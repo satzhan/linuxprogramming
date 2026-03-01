@@ -98,6 +98,7 @@ To use this Python example:
 2. Run the reader script in one terminal: `python reader.py`
 
 3. probably a tmux idea :: https://tmuxcheatsheet.com/
+```
 TO INSTALL
 sudo apt install tmux
 TO ENTER
@@ -110,6 +111,7 @@ TO START PIPE
 cat my_pipe
 OR FLOW
 tail -f my_pipe
+```
 
 # Multiple messages Canonical Producer Consumer Pattern
 #### Python code
