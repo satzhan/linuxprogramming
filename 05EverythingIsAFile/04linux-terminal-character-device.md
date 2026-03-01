@@ -50,7 +50,7 @@ for line in sys.stdin:
 #### Linux Commands
 
 ```bash
-# care, it's a bit disorienting if connection is ...
+# care, it's a bit disorienting ... (but good to know)
 # Disable echoing
 stty -echo
 cat /dev/stdin
