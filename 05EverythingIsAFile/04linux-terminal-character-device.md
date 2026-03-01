@@ -23,6 +23,8 @@ Linux terminals operate in different input modes:
 ```bash
 cat /dev/stdin
 # Type some text and press Ctrl+D to end input
+
+sudo -i -u <your_login_name> script /dev/null
 ```
 
 #### What Happens:
@@ -48,6 +50,7 @@ for line in sys.stdin:
 #### Linux Commands
 
 ```bash
+# care, it's a bit disorienting if connection is ...
 # Disable echoing
 stty -echo
 cat /dev/stdin
