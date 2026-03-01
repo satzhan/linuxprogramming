@@ -12,6 +12,9 @@ Character devices in Linux are accessed as files, typically in the `/dev` direct
 ```bash
 cat /dev/stdin
 # Type some text and press Ctrl+D to end input
+
+# check out login this way instead if there is permission issue ::
+sudo -i -u <your_login_name> script /dev/null
 ```
 
 #### Python Code:
