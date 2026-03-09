@@ -1,181 +1,87 @@
-Linux OS Fundamentals: Midterm Study Guide
-
-1. The Core Philosophy: "Everything is a File"
-
-In Linux, the "Everything is a File" philosophy is the architectural cornerstone. It means that nearly all system components—from hardware devices and system memory to network connections—are represented as files within the filesystem.
-
-Admin Insight: This uniformity is powerful because it allows a system administrator to use the same basic tools (like cat, grep, or redirects) to interact with diverse hardware. For example, you can use cat to read from a physical disk device file just as easily as you would a standard text file.
-
-System Components Represented as Files:
-
-* Regular files: Standard data files (text, binaries, images).
-* Directories: Special files that serve as containers for other files.
-* Sockets: Files that facilitate network-based inter-process communication (IPC).
-* Pipes and FIFOs: Files used for IPC that allow data to flow in one direction (unidirectional).
-* Devices: Hardware represented as files. Character devices handle data character-by-character (like a keyboard), while Block devices handle data in large chunks (like a hard drive).
-
-Kernel and Device Interfaces The filesystem provides specific directories to serve as portals to the system hardware and the kernel itself.
-
-Location	Purpose
-/dev	Contains character and block device files representing physical hardware.
-/proc	A virtual filesystem providing an interface to kernel data structures and process information.
-
-
---------------------------------------------------------------------------------
-
-
-2. File Metadata and Access: Inodes vs. File Descriptors
-
-Linux distinguishes between how a file is stored on disk and how it is accessed by an active process.
-
-Admin Tip: To see the "truth" of a file, use the stat command. It displays detailed metadata including permissions, size, timestamps, and the Inode number. To see Inode numbers in a directory listing, use ls -i.
-
-Internal Mechanics: Inodes vs. File Descriptors
-
-Feature	Inode Number	File Descriptor
-Primary Purpose	A data structure identifying files/directories at the filesystem level.	An abstract indicator (integer) used by the kernel to track a process's access to a file.
-Scope/Uniqueness	Unique within the specific filesystem.	Unique only within a single process.
-Persistence	Persists across reboots until the file is deleted.	Volatile; it ceases to exist once the process terminates.
-Associated System Calls	Managed by the filesystem; viewed via stat.	Heavily used by read() and write() calls during execution.
-
-Inode Attributes The Inode contains the vital statistics of a file, excluding the filename. Key data includes:
-
-* File attributes (size, type).
-* Disk block locations (where the data physically resides on the platter or SSD).
-* Access permissions (Read/Write/Execute).
-* Timestamps (Access, Modify, Change).
-
-
---------------------------------------------------------------------------------
-
-
-3. Linking Mechanics: Hard Links vs. Soft (Symbolic) Links
-
-Links allow a single file to be accessed from multiple locations or by multiple names.
-
-Key Facts
-
-* Hard Links (ln): These share the exact same Inode number as the source. Because they point to the same data on the disk, the data remains accessible as long as at least one hard link exists.
-* Symbolic Links (ln -s): Also called "Soft Links," these function like a shortcut. They point to the path name of the target file, not the Inode.
-* The "Dangling Link": If you delete the target file of a symbolic link, the link remains but points to a non-existent path. This is a "broken" or "dangling" link.
-* Argument Order: Always remember the syntax is target followed by link_name.
-
-Symbolic Link Syntax
-
-ln -s target_file link_name
-
-
-
---------------------------------------------------------------------------------
-
-
-4. File Management: Linux CLI vs. Python Programming
-
-Modern systems administration often requires automating shell tasks using Python's os and shutil modules.
-
-Command Mapping: Linux Shell vs. Python
-
-Linux Command	Python Equivalent	Admin Note
-ls / ls -l	os.listdir()	Lists directory contents.
-pwd	os.getcwd()	"Get current working directory."
-cd	os.chdir(path)	Changes the process's current directory.
-mv	os.rename()	Used for both moving and renaming.
-cp / cp -r	shutil.copy()	Use shutil for file-level copying.
-rm	os.remove()	Deletes a single file.
-rm -r	shutil.rmtree()	Warning: Recursively deletes a non-empty directory.
-mkdir	os.mkdir()	Creates a single directory.
-mkdir -p	os.makedirs()	Creates the full path, including missing parent directories.
-chmod	os.chmod()	Changes permissions.
-cat	print(open('f', 'r').read())	Opens, reads, and prints file contents.
-touch	open('f', 'a').close()	Opens in append mode and closes to update timestamp/create file.
-
-Gotcha: Directory Removal If you attempt to use os.remove() or os.rmdir() on a directory that contains files, Python will raise an error. You must use shutil.rmtree() to perform a recursive deletion, which is the equivalent of rm -r.
-
-
---------------------------------------------------------------------------------
-
-
-5. Permissions, Ownership, and User Management
-
-Linux uses a strict security model based on User (u), Group (g), and Others (o).
-
-Permission Strings (e.g., -rwxr-xr--)
-
-1. Leading Character: - (file), d (directory), l (link).
-2. Next 9 Characters: Three triads representing u, g, and o.
-
-Octal (Numerical) Notation Permissions are calculated as: Read=4, Write=2, Execute=1.
-
-* 755: rwxr-xr-x (Owner: All; Group/Others: Read and Execute). Admin Tip: 755 is the standard for directories and executable scripts.
-* 644: rw-r--r-- (Owner: Read/Write; Group/Others: Read only).
-* rw-: Octal value 6.
-
-Permissions on Directories
-
-* Read (r): Allows you to list the files inside (via ls).
-* Write (w): Allows you to create or delete files within that directory.
-* Execute (x): The "pass-through" permission. It allows you to enter the directory (cd) and access its contents.
-
-Management Commands
-
-* useradd / usermod: Create or modify user accounts.
-* passwd: Update a user's password.
-* chown: Changes file ownership. Format: chown user:group filename.
-* chgrp: Changes only the group ownership.
-* sudo: Temporarily grants "root" (superuser) privileges to execute administrative tasks.
-
-
---------------------------------------------------------------------------------
-
-
-6. I/O Redirection and the Pipeline
-
-Data flow is managed via Standard File Descriptors:
-
-* 0 (stdin): Standard Input (Keyboard).
-* 1 (stdout): Standard Output (Screen).
-* 2 (stderr): Standard Error (Error messages on screen).
-
-Quick Reference: Redirection Operators
-
-* >: Overwrites a file with output (creates the file if it doesn't exist).
-* >>: Appends output to the end of a file.
-* <: Redirects a file's content into a command as input.
-* 2>: Redirects error messages to a file (crucial for logging).
-* |: Piping. Connects the stdout of one command to the stdin of another. Pipes use half-duplex communication, meaning data flows in one direction only.
-
-Chained Command Example
-
-cat logs.txt | grep "ERROR" | wc -l
-
-
-This reads the file, filters for "ERROR", and then counts the resulting lines.
-
-
---------------------------------------------------------------------------------
-
-
-7. Essential Text Processing Utilities
-
-* grep: Pattern searching. Use -i for case-insensitive searches.
-* wc: Word count. Use -l for lines, -w for words, and -c for bytes/characters.
-* sort: Alphabetical sorting. Use -n for numeric sorting.
-* uniq: Removes adjacent duplicates. Admin Tip: Always sort your data before running uniq.
-* head / tail: View the start or end of a file. Default is 10 lines. Change this with -n (e.g., tail -n 5 for the last 5 lines).
-* ls -a: Lists all files, including hidden ones (those starting with a dot).
-* tree -L [number]: Visualizes directory structure, limited to a specific depth of levels.
-
-
---------------------------------------------------------------------------------
-
-
-8. Midterm Review: High-Probability Questions
-
-1. What is the correct order of arguments for the ln -s command? Answer: target_file link_name
-2. Which Python function should be used to create a directory path including all necessary parent directories? Answer: os.makedirs()
-3. In Python, which mode is used with open() to append data to a file? Answer: 'a'
-4. How do file descriptors and Inodes differ in persistence? Answer: Inodes persist across reboots; file descriptors cease to exist when a process terminates.
-5. What command is used to locate the full path of an executable command? Answer: which
-6. What does the PATH environment variable contain? Answer: A list of directories the shell searches for executable commands.
-7. What happens if you use os.remove() on a directory that is not empty? Answer: It will raise an error; shutil.rmtree() must be used for recursive deletion.
-8. Which directory contains interfaces to kernel data structures? Answer: /proc
+# Linux Programming Midterm Study Guide
+
+## 1. Navigation and File Management
+* [cite_start]**Current Location:** Use `pwd` to print the current working directory[cite: 84, 85].
+* [cite_start]**Changing Directories:** * `cd` changes directories[cite: 87].
+    * [cite_start]`cd ..` moves up one directory level[cite: 88].
+    * [cite_start]`cd ~` changes to your home directory[cite: 89, 90].
+* **Listing Contents:**
+    * [cite_start]`ls -a` shows hidden files[cite: 86].
+    * [cite_start]`ls -i` displays inode numbers[cite: 99].
+    * [cite_start]`tree -L` visualizes the directory structure but limits the display to a specific depth[cite: 89, 91].
+* **Searching:**
+    * [cite_start]`find` is used to search for files and directories[cite: 92].
+    * [cite_start]`which` shows the full path of shell commands[cite: 93].
+* **File Manipulation:**
+    * [cite_start]`touch` creates a file if it doesn't exist, or updates its timestamp if it does[cite: 103].
+    * [cite_start]`mkdir -p` creates a directory path, including any missing parent directories[cite: 104].
+    * [cite_start]`rmdir` removes an empty directory[cite: 105, 106].
+    * [cite_start]`cp` copies files [cite: 107][cite_start], while `cp -r` copies directories recursively[cite: 108].
+    * [cite_start]`rm` removes files [cite: 109][cite_start], and `rm -r` recursively deletes a directory and its contents[cite: 110].
+    * [cite_start]`stat` displays detailed file information like permissions, size, timestamps, and inodes[cite: 100].
+* [cite_start]**Shell Globbing:** `*` matches any string of characters [cite: 114][cite_start], while `?` matches exactly one character[cite: 115].
+* [cite_start]**Environment:** The `$PATH` variable contains a list of directories searched for executable commands [cite: 116][cite_start]; you can view it with `echo $PATH`[cite: 118].
+
+## 2. Text Processing, Pipes, and Redirection
+* **Text Commands:**
+    * [cite_start]`cat` displays file contents[cite: 73]; [cite_start]`cat -n` displays them with line numbers[cite: 73].
+    * [cite_start]`less` is used to view a long text file one screen at a time[cite: 113].
+    * [cite_start]`wc` counts lines, words, characters, or bytes[cite: 75]. [cite_start]`wc -l` counts only lines[cite: 76].
+    * [cite_start]`sort` sorts lines of text[cite: 77]. [cite_start]`sort -n` is used for numeric sorting[cite: 78].
+    * [cite_start]`grep` searches for patterns[cite: 79]; [cite_start]`grep -i` makes the search case-insensitive[cite: 80].
+    * [cite_start]`head` shows the top 10 lines by default[cite: 81]; [cite_start]`head -n 20` shows the first 20[cite: 130].
+    * [cite_start]`tail` displays the end of a file[cite: 82]; [cite_start]`tail -n 20` displays the last 20 lines[cite: 83].
+    * [cite_start]`uniq` removes adjacent duplicate lines (usually used after sorting)[cite: 129].
+* **Pipes (`|`):**
+    * [cite_start]A pipe (`|`) allows the output of one process to become the input of another[cite: 61, 63]. 
+    * [cite_start]This is a form of Inter-Process Communication (IPC) that creates a half-duplex communication channel[cite: 64, 73]. 
+    * [cite_start]You can chain multiple commands together (e.g., `command1 | command2 | command3`)[cite: 133].
+* **Redirection:**
+    * [cite_start]**File Descriptors:** Standard input (stdin) is `0` [cite: 67][cite_start], standard output (stdout) is `1` [cite: 71][cite_start], and standard error (stderr) is `2`[cite: 71].
+    * [cite_start]`>` overwrites or creates a file with the output[cite: 69].
+    * [cite_start]`>>` appends output to an existing file[cite: 68].
+    * [cite_start]`<` reads input from a file[cite: 70].
+    * [cite_start]`2>` redirects standard error (stderr) to a file[cite: 127, 128].
+
+## 3. Users, Groups, and Permissions
+* **User Management:**
+    * [cite_start]The Superuser (root) has the highest level of permissions[cite: 48]. [cite_start]`sudo` temporarily grants administrative privileges to a regular user[cite: 56].
+    * [cite_start]`useradd` adds a new user account [cite: 51][cite_start], `usermod` modifies it [cite: 52][cite_start], and `passwd` changes the password[cite: 53].
+    * [cite_start]`whoami` prints the current user's username [cite: 119][cite_start], `id` displays UID/GID and group memberships [cite: 121][cite_start], and `groups` shows the groups the current user belongs to[cite: 120].
+    * [cite_start]`last` shows the last logins in the system[cite: 57].
+    * [cite_start]`/etc/passwd` contains user accounts and info [cite: 122][cite_start], while `/etc/group` contains group definitions and GIDs[cite: 123].
+* **Permissions:**
+    * [cite_start]`r` (read): Allows reading file contents[cite: 38, 39]. [cite_start]Octal value: `4`[cite: 44].
+    * [cite_start]`w` (write): Allows creating or deleting files inside a directory[cite: 45]. [cite_start]Octal value: `2`[cite: 44].
+    * [cite_start]`x` (execute): Allows entering a directory[cite: 40]. [cite_start]Octal value: `1`[cite: 44].
+    * [cite_start]*Example:* Octal `755` represents `rwxr-xr-x` [cite: 44][cite_start], and `rw-` represents `6`[cite: 44].
+* **Changing Ownership & Permissions:**
+    * [cite_start]`chmod` modifies permissions (e.g., `chmod u+x` adds execute permission for the user/owner)[cite: 44].
+    * [cite_start]`chown` changes the owner of files/directories[cite: 54].
+    * [cite_start]`chgrp` changes the group[cite: 60, 61].
+
+## 4. "Everything is a File", Inodes, and Links
+* **"Everything is a File" Concept:**
+    * [cite_start]In Linux, all system components are represented as files, which simplifies interaction with system components using standard tools[cite: 24, 30]. [cite_start]Programs themselves are *not* considered a file type under this specific concept[cite: 26].
+    * [cite_start]`/dev` contains character and block device files[cite: 27]. [cite_start]Character devices handle data character by character[cite: 33].
+    * [cite_start]`/proc` provides interfaces to kernel data structures[cite: 31].
+    * [cite_start]Sockets facilitate network communication between processes [cite: 37][cite_start], and Pipes/FIFOs allow data to flow in one direction for IPC[cite: 28].
+* **Inodes vs. File Descriptors:**
+    * [cite_start]**Inodes:** A data structure storing file attributes and disk block locations[cite: 8, 18]. [cite_start]They are unique within the filesystem [cite: 9] [cite_start]and persist until the file is deleted[cite: 19].
+    * [cite_start]**File Descriptors:** An abstract indicator for kernel file access[cite: 10]. [cite_start]They are unique only within a single process [cite: 13] [cite_start]and cease to exist when the process terminates[cite: 14]. [cite_start]System calls like `read()` and `write()` use file descriptors[cite: 15, 16].
+* **Links:**
+    * [cite_start]**Symbolic Links (`ln -s`):** Creates a "soft" link pointing to a path name[cite: 2]. [cite_start]If the target is deleted, the link becomes broken (dangling)[cite: 101, 102].
+    * [cite_start]**Hard Links (`ln`):** Shares the same inode as the original file[cite: 95, 96]. 
+
+## 5. Python Equivalents of Linux Commands
+[cite_start]The `os` and `shutil` Python modules provide similar file/directory operations[cite: 22]:
+* [cite_start]`ls` -> `os.listdir()` [cite: 22]
+* [cite_start]`pwd` -> `os.getcwd()` [cite: 124]
+* [cite_start]`cd path` -> `os.chdir(path)` [cite: 125]
+* [cite_start]`mkdir` -> `os.mkdir()` [cite: 22]
+* [cite_start]`mv` -> `os.rename()` [cite: 21]
+* [cite_start]`rm` -> `os.remove()` [cite: 22]
+* [cite_start]`rm -r` -> `shutil.rmtree()` (removes non-empty directories) [cite: 23]
+* [cite_start]`cp` -> `shutil.copy()` [cite: 126]
+* [cite_start]`chmod` -> `os.chmod()` [cite: 23]
+* [cite_start]`touch file.txt` -> `open('file.txt', 'a').close()` [cite: 19, 20]
