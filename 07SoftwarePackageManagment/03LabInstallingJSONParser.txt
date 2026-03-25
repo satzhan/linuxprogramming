@@ -11,6 +11,11 @@ Utilize jq to manipulate JSON data.
 Prerequisites:
 Basic knowledge of Linux command-line tools.
 Basic knowledge of JSON data structure.
+
+### potential fixes :: Install libtool
+
+sudo apt update
+sudo apt install libtool
 A Linux system with wget, curl, tar, and build-essential tools installed.
 
 Lab Overview:
@@ -87,4 +92,16 @@ Key Learning: Basic source code management and JSON data manipulation using comm
 Additional Notes: Exploring more advanced functionalities of jq and mastering 
 JSON data handling are crucial in dealing with API responses and configuration files in 
 devOps, Data Engineering, and Software Development contexts.
+
+Potential fixes ::
+
+
+sudo apt update
+sudo apt install libtool
+
+autoreconf -i
+./configure
+make
+sudo make install
+
 
