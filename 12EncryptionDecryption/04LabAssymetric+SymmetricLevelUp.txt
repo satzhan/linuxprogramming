@@ -70,7 +70,63 @@ especially for larger data.
 Combining Asymmetric and Symmetric: The symmetric key is secured with asymmetric encryption for transmission, 
 thus providing a balance between security and efficiency.
 
+
 This lab illustrates a practical usage of asymmetric and symmetric encryption in ensuring secure and 
 computationally efficient communication. It's pivotal to note that in real-world applications, 
 additional considerations regarding key management, integrity checks, and secure channels are vital and 
 should be implemented in accordance with best practices.
+
+
+
+:: hmm alternatively can try following this ::
+
+mkdir -p hybrid_lab
+cd hybrid_lab
+
+echo "This is a confidential message" > message.txt
+cat message.txt
+
+openssl genpkey -algorithm RSA -out private_key.pem
+openssl rsa -pubout -in private_key.pem -out public_key.pem
+
+ls -l private_key.pem public_key.pem
+
+openssl rand -base64 32 > symmetric_key.key
+cat symmetric_key.key
+
+openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 \
+  -in message.txt \
+  -out message.enc \
+  -pass file:symmetric_key.key
+
+xxd -l 64 message.enc
+
+openssl pkeyutl -encrypt \
+  -pubin \
+  -inkey public_key.pem \
+  -in symmetric_key.key \
+  -out encrypted_symmetric_key.key \
+  -pkeyopt rsa_padding_mode:oaep \
+  -pkeyopt rsa_oaep_md:sha256
+
+openssl pkeyutl -decrypt \
+  -inkey private_key.pem \
+  -in encrypted_symmetric_key.key \
+  -out decrypted_symmetric_key.key \
+  -pkeyopt rsa_padding_mode:oaep \
+  -pkeyopt rsa_oaep_md:sha256
+
+diff -s symmetric_key.key decrypted_symmetric_key.key
+
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 \
+  -in message.enc \
+  -out decrypted_message.txt \
+  -pass file:decrypted_symmetric_key.key
+
+cat decrypted_message.txt
+
+diff -s message.txt decrypted_message.txt
+
+
+
+
