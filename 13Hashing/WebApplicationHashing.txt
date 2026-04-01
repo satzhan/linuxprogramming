@@ -12,6 +12,7 @@ Web browser with developer tools.
 
 Part 1: Setting Up the Flask Application
 1.1 Install Flask:
+sudo apt install python3-pip
 
 pip install flask
 
