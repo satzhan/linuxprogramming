@@ -16,6 +16,9 @@ sudo apt install python3-pip
 
 pip install flask
 
+MAYBE AN ISSUE IF NO PATH
+echo 'export PATH="$PATH:/home/USER_NAME/.local/bin"' >> ~/.bashrc
+source ~/.bashrc
 
 !!! If you do that project on repl.it
 make sure to update 2 lines in 
