@@ -113,7 +113,11 @@ if __name__ == '__main__':
 
 
 2.3 Run the application and access it in a web browser. Submit the form and observe how data is sent unencrypted.
+
+TO OPEN PORT TO THE LOCAL WEB YOU MIGHT NEED TO OPEN NEW TERMINAL AND CONNECT
 ssh -p 5037 -L 5000:127.0.0.1:5000 student@YOUR_LINK.eastus.cloudapp.azure.com
+
+THEN YOU CAN GO THE LOCAL SERVER AND DO THESE
 F12 to inspect
 Click Submit form and find Payload tab to see
 
