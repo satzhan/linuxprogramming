@@ -62,8 +62,17 @@ Checking Against Known Hash Values:
 
 Security practitioners could use the hash values to compare files against known malicious ones 
 ( use an online virus database to compare hash values).
+# 1. Create a clean test file
+echo "This is my clean, safe test file for VirusTotal." > safe_file.txt
 
+# 2. Generate the SHA-256 hash
+sha256sum safe_file.txt
 
+# 1. Create the EICAR test file (using the exact industry standard string)
+echo -n 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' > eicar.txt
+
+# 2. Generate the SHA-256 hash of the EICAR file
+sha256sum eicar.txt
 
 Conclusion:
 Reflect on how hash functions can detect even the slightest changes in data and 
