@@ -113,6 +113,9 @@ if __name__ == '__main__':
 
 
 2.3 Run the application and access it in a web browser. Submit the form and observe how data is sent unencrypted.
+ssh -p 5037 -L 5000:127.0.0.1:5000 student@YOUR_LINK.eastus.cloudapp.azure.com
+F12 to inspect
+Click Submit form and find Payload tab to see
 
 Part 3: Secured Form with Hashing
 3.1 Modify app.py to add a route for the secured form:
