@@ -53,6 +53,8 @@ Generate and note the hash of backupfile.txt.
 Tamper with backupfile.txt by adding new text.
 Generate the hash again and compare it with the original hash to see if the tampering is detected.
 
+diff <(sha256sum testfile.txt) <(sha256sum backupfile.txt)
+
 Part 4: Using Hashes for Security Analysis
 
 Checking Against Known Hash Values:
