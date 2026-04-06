@@ -279,6 +279,13 @@ $ nice -n 10 python3 fibonacci.py 35
 $ python3 fibonacci.py 35 &
 $ renice -n 10 -p $!
 ```
+ALSO
+```bash
+python3 fibonacci.py 38 &
+nice -n 10 python3 fibonacci.py 38 &
+python3 fibonacci.py 38 &
+nice -n 10 python3 fibonacci.py 38 &
+```
 
 ## Verification and Troubleshooting
 
