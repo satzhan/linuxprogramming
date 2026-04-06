@@ -100,6 +100,24 @@ $ bg    # Continue in background
 $ fg    # Bring to foreground
 ```
 
+MORE
+```
+# Default behavior: background job still prints
+python3 infinite_loop.py
+Ctrl+Z
+bg
+# job continues in background and still writes to terminal
+
+# Demo where background terminal output is blocked
+stty tostop
+python3 infinite_loop.py
+Ctrl+Z
+bg
+jobs -l   # shows: Stopped (tty output)
+fg        # resume in foreground and see printing again
+stty -tostop
+```
+
 ### Lab Exercise 3: Signal Handling
 ```python
 # signal_handling.py
