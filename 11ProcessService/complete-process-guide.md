@@ -118,6 +118,30 @@ fg        # resume in foreground and see printing again
 stty -tostop
 ```
 
+MORE 
+```
+import os
+import sys
+import time
+
+i = 1
+
+while True:
+    try:
+        my_pgid = os.getpgrp()
+        fg_pgid = os.tcgetpgrp(sys.stdout.fileno())
+
+        if my_pgid == fg_pgid:
+            print(i, flush=True)
+
+        i += 1
+        time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("\nExiting.")
+        break
+```
+
 ### Lab Exercise 3: Signal Handling
 ```python
 # signal_handling.py
