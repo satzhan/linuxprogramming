@@ -101,7 +101,7 @@ $ fg    # Bring to foreground
 ```
 
 MORE
-```
+```bash
 # Default behavior: background job still prints
 python3 infinite_loop.py
 Ctrl+Z
@@ -119,7 +119,7 @@ stty -tostop
 ```
 
 MORE 
-```
+```python
 import os
 import sys
 import time
