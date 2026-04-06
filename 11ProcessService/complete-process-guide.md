@@ -94,7 +94,7 @@ $ python3 infinite_loop.py
 3...
 
 # Process Control
-Ctrl+C  # Kill
+Ctrl+C  # Kill process
 Ctrl+Z  # Suspend
 $ bg    # Continue in background
 $ fg    # Bring to foreground
