@@ -175,6 +175,37 @@ pgrep -af signal_handling.py
 ps aux | grep signal_handling.py
 ```
 
+MORE
+```python
+import signal
+import time
+import sys
+
+running = True
+
+def handle_sigterm(signum, frame):
+    global running
+    print("\nSIGTERM received: cleaning up...", flush=True)
+
+    with open("cleanup.log", "a") as f:
+        f.write("Cleanup happened before exit\n")
+
+    time.sleep(2)
+    print("Cleanup complete. Exiting now.", flush=True)
+    running = False
+
+signal.signal(signal.SIGTERM, handle_sigterm)
+
+print("Process started. Waiting for SIGTERM...", flush=True)
+
+while running:
+    print("Working...", flush=True)
+    time.sleep(1)
+
+print("Program ended normally.", flush=True)
+sys.exit(0)
+```
+
 ### Lab Exercise 4: Process Creation
 ```python
 # process_creation.py
