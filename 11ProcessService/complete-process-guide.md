@@ -169,6 +169,11 @@ $ pid=$(pgrep -f signal_handling.py)
 $ kill -SIGTERM $pid
 # Terminal 1 shows: SIGTERM received, but not terminating
 ```
+```bash
+pgrep -af python
+pgrep -af signal_handling.py
+ps aux | grep signal_handling.py
+```
 
 ### Lab Exercise 4: Process Creation
 ```python
