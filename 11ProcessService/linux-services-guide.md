@@ -163,8 +163,11 @@ sudo apt install mysql-client
 sudo apt install net-tools
 ifconfig
 
-# Connect from client
-mysql -h server_ip -u newuser -p
+# Connect from client <template>
+mysql -h <server_ip> -u newuser -p
+
+# for the binding
+mysql -h 0.0.0.0 -u newuser -p
 ```
 
 ## Cleanup and Security
