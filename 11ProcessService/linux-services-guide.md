@@ -170,6 +170,28 @@ mysql -h <server_ip> -u newuser -p
 mysql -h 0.0.0.0 -u newuser -p
 ```
 
+### TEST
+```sql
+CREATE USER 'intern'@'%' IDENTIFIED BY '123';
+```
+```sql
+GRANT SELECT ON testdb.* TO 'intern'@'%';
+FLUSH PRIVILEGES;
+```
+```bash
+mysql -u intern -p
+```
+```sql
+SELECT * FROM testdb.employees;
+-- try to delete with intern privileges
+DELETE FROM testdb.employees;
+```
+```sql
+-- check difference
+SHOW GRANTS FOR 'intern'@'%';
+SHOW GRANTS FOR 'newuser'@'%';
+```
+
 ## Cleanup and Security
 
 ### Database Cleanup
