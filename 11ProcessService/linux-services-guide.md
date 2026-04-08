@@ -136,6 +136,9 @@ FLUSH PRIVILEGES;
 
 -- check
 SELECT user, host FROM mysql.user;
+
+-- delete
+DROP USER 'newuser'@'%';
 ```
 
 #### 2. Remote Access Configuration
