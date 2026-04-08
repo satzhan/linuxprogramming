@@ -133,6 +133,9 @@ GRANT ALL PRIVILEGES ON testdb.* TO 'newuser'@'%';
 
 -- Apply changes
 FLUSH PRIVILEGES;
+
+-- check
+SELECT user, host FROM mysql.user;
 ```
 
 #### 2. Remote Access Configuration
