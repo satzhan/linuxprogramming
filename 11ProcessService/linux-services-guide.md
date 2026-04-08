@@ -83,6 +83,11 @@ sudo mysql
 ```
 
 #### 3. Database and Table Creation
+To know existing databases
+```sql
+SHOW DATABASES;
+```
+
 ```sql
 -- Create database
 CREATE DATABASE testdb;
