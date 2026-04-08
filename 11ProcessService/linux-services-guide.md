@@ -83,8 +83,10 @@ sudo mysql
 ```
 
 #### 3. Database and Table Creation
-To know existing databases
 ```sql
+-- check where we are / what you're using
+SELECT DATABASE();
+-- check what you have
 SHOW DATABASES;
 ```
 
