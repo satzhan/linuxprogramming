@@ -77,6 +77,11 @@ systemctl status mysql.service
 sudo mysql -u root -p
 ```
 
+IF NO password
+```bash
+sudo mysql
+```
+
 #### 3. Database and Table Creation
 ```sql
 -- Create database
