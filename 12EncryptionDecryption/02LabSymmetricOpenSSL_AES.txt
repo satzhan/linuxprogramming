@@ -30,6 +30,7 @@ Step 3: Encrypt the File
 Encrypt the secret.txt file using OpenSSL with symmetric encryption (AES).
 
 openssl enc -aes-256-cbc -salt -in secret.txt -out secret.txt.enc
+openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 -in secret.txt -out secret.txt.enc
 
 During this step, OpenSSL will ask you to provide a password 
 which will be used to generate a key for encryption. Keep the password in a secure place 
@@ -45,7 +46,7 @@ Step 5: Decrypt the File
 Decrypt the file back into its original format using OpenSSL.
 
 openssl enc -aes-256-cbc -d -in secret.txt.enc -out secret_decrypted.txt
-
+openssl enc -aes-256-cbc -d -pbkdf2 -iter 100000 -in secret.txt.enc -out secret_decrypted.txt
 You’ll be prompted to enter the password used during the encryption process.
 
 Step 6: Validate Decryption

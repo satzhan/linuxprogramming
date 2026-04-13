@@ -94,9 +94,52 @@ $ python3 infinite_loop.py
 3...
 
 # Process Control
+Ctrl+C  # Kill process
 Ctrl+Z  # Suspend
 $ bg    # Continue in background
 $ fg    # Bring to foreground
+```
+
+MORE
+```bash
+# Default behavior: background job still prints
+python3 infinite_loop.py
+Ctrl+Z
+bg
+# job continues in background and still writes to terminal
+
+# Demo where background terminal output is blocked
+stty tostop
+python3 infinite_loop.py
+Ctrl+Z
+bg
+jobs -l   # shows: Stopped (tty output)
+fg        # resume in foreground and see printing again
+stty -tostop
+```
+
+MORE 
+```python
+import os
+import sys
+import time
+
+i = 1
+
+while True:
+    try:
+        my_pgid = os.getpgrp()
+        fg_pgid = os.tcgetpgrp(sys.stdout.fileno())
+
+        if my_pgid == fg_pgid:
+            print(i, flush=True)
+
+        i += 1
+        time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("\nExiting.")
+        break
 ```
 
 ### Lab Exercise 3: Signal Handling
@@ -125,6 +168,42 @@ Running... (try to send SIGTERM)
 $ pid=$(pgrep -f signal_handling.py)
 $ kill -SIGTERM $pid
 # Terminal 1 shows: SIGTERM received, but not terminating
+```
+```bash
+pgrep -af python
+pgrep -af signal_handling.py
+ps aux | grep signal_handling.py
+```
+
+MORE
+```python
+import signal
+import time
+import sys
+
+running = True
+
+def handle_sigterm(signum, frame):
+    global running
+    print("\nSIGTERM received: cleaning up...", flush=True)
+
+    with open("cleanup.log", "a") as f:
+        f.write("Cleanup happened before exit\n")
+
+    time.sleep(2)
+    print("Cleanup complete. Exiting now.", flush=True)
+    running = False
+
+signal.signal(signal.SIGTERM, handle_sigterm)
+
+print("Process started. Waiting for SIGTERM...", flush=True)
+
+while running:
+    print("Working...", flush=True)
+    time.sleep(1)
+
+print("Program ended normally.", flush=True)
+sys.exit(0)
 ```
 
 ### Lab Exercise 4: Process Creation
@@ -199,6 +278,13 @@ $ nice -n 10 python3 fibonacci.py 35
 ```bash
 $ python3 fibonacci.py 35 &
 $ renice -n 10 -p $!
+```
+ALSO
+```bash
+python3 fibonacci.py 38 &
+nice -n 10 python3 fibonacci.py 38 &
+python3 fibonacci.py 38 &
+nice -n 10 python3 fibonacci.py 38 &
 ```
 
 ## Verification and Troubleshooting

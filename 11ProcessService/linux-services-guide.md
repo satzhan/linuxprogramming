@@ -77,7 +77,19 @@ systemctl status mysql.service
 sudo mysql -u root -p
 ```
 
+IF NO password
+```bash
+sudo mysql
+```
+
 #### 3. Database and Table Creation
+```sql
+-- check where we are / what you're using
+SELECT DATABASE();
+-- check what you have
+SHOW DATABASES;
+```
+
 ```sql
 -- Create database
 CREATE DATABASE testdb;
@@ -121,6 +133,12 @@ GRANT ALL PRIVILEGES ON testdb.* TO 'newuser'@'%';
 
 -- Apply changes
 FLUSH PRIVILEGES;
+
+-- check
+SELECT user, host FROM mysql.user;
+
+-- delete
+DROP USER 'newuser'@'%';
 ```
 
 #### 2. Remote Access Configuration
@@ -145,8 +163,33 @@ sudo apt install mysql-client
 sudo apt install net-tools
 ifconfig
 
-# Connect from client
-mysql -h server_ip -u newuser -p
+# Connect from client <template>
+mysql -h <server_ip> -u newuser -p
+
+# for the binding
+mysql -h 0.0.0.0 -u newuser -p
+```
+
+### TEST
+```sql
+CREATE USER 'intern'@'%' IDENTIFIED BY '123';
+```
+```sql
+GRANT SELECT ON testdb.* TO 'intern'@'%';
+FLUSH PRIVILEGES;
+```
+```bash
+mysql -u intern -p
+```
+```sql
+SELECT * FROM testdb.employees;
+-- try to delete with intern privileges
+DELETE FROM testdb.employees;
+```
+```sql
+-- check difference
+SHOW GRANTS FOR 'intern'@'%';
+SHOW GRANTS FOR 'newuser'@'%';
 ```
 
 ## Cleanup and Security
