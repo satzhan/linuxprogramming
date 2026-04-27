@@ -1,159 +1,224 @@
-# The Linux Artisan: A Hands-On Guide to Stream Editing
+# Systems & Streams: A Rigorous Guide to the Linux Environment and `sed`
 
-Welcome to the workshop. Mastering a Linux environment is not about memorizing commands; it is about building accurate mental models of how information flows. Once you understand the flow, you gain the autonomy to shape it.
+To master a system, you must first strip away the magic and understand its fundamental mechanisms. Operating in a Linux environment is not about memorizing a dictionary of commands; it is about building an accurate mental model of how data flows and how processes interact with that data. Once you understand the physical reality of the environment, you gain the autonomy to shape it to your exact will.
 
-This guide is entirely self-contained. We will start with a foundational concept, immediately build a sandbox to test it, and then work through progressively complex, real-world problems. 
+This comprehensive laboratory manual will rebuild your understanding of text processing from first principles. We will construct a complex sandbox, break down the execution cycle of the stream editor, and tackle layered, real-world systems problems.
 
-Our approach relies on four steps for every challenge:
-1. Understand the exact nature of the problem.
-2. Devise a logical plan before touching the keyboard.
-3. Execute the plan.
-4. Look back and dissect why it worked.
-
----
-
-## Part 1: The Mental Model
-
-Imagine a traditional text editor (like Notepad or Nano) as a drawing board. You lay the entire document flat, look at it, move your pen to a specific spot, and change something. This is static editing.
-
-`sed` (Stream Editor) is different. Imagine an assembly line. 
-The text is a continuous stream of products moving swiftly down the conveyor belt. You stand next to the belt with a set of strict, pre-programmed instructions. As each line of text zooms past, you inspect it. If it matches your criteria, you instantly apply a modification (a stamp, a cut, a replacement) and let it continue down the line to the output bin. 
-
-Because `sed` never loads the entire file into memory at once, it can process gigabytes of data in seconds. 
+For every challenge we face, we will employ a rigorous four-phase methodology:
+1.  **Confront the Reality:** What is the exact state of our data, and what is our precise goal?
+2.  **Map the Logic:** What underlying mechanisms can bridge the gap between state and goal?
+3.  **Execute the Operation:** Translate the logic into dense, structurally illuminating code.
+4.  **Verify and Integrate:** Did the output match the goal? Why? 
 
 ---
 
-## Part 2: Constructing Your Sandbox
+## Part 1: First Principles of the Linux Environment
 
-Experience is the only true teacher. Before we discuss theory, let us build the materials we will manipulate. 
+Before manipulating streams, you must understand what a stream is. In Linux, an elegant, fundamental philosophy dictates the architecture: *Everything is a file*. 
 
-Open your terminal and paste the following commands. This will generate three files (`app.py`, `server.conf`, and `system.log`) in your current directory. These are yours to break and rebuild.
+A text document is a file. Your keyboard is a file. Your monitor is a file. A network socket is a file. Because everything shares this common interface, data can flow between them seamlessly. 
+
+When you launch a process (like a program or a command), the operating system automatically opens three primary data streams, known as File Descriptors (FDs):
+* **Standard Input (`stdin`, FD 0):** Where the process listens for data (usually the keyboard).
+* **Standard Output (`stdout`, FD 1):** Where the process sends successful results (usually the terminal screen).
+* **Standard Error (`stderr`, FD 2):** Where the process sends error diagnostics (also the terminal screen, but kept logically separate from stdout).
+
+The pipe `|` is the connective tissue of this environment. It physically connects the `stdout` of one process directly into the `stdin` of another, allowing you to chain small, single-purpose tools into massive, complex data pipelines.
+
+---
+
+## Part 2: Constructing the Laboratory
+
+True learning requires friction. We must build a complex sandbox of realistic, messy files to experiment on. Open your terminal and paste this entire block exactly as it is written. This will generate four files representing a typical backend system.
 
 ```bash
-# 1. Create a Python script
-cat << 'EOF' > app.py
-def init_system():
-    print("DEBUG: System starting...")
-    # TODO: Load environment variables
-    db_connect()
-    # TODO: Verify cache
-    print("DEBUG: System initialized.")
+# 1. Create a C source file
+cat << 'EOF' > server.c
+#include <stdio.h>
+#include <stdlib.h>
 
-def db_connect():
-    connection_string = "jdbc:mysql://localhost:3306"
-    print("DEBUG: Connecting to DB")
+void initialize_buffer() {
+    // DEBUG: Allocating memory
+    char *buffer = (char *)malloc(1024);
+    if (buffer == NULL) {
+        printf("ERROR: Memory allocation failed.\n");
+        exit(1);
+    }
+    // TODO: Implement safety checks
+}
 EOF
 
 # 2. Create a Configuration file
-cat << 'EOF' > server.conf
-[network]
-port=8080
-host=127.0.0.1
-protocol=http
-
+cat << 'EOF' > config.ini
 [database]
-# The primary database URL
-url=http://localhost:5432
+uri=tcp://localhost:5432
 user=admin
+password=secure_pass_123
+
+[network]
+# Listen on all interfaces
+bind_address=127.0.0.1
+port=8080
 EOF
 
-# 3. Create a Log file
-cat << 'EOF' > system.log
-[2026-04-27 10:00:01] INFO  System booted successfully.
-[2026-04-27 10:05:12] WARN  High memory usage detected.
-[2026-04-27 10:10:45] ERROR Failed to connect to database.
-[2026-04-27 10:12:00] INFO  Retrying connection...
-[2026-04-27 10:12:05] ERROR Connection timeout.
+# 3. Create a System Log
+cat << 'EOF' > auth.log LOGIN_SUCCESS user=root ip=192.168.1.50 LOGIN_FAILED user=admin ip=10.0.0.5 LOGIN_FAILED user=unknown ip=10.0.0.5 SYSTEM_RESTART LOGIN_SUCCESS user=sajan ip=192.168.1.100
+EOF
+
+# 4. Create a Data Roster
+cat << 'EOF' > roster.csv
+ID,LastName,FirstName,Department
+101,Smith,John,Engineering
+102,Sitmukhambetov,Sajan,Computer Science
+103,Doe,Jane,Physics
 EOF
 ```
 
 ---
 
-## Part 3: The Core Toolkit
+## Part 3: The Internal Mechanics of `sed`
 
-The anatomy of a `sed` command is: `sed [OPTIONS] 'instruction' target_file`
+Most users treat `sed` (Stream Editor) as a simple find-and-replace tool. This is a severe underestimation. `sed` is a Turing-complete text processing engine. 
 
-The `instruction` tells our assembly line worker what to do.
-* **`s/old/new/` (Substitute):** Find 'old', replace with 'new'.
-* **`g` (Global flag):** Apply the substitution to *every* match on the line, not just the first one.
-* **`p` (Print):** Explicitly output the line.
-* **`d` (Delete):** Drop the line from the assembly line; do not output it.
-* **`a` (Append):** Add a new line of text *after* the current line.
+To use it effectively, you must understand its internal execution cycle. `sed` does not load a file into memory; it processes an infinite stream using two internal buffers: The **Pattern Space** (the workbench) and the **Hold Space** (the clipboard).
 
-**Crucial Options:**
-* **`-n` (Quiet mode):** By default, `sed` outputs everything that passes down the assembly line. `-n` turns off this automatic output, forcing `sed` to only output what you explicitly tell it to (usually paired with `p`).
-* **`-i` (In-place):** Saves the output permanently to the original file instead of printing it to your screen.
+**The Standard Execution Cycle:**
+1.  **Read:** `sed` reads exactly one line from `stdin` (or the file) and places it into the Pattern Space.
+2.  **Execute:** `sed` checks its list of provided instructions. If an instruction's conditions are met (e.g., the line matches a specific regex), the instruction modifies the Pattern Space.
+3.  **Output:** Once all instructions have run, `sed` automatically prints the final contents of the Pattern Space to `stdout` (unless the `-n` flag is used to suppress this).
+4.  **Flush:** The Pattern Space is wiped clean.
+5.  **Loop:** The cycle repeats for the next line in the stream.
 
----
-
-## Part 4: The Missions
-
-We will now apply our tools to the sandbox. 
-
-### Mission 1: The Broad Stroke
-**1. Understand:** You are preparing `app.py` for a production release. You must change all `DEBUG:` tags to `INFO:`.
-**2. Plan:** We require a basic substitution instruction. We want it applied globally across the file.
-**3. Execute:**
-```bash
-sed 's/DEBUG:/INFO:/g' app.py
-```
-**4. Look Back:** The text flowed through. Everywhere `sed` saw `DEBUG:`, it stamped `INFO:`. Because we did not use `-i`, your original `app.py` remains unchanged. You are simply viewing the modified stream on your screen.
-
-### Mission 2: Escaping the Slash
-**1. Understand:** In `server.conf`, update the database URL from `http://localhost:5432` to `http://prod-db.internal:5432`.
-**2. Plan:** We need substitution, but our target string contains forward slashes (`/`). If we use the standard `s/old/new/`, `sed` will interpret the slashes in `http://` as the end of the instruction and crash. We must change the delimiter.
-**3. Execute:**
-```bash
-sed 's#http://localhost:5432#[http://prod-db.internal:5432](http://prod-db.internal:5432)#g' server.conf
-```
-**4. Look Back:** `sed` is flexible. The character immediately following the `s` becomes the delimiter. By using `#`, we safely encapsulated the slashes within our search string.
-
-### Mission 3: Signal Extraction
-**1. Understand:** You are investigating an outage. You only want to see the `ERROR` lines in `system.log`.
-**2. Plan:** The default behavior of printing everything is useless here. We must silence the default output (`-n`), search for the pattern `ERROR`, and explicitly print (`p`) only those lines.
-**3. Execute:**
-```bash
-sed -n '/ERROR/p' system.log
-```
-**4. Look Back:** The stream is quieted. The instruction `/ERROR/` identifies the target, and `p` reveals it. This is how you extract needles from haystacks.
-
-### Mission 4: Precision Surgery (Contextual Addressing)
-**1. Understand:** Look at `server.conf`. There is a `host=127.0.0.1` under `[network]`. Imagine there were other `host=` lines in the file, but you *only* want to change the network host to `0.0.0.0`.
-**2. Plan:** We cannot just do `s/127.0.0.1/0.0.0.0/` because it might change the wrong line. We must give `sed` an *address*. We tell it: "Find the line containing `host=`, and *then* perform the substitution."
-**3. Execute:**
-```bash
-sed '/host=/ s/127.0.0.1/0.0.0.0/' server.conf
-```
-**4. Look Back:** The assembly worker inspects the line. Does it contain `host=`? If yes, it applies the substitution logic. If no, it passes the line along untouched. 
-
-### Mission 5: The Architect (Structural Changes)
-**1. Understand:** You need to add a new configuration parameter, `timeout=30`, immediately after the `protocol=http` line in `server.conf`.
-**2. Plan:** We are not substituting text; we are injecting it. We will search for the specific line, then use the Append (`a`) command.
-**3. Execute:**
-```bash
-sed '/protocol=http/a timeout=30' server.conf
-```
-**4. Look Back:** The `/protocol=http/` acts as the trigger. When the worker sees this line, it passes it through, and immediately manufactures a new line `timeout=30` right behind it on the assembly belt.
-
-### Mission 6: The Transmuter (Advanced Pattern Capture)
-**1. Understand:** In `app.py`, you want to standardize your function definitions. You want to change `def init_system():` to `def system_init():`, but you want a rule that works for *any* two words separated by an underscore.
-**2. Plan:** We must use Regular Expressions to capture the two words into temporary variables, then swap their order in the output.
-**3. Execute:**
-```bash
-sed -E 's/def ([a-z]+)_([a-z]+)\(\):/def \2_\1():/g' app.py
-```
-**4. Look Back:** * `-E` enables extended regular expressions (making syntax cleaner).
-* `([a-z]+)` captures a sequence of letters and stores it in memory. We do this twice.
-* In the replacement string, `\1` recalls the first captured word (`init`), and `\2` recalls the second (`system`). We output them in reverse order: `\2_\1`. 
+**The Core Operations:**
+* `s/old/new/` : **Substitute**. Replaces text in the Pattern Space.
+* `p` : **Print**. Explicitly prints the current Pattern Space.
+* `d` : **Delete**. Instantly wipes the Pattern Space and aborts the current cycle, moving to the next line.
+* `a\` : **Append**. Queues text to be written to `stdout` *after* the Pattern Space is printed.
+* `i\` : **Insert**. Queues text to be written to `stdout` *before* the Pattern Space is printed.
 
 ---
 
-## Part 5: Independent Practice
+## Part 4: Phase I - Isolation and Extraction
 
-You have seen how the concepts connect to execution. True competence requires independent experimentation. Use your sandbox to solve these challenges:
+**The Challenge:** We are auditing our system for security threats. We need to extract all IP addresses that triggered a `LOGIN_FAILED` event from `auth.log`.
 
-1.  **The Cleaner:** Write a command that removes all lines starting with `#` from `app.py` and `server.conf`. (Hint: Use the delete `d` command with a line-start `^` regex).
-2.  **The Time Traveler:** Write a single command that extracts only the timestamps (e.g., `2026-04-27 10:00:01`) from `system.log`, discarding the rest of the text on the line. 
-3.  **The Commitment:** Once you are confident in your solution for The Cleaner, apply it using the `-i` flag to permanently alter your sandbox files. Use `cat app.py` to verify the comments are gone forever.
+**1. Confront the Reality:** Our data is structured chronologically. We only want lines containing "LOGIN_FAILED", and from those lines, we only care about the IP address.
 
-The system will do exactly what you tell it to do. If it breaks, observe the output, adjust your mental model, refine your plan, and try again.
+**2. Map the Logic:**
+* We must suppress `sed`'s default behavior of printing everything (`-n`).
+* We must filter the stream to act only on lines matching `/LOGIN_FAILED/`.
+* We need to strip away everything from the start of the line up to "ip=".
+
+**3. Execute the Operation:**
+```bash
+sed -n '/LOGIN_FAILED/ s/.*ip=//p' auth.log
+```
+
+**4. Verify and Integrate:**
+* `-n`: Quiet the stream.
+* `/LOGIN_FAILED/`: The *address*. `sed` only runs the following command if this matches.
+* `s/.*ip=//`: Substitute everything from the start of the line (`.*`) up to `ip=` with nothing (empty string).
+* `p`: Print the resulting Pattern Space.
+You should see only `10.0.0.5` outputted twice. You have successfully isolated the signal from the noise.
+
+---
+
+## Part 5: Phase II - Structural Transmutation
+
+**The Challenge:** We are migrating our backend. In `config.ini`, we must change the database URI from `tcp://localhost:5432` to `tls://db.internal:5432`, but we must ensure we only touch the database block, nowhere else.
+
+**1. Confront the Reality:**
+Our target text contains forward slashes (`/`). The target exists under a specific `[database]` header. 
+
+**2. Map the Logic:**
+* We cannot use the standard `/` delimiter in our `s` command, or `sed` will fail to parse the slashes in the URIs. We will use a custom delimiter `#`.
+* We only want this substitution to occur between the `[database]` header and the `[network]` header. We will use a *range address*.
+
+**3. Execute the Operation:**
+```bash
+sed '/\[database\]/,/\[network\]/ s#tcp://localhost:5432#tls://db.internal:5432#' config.ini
+```
+
+**4. Verify and Integrate:**
+* `/\[database\]/,/\[network\]/`: This establishes an execution window. `sed` turns the command ON when it sees `[database]` and turns it OFF when it sees `[network]`.
+* `s#old#new#`: Uses the hash as a clean, easily readable delimiter for URIs.
+
+---
+
+## Part 6: Phase III - Advanced Regular Expressions (Capture Groups)
+
+**The Challenge:** Our legacy `roster.csv` stores names as "LastName,FirstName". A new system requires the format to be "FirstName LastName", dropping the comma entirely.
+
+**1. Confront the Reality:**
+We need to transpose data. We don't know the specific names in advance, so we cannot do simple string matching. We must match the *structure* of a word, a comma, and another word.
+
+**2. Map the Logic:**
+* We need Extended Regular Expressions (`-E`) to make our syntax readable.
+* We will use Capture Groups `()` to isolate the LastName and FirstName into temporary memory blocks in the Pattern Space.
+* We will reassemble them in reverse order using backreferences (`\1`, `\2`).
+
+**3. Execute the Operation:**
+```bash
+sed -E 's/([A-Za-z]+),([A-Za-z]+)/\2 \1/' roster.csv
+```
+
+**4. Verify and Integrate:**
+* `-E`: Turns on extended regex.
+* `([A-Za-z]+)`: Matches one or more alphabetical characters and captures it. The first one (LastName) becomes `\1`. The second one (FirstName) becomes `\2`.
+* `\2 \1`: The replacement string. It drops the comma and swaps the order. "Sitmukhambetov,Sajan" becomes "Sajan Sitmukhambetov".
+
+---
+
+## Part 7: Phase IV - Mastering the Internal Buffers
+
+To this point, we have only modified data within a single line. But what if we need to move data *across* lines? This requires utilizing `sed`'s secondary memory: **The Hold Space**. 
+
+Think of the Hold Space as a clipboard.
+* `h`: Copy Pattern Space to Hold Space (overwrite).
+* `H`: Append Pattern Space to Hold Space.
+* `g`: Copy Hold Space to Pattern Space (overwrite).
+* `G`: Append Hold Space to Pattern Space.
+* `x`: Exchange (swap) the contents of Pattern Space and Hold Space.
+
+**The Challenge:** In `server.c`, the `#include <stdio.h>` and `#include <stdlib.h>` are in the wrong order. We need to physically swap these two lines.
+
+**1. Confront the Reality:**
+We need to read the `stdio.h` line, hide it somewhere, print the `stdlib.h` line, and then retrieve and print the `stdio.h` line. 
+
+**2. Map the Logic:**
+* When we hit `stdio.h`, copy it to the Hold Space (`h`), then delete it from the Pattern Space (`d`) so it doesn't print yet.
+* When we hit `stdlib.h`, append the Hold Space (which contains `stdio.h`) to the Pattern Space (`G`).
+
+**3. Execute the Operation:**
+```bash
+sed '/stdio\.h/ { h; d; }; /stdlib\.h/ G' server.c
+```
+
+**4. Verify and Integrate:**
+Let's trace the cycle:
+* Line 1 (`#include <stdio.h>`): Matches our first rule. `h` copies it to the clipboard. `d` deletes the Pattern Space and immediately starts the next cycle. (Nothing is printed).
+* Line 2 (`#include <stdlib.h>`): Matches our second rule. It is in the Pattern Space. `G` appends the clipboard (`\n#include <stdio.h>`) to the Pattern Space. The cycle ends, and the Pattern Space is printed. The lines are now swapped.
+
+---
+
+## Part 8: The Crucible (Independent Operation)
+
+A true craftsman does not rely solely on instructions; they build the capacity to derive their own solutions. You now possess the logical components necessary to architect complex transformations. 
+
+Without looking for external solutions, attempt to construct `sed` pipelines for the following scenarios. Map the logic first. Rely on the fundamental execution cycle.
+
+**Challenge 1: The Code Sweeper**
+Create a single command that removes all comments (lines starting with `//`) AND removes all empty lines from `server.c`. 
+*Hint: You can chain multiple commands by separating them with a semicolon `;` or passing multiple `-e` flags.*
+
+**Challenge 2: Dynamic Injection**
+Locate the `bind_address=127.0.0.1` line in `config.ini`. Using the `a\` (append) command, inject a new line dynamically that says `max_connections=500` immediately following the bind address.
+
+**Challenge 3: The Sentinel**
+Parse `auth.log`. For any line containing `LOGIN_SUCCESS`, replace the word `SUCCESS` with `GRANTED` and append the phrase `[AUDITED]` to the very end of the line. 
+*Hint: The `$` character in regex represents the end of the line.*
+
+**Challenge 4: Permanent Architecture**
+Once you have formulated a perfect command for Challenge 1, execute it using the `-i` flag to permanently rewrite `server.c` in place. Use `cat server.c` to verify that the physical file has been fundamentally altered.
+
+The environment is yours. Build, break, analyze, and rebuild. This is how mastery is forged.
