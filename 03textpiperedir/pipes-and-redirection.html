@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pipes and redirection</title>
+<style>
+:root{
+  --paper:#eceae4;
+  --sheet:#fbfaf7;
+  --ink:#22201d;
+  --soft:#6c675f;
+  --rule:#d7d3ca;
+  --code-bg:#f3f1ea;
+  --in:#6b4fa8;
+  --out:#14628f;
+  --err:#bf4327;
+  --term:#857f76;
+  --mark:#e9e4cf;
+  --serif:Charter,"Bitstream Charter","Sitka Text",Cambria,Georgia,serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#141517;
+    --sheet:#1c1e21;
+    --ink:#e6e3dd;
+    --soft:#97928a;
+    --rule:#33363a;
+    --code-bg:#121416;
+    --in:#b49bf0;
+    --out:#6bb6e8;
+    --err:#f08a70;
+    --term:#7d8288;
+    --mark:#3a3520;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--serif);
+  font-size:19px;
+  line-height:1.62;
+}
+.wrap{
+  max-width:72rem;
+  margin:0 auto;
+  padding:0 1.25rem 6rem;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:2.5rem;
+}
+@media (min-width:1080px){
+  .wrap{grid-template-columns:14rem minmax(0,1fr);padding-left:2rem}
+}
+main{
+  background:var(--sheet);
+  padding:3rem 2rem 4rem;
+  border:1px solid var(--rule);
+  min-width:0;
+}
+@media (min-width:700px){main{padding:4rem 3.5rem 5rem}}
+main > *{max-width:36rem;margin-left:auto;margin-right:auto}
+main > figure,main > .demo,main > .wide{max-width:46rem}
+
+h1{
+  font-size:2.35rem;
+  line-height:1.15;
+  font-weight:700;
+  letter-spacing:-.015em;
+  margin:0 0 .6rem;
+}
+.standfirst{color:var(--soft);font-size:1.05rem;margin:0 0 3rem}
+h2{
+  font-size:1.5rem;
+  line-height:1.25;
+  font-weight:700;
+  margin:3.6rem 0 1rem;
+  padding-top:1.4rem;
+  border-top:1px solid var(--rule);
+}
+h3{font-size:1.12rem;font-weight:700;margin:2.2rem 0 .6rem}
+p{margin:0 0 1.1rem}
+ul,ol{margin:0 0 1.1rem;padding-left:1.3rem}
+li{margin-bottom:.45rem}
+a{color:var(--out)}
+
+code{
+  font-family:var(--mono);
+  font-size:.86em;
+  background:var(--code-bg);
+  padding:.1em .32em;
+  border-radius:2px;
+  word-break:break-word;
+}
+pre{
+  font-family:var(--mono);
+  font-size:.83rem;
+  line-height:1.55;
+  background:var(--code-bg);
+  border:1px solid var(--rule);
+  border-left:3px solid var(--soft);
+  padding:.9rem 1rem;
+  overflow-x:auto;
+  margin:0 0 1.2rem;
+}
+pre code{background:none;padding:0;font-size:inherit}
+.p{color:var(--soft)}
+.c{color:var(--soft);font-style:italic}
+.o{color:var(--out)}
+.e{color:var(--err)}
+.i{color:var(--in)}
+
+figure{margin:2.4rem auto;}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:.88rem;color:var(--soft);margin-top:.7rem;text-align:left}
+
+.svg-box{fill:none;stroke:var(--ink);stroke-width:1.5}
+.svg-fill{fill:var(--sheet);stroke:var(--ink);stroke-width:1.5}
+.svg-label{font-family:var(--mono);font-size:12px;fill:var(--ink)}
+.svg-small{font-family:var(--mono);font-size:10.5px;fill:var(--soft)}
+.svg-title{font-family:var(--mono);font-size:12.5px;fill:var(--ink);font-weight:600}
+.l-in{stroke:var(--in);stroke-width:2;fill:none}
+.l-out{stroke:var(--out);stroke-width:2;fill:none}
+.l-err{stroke:var(--err);stroke-width:2;fill:none}
+.t-in{fill:var(--in)}
+.t-out{fill:var(--out)}
+.t-err{fill:var(--err)}
+
+details.check{
+  border:1px solid var(--rule);
+  border-left:3px solid var(--out);
+  background:var(--code-bg);
+  padding:.85rem 1.1rem;
+  margin:2rem auto;
+}
+details.check summary{
+  cursor:pointer;
+  font-weight:700;
+  font-size:.95rem;
+  list-style:none;
+}
+details.check summary::-webkit-details-marker{display:none}
+details.check summary::before{content:"\25B8  ";color:var(--out)}
+details.check[open] summary::before{content:"\25BE  "}
+details.check .q{font-weight:400;display:block;margin-top:.45rem;color:var(--ink)}
+details.check .body{margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--rule);font-size:.95rem}
+details.check .body > :last-child{margin-bottom:0}
+details.check pre{font-size:.79rem}
+
+.note{
+  border-left:3px solid var(--rule);
+  padding:.2rem 0 .2rem 1.1rem;
+  margin:1.8rem auto;
+  font-size:.95rem;
+  color:var(--soft);
+}
+.note > :last-child{margin-bottom:0}
+.note strong{color:var(--ink)}
+
+.warn{border-left-color:var(--err)}
+
+.demo{
+  border:1px solid var(--rule);
+  background:var(--code-bg);
+  padding:1.1rem 1.2rem 1.2rem;
+  margin:2.6rem auto;
+}
+.demo h4{margin:0 0 .2rem;font-size:1rem}
+.demo .sub{margin:0 0 1rem;font-size:.88rem;color:var(--soft)}
+.demo svg{width:100%;height:auto;display:block}
+.controls{display:flex;gap:.5rem;align-items:center;margin-top:1rem;flex-wrap:wrap}
+button{
+  font-family:var(--mono);
+  font-size:.8rem;
+  padding:.42rem .8rem;
+  background:var(--sheet);
+  color:var(--ink);
+  border:1px solid var(--ink);
+  cursor:pointer;
+}
+button:hover{background:var(--mark)}
+button:disabled{opacity:.35;cursor:default}
+button:hover:disabled{background:var(--sheet)}
+:focus-visible{outline:2px solid var(--out);outline-offset:2px}
+.step-caption{
+  font-size:.9rem;
+  margin-top:.9rem;
+  min-height:3.4rem;
+  border-top:1px solid var(--rule);
+  padding-top:.8rem;
+}
+.step-caption code{background:transparent;padding:0}
+.counter{font-family:var(--mono);font-size:.78rem;color:var(--soft)}
+
+.fdtable{font-family:var(--mono);font-size:.84rem}
+.fdowner{color:var(--soft);font-size:.75rem;margin-bottom:.55rem}
+.fdrow{
+  display:grid;
+  grid-template-columns:1.6rem 4.6rem 1fr;
+  gap:.4rem;
+  padding:.45rem .6rem;
+  border:1px solid var(--rule);
+  background:var(--sheet);
+  margin-bottom:.3rem;
+  align-items:center;
+}
+.fdrow.hot{background:var(--mark);border-color:var(--ink)}
+.fdnum{font-weight:700}
+.fdtarget{color:var(--soft);text-align:right;overflow-wrap:anywhere}
+.r-in .fdnum,.r-in .fdname{color:var(--in)}
+.r-out .fdnum,.r-out .fdname{color:var(--out)}
+.r-err .fdnum,.r-err .fdname{color:var(--err)}
+.r-extra .fdnum{color:var(--soft)}
+
+table{border-collapse:collapse;width:100%;font-size:.9rem;margin:0 0 1.4rem}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:.82rem;color:var(--soft);font-weight:700}
+td code{font-size:.82em}
+
+nav.toc{font-size:.84rem;line-height:1.45}
+@media (min-width:1080px){
+  nav.toc{position:sticky;top:2rem;align-self:start;max-height:calc(100vh - 4rem);overflow-y:auto;padding-top:4rem}
+}
+nav.toc ol{list-style:none;padding:0;margin:0}
+nav.toc li{margin-bottom:.5rem}
+nav.toc a{color:var(--soft);text-decoration:none;display:block;border-left:2px solid var(--rule);padding-left:.7rem}
+nav.toc a:hover{color:var(--ink);border-left-color:var(--ink)}
+nav.toc .tocnum{font-family:var(--mono);font-size:.75rem;color:var(--rule)}
+.toc-head{font-family:var(--mono);font-size:.75rem;color:var(--soft);margin-bottom:.9rem}
+
+.channel-key{display:flex;gap:1.2rem;flex-wrap:wrap;font-family:var(--mono);font-size:.78rem;margin:0 auto 2.4rem;color:var(--soft)}
+.channel-key span::before{content:"\2014 ";font-weight:700}
+.k-in::before{color:var(--in)}
+.k-out::before{color:var(--out)}
+.k-err::before{color:var(--err)}
+
+footer{max-width:36rem;margin:4rem auto 0;padding-top:1.4rem;border-top:1px solid var(--rule);font-size:.85rem;color:var(--soft)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.fdrow{transition:opacity .25s ease}
+@media (prefers-reduced-motion:reduce){.fdrow{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+<div class="toc-head">contents</div>
+<ol>
+<li><a href="#too-big"><span class="tocnum">1</span> A file too big to look at</a></li>
+<li><a href="#wrong-first"><span class="tocnum">2</span> Doing it wrong first</a></li>
+<li><a href="#tools"><span class="tocnum">3</span> The tools, one at a time</a></li>
+<li><a href="#redirection"><span class="tocnum">4</span> Redirection</a></li>
+<li><a href="#three-numbers"><span class="tocnum">5</span> Three numbers every program is born with</a></li>
+<li><a href="#pipes"><span class="tocnum">6</span> Pipes, and why they are not redirection</a></li>
+<li><a href="#shell-does"><span class="tocnum">7</span> What the shell actually does</a></li>
+<li><a href="#inside-pipe"><span class="tocnum">8</span> Inside the pipe</a></li>
+<li><a href="#python"><span class="tocnum">9</span> Watching it happen in Python</a></li>
+<li><a href="#combining"><span class="tocnum">10</span> Joining streams, and throwing them away</a></li>
+<li><a href="#which"><span class="tocnum">11</span> Which one do I reach for?</a></li>
+<li><a href="#setup"><span class="tocnum">12</span> Setting up in Codespaces</a></li>
+</ol>
+</nav>
+<main>
+<h1>Pipes and redirection</h1>
+<p class="standfirst">How seven small dumb programs turn into one useful one, and what the operating system is doing while they do it.</p>
+
+<div class="channel-key" aria-hidden="true">
+<span class="k-in">stdin, fd 0</span>
+<span class="k-out">stdout, fd 1</span>
+<span class="k-err">stderr, fd 2</span>
+</div>
+
+<h2 id="too-big">A file too big to look at</h2>
+
+<p>Here is a file. Ten lines, each one a timestamp and a word like INFO or ERROR.</p>
+
+<pre><code>2023-09-10 10:15:32 INFO: Application started
+2023-09-10 10:16:45 WARNING: Low memory warning
+2023-09-10 10:17:30 ERROR: Failed to connect to database
+2023-09-10 10:18:22 INFO: User logged in
+2023-09-10 10:19:15 DEBUG: Processing item 1
+2023-09-10 10:20:05 ERROR: Invalid input received
+2023-09-10 10:21:18 WARNING: CPU usage high
+2023-09-10 10:22:30 INFO: Task completed successfully
+2023-09-10 10:23:45 DEBUG: Closing connection
+2023-09-10 10:24:50 INFO: Application shutdown</code></pre>
+
+<p>Two of them are errors. You can count those with your eyes in about four seconds and there is nothing more to say about it.</p>
+
+<p>Now make the file bigger. It has been collecting since March, it has 800,000 lines in it, and somewhere in there the database connection failed a few times. Your eyes are no good now. Opening it in an editor is no good either. The editor will load it, eventually, and then you will scroll for the rest of the afternoon.</p>
+
+<p>So we want to ask the machine instead. Something like: how many lines in this file have the word ERROR in them? The trouble is the machine has no idea what a line is, or a word, or an error. What it has is a pile of small dumb tools, each one doing exactly one thing, and a way to hook them together. Hooking them together is the whole trick, and it is what this page is about.</p>
+
+<p>Let us do it wrong first. Doing it wrong is how you find out what the pieces are for.</p>
+
+<h2 id="wrong-first">Doing it wrong first</h2>
+
+<p>Suppose we have two tools. One is <code>grep</code>, which reads lines and prints back only the ones containing some word. The other is <code>wc</code>, which reads lines and prints how many there were. Between them they can answer the question. Neither can answer it alone.</p>
+
+<p>The obvious move is to run the first one, catch what falls out, and hand it to the second one:</p>
+
+<pre><code><span class="p">$</span> grep <span class="o">"ERROR"</span> logfile.txt > errors-only.txt
+<span class="p">$</span> wc -l errors-only.txt
+2 errors-only.txt
+<span class="p">$</span> rm errors-only.txt</code></pre>
+
+<p>That works. It gives the right answer. And it is a perfectly reasonable thing to do, which is why almost everybody does it the first time. But look at what it costs.</p>
+
+<p>You invented a file. You had to name it, which means you had to think of a name, which means that ten minutes from now there will be a file called <code>errors-only.txt</code> sitting in your directory and you will not remember whether it matters. You had to remember to delete it. If the log had been 40 gigabytes and one line in twenty was an error, you would have needed two gigabytes of free disk just to hold an intermediate answer that nobody wanted. And <code>wc</code> could not start until <code>grep</code> was completely finished, because the file was not complete until then.</p>
+
+<p>Hold on to that last one. It comes back later and it turns out to be the deep difference between the two mechanisms on this page.</p>
+
+<p>What we actually wanted was for the output of <code>grep</code> to become the input of <code>wc</code> without ever touching a disk. That is a pipe, and it is written with one character:</p>
+
+<pre><code><span class="p">$</span> grep <span class="o">"ERROR"</span> logfile.txt | wc -l
+2</code></pre>
+
+<p>No temporary file. No name to invent. No cleanup. Both programs running at the same moment, one feeding the other.</p>
+
+<p>That is the punchline, and you have now seen it, so the rest of this page is the interesting part: why it works, what the operating system is doing while it happens, and how it is different from the <code>&gt;</code> in the wrong version, which looks similar and is not.</p>
+
+<div class="note">
+<p><strong>A confession about that command.</strong> Even the good version above is doing more work than it needs to. <code>grep</code> can count by itself: <code>grep -c "ERROR" logfile.txt</code> gives the same 2 and starts one program instead of two. We are using the long form because it shows the plumbing. Through this whole page, when a shorter command exists, it gets pointed out. Knowing the short way and the long way is better than knowing either one.</p>
+</div>
+
+<h2 id="tools">The tools, one at a time</h2>
+
+<p>Seven commands. Each one is boring on its own, and that is deliberate. They are boring in a way that makes them combine.</p>
+
+<h3>cat — pour a file out</h3>
+
+<pre><code><span class="p">$</span> cat hello.txt
+Hello, World!
+Welcome to Linux text manipulation.</code></pre>
+
+<p><code>cat</code> is short for concatenate, because its real job is gluing several files together end to end: <code>cat a.txt b.txt c.txt</code> gives you one continuous stream of all three. Printing one file is the degenerate case of that, and it is what everyone actually uses it for.</p>
+
+<p><code>cat -n</code> numbers the lines as they go by. Useful when someone tells you the bug is on line 402.</p>
+
+<div class="note warn">
+<p><strong>Where it falls down.</strong> <code>cat</code> on a 40-gigabyte log will faithfully throw all 40 gigabytes at your terminal and you will sit there for a long time watching text you cannot read. For big files use <code>head</code>, <code>tail</code>, or <code>less</code>. <code>less</code> shows you one screen at a time and lets you page around; press <code>q</code> to quit. It is not on this page because it is interactive and does not combine with the others, but in real life you will use it constantly.</p>
+</div>
+
+<h3>echo — say something out loud</h3>
+
+<pre><code><span class="p">$</span> echo <span class="o">"Hello, World!"</span>
+Hello, World!
+<span class="p">$</span> NAME=<span class="o">"Alice"</span>
+<span class="p">$</span> echo <span class="o">"My name is $NAME"</span>
+My name is Alice</code></pre>
+
+<p><code>echo</code> prints its arguments. That is all it does. It seems almost too simple to be worth a name, and then you find that half of shell programming is <code>echo</code> feeding something else, because it is the cheapest way to manufacture a bit of text out of nothing.</p>
+
+<p>Notice the second one. The shell replaced <code>$NAME</code> with <code>Alice</code> before <code>echo</code> ever ran. <code>echo</code> never saw a variable, it saw the finished words. The shell does a surprising amount of rewriting to your command line before the command starts, and redirection, which we get to shortly, is another piece of that same rewriting.</p>
+
+<h3>wc — count what went past</h3>
+
+<pre><code><span class="p">$</span> wc logfile.txt
+ 10  70 483 logfile.txt
+<span class="p">$</span> wc -l logfile.txt
+10 logfile.txt</code></pre>
+
+<p>Three numbers with no header: lines, words, bytes, in that order. <code>-l</code> for lines, <code>-w</code> for words, <code>-c</code> for bytes, <code>-m</code> for characters.</p>
+
+<p>The <code>-c</code> and <code>-m</code> split is worth a second. In a plain English file they give the same number, because each character is one byte. In a file with accented letters or Japanese or an emoji they do not, because those characters take several bytes each. <code>-c</code> counts storage, <code>-m</code> counts letters.</p>
+
+<div class="note warn">
+<p><strong>Where it falls down.</strong> <code>wc -l</code> does not really count lines. It counts newline characters. If a file ends without a final newline, the last line is real, visible, and uncounted. This is a genuine and very old source of off-by-one arguments.</p>
+</div>
+
+<h3>sort — put lines in order</h3>
+
+<pre><code><span class="p">$</span> sort names.txt
+Alice
+Bob
+Charlie
+...</code></pre>
+
+<p>Default is alphabetical. <code>-r</code> reverses it, <code>-u</code> drops duplicates, and <code>-n</code> switches to numeric.</p>
+
+<p>You need <code>-n</code> more often than you expect, because without it <code>sort</code> compares text, and as text, <code>100</code> comes before <code>9</code>. That is not a bug. One and nine, and one is smaller. It is only wrong if you meant numbers, and <code>sort</code> has no way to know that you did unless you say <code>-n</code>.</p>
+
+<div class="note warn">
+<p><strong>Where it falls down.</strong> What counts as alphabetical depends on your language settings. In one locale, punctuation and capital letters are quietly ignored while sorting; in another they are not, so <code>Zebra</code> lands before <code>apple</code>. If you need an answer that is the same on every machine, set the locale to the plain byte ordering for that one command: <code>LC_ALL=C sort names.txt</code>. Scripts that worked on your laptop and broke on the server have died on this.</p>
+</div>
+
+<h3>grep — keep only the lines that match</h3>
+
+<pre><code><span class="p">$</span> grep <span class="o">"ERROR"</span> logfile.txt
+2023-09-10 10:17:30 ERROR: Failed to connect to database
+2023-09-10 10:20:05 ERROR: Invalid input received</code></pre>
+
+<p>A sieve. Lines with the pattern fall through, lines without it do not. <code>-i</code> ignores case, <code>-n</code> prefixes each hit with its line number, <code>-v</code> inverts the sieve and keeps everything that did <em>not</em> match, and <code>-c</code> prints the count instead of the lines.</p>
+
+<p><code>-v</code> is the one people forget they have. "Show me the log with all the DEBUG noise taken out" is <code>grep -v "DEBUG" logfile.txt</code>, and there is no other tool here that does it.</p>
+
+<div class="note warn">
+<p><strong>A precision point that matters.</strong> <code>grep -c</code> counts <em>lines that contain at least one match</em>, not matches. If a line says <code>ERROR: retrying after ERROR</code>, that is one line and two errors, and <code>-c</code> will say one. If you genuinely want occurrences, <code>grep -o</code> prints each match on its own line, so <code>grep -o "ERROR" logfile.txt | wc -l</code> counts them. The original question we asked at the top of this page, "how many lines have ERROR in them", is the <code>-c</code> question. Be careful which one you are being asked.</p>
+</div>
+
+<h3>head and tail — take an end</h3>
+
+<pre><code><span class="p">$</span> head -n 3 logfile.txt
+<span class="c">(first three lines)</span>
+<span class="p">$</span> tail -n 2 logfile.txt
+<span class="c">(last two lines)</span></code></pre>
+
+<p>Both default to ten lines. <code>head</code> is how you look at a huge file without printing it, and it is the polite thing to run before <code>cat</code> when you do not know how big something is.</p>
+
+<p><code>tail</code> has one option that is not like the others: <code>tail -f</code> keeps the file open and prints new lines as they are written. That is how you watch a log live while you poke at the thing producing it. It never exits on its own; <code>Ctrl-C</code> stops it.</p>
+
+<div class="note">
+<p><strong>Alternatives worth knowing.</strong> Two more tools show up constantly in real pipelines and are not on this page: <code>cut</code>, which slices columns out of each line, and <code>uniq</code>, which collapses adjacent identical lines and with <code>-c</code> counts them. <code>sort | uniq -c | sort -rn</code> is the standard "count how many of each" idiom and you will meet it everywhere.</p>
+</div>
+
+<details class="check">
+<summary>Try it first
+<span class="q">You want the three most common log levels in <code>logfile.txt</code>, with counts. You have <code>cut</code>, <code>sort</code>, <code>uniq -c</code>, and <code>head</code>. What order do they go in?</span></summary>
+<div class="body">
+<pre><code><span class="p">$</span> cut -d<span class="o">" "</span> -f3 logfile.txt | sort | uniq -c | sort -rn | head -n 3
+      4 INFO:
+      2 WARNING:
+      2 ERROR:</code></pre>
+<p>The <code>sort</code> before <code>uniq</code> is the part that catches people. <code>uniq</code> only collapses lines that are <em>next to each other</em>, so unsorted input gives nonsense. It is a deliberately dumb tool, and being dumb is why it can handle a file larger than memory.</p>
+</div>
+</details>
+
+<h2 id="redirection">Redirection</h2>
+
+<p>Every one of those commands printed to your screen. None of them mentioned the screen. <code>grep</code> contains no code about terminals, no code about windows, no code about scrollback. It writes its answer into something, and something happens to be the screen, and <code>grep</code> does not know or care which.</p>
+
+<p>Redirection is how you change what that something is.</p>
+
+<pre><code><span class="p">$</span> sort names.txt > sorted.txt</code></pre>
+
+<p>Nothing appears on screen. The sorted names went into <code>sorted.txt</code> instead. The important thing is what <em>did not</em> happen: <code>sort</code> was not told to write to a file. <code>sort</code> ran exactly the same code it always runs, writing to the same place it always writes. The shell moved the far end of that place before <code>sort</code> started.</p>
+
+<p>There are four of these to learn and they are all the same idea.</p>
+
+<table>
+<thead><tr><th>Written</th><th>Does</th></tr></thead>
+<tbody>
+<tr><td><code>&gt; file</code></td><td>Send normal output to <code>file</code>. Wipes it first if it exists, creates it if it does not.</td></tr>
+<tr><td><code>&gt;&gt; file</code></td><td>Send normal output to the end of <code>file</code>, keeping what was there. Creates it if needed.</td></tr>
+<tr><td><code>&lt; file</code></td><td>Take input from <code>file</code> instead of the keyboard.</td></tr>
+<tr><td><code>2&gt; file</code></td><td>Send error messages to <code>file</code>.</td></tr>
+</tbody>
+</table>
+
+<p>The <code>2</code> in that last row is not decoration and it is not an option to the command. It is a number that names one of the three streams, and the next section is about where that number comes from.</p>
+
+<h3>Two things that will bite you</h3>
+
+<p>First, <code>&gt;</code> empties the file <em>before the command runs</em>. Not after, not during. Which makes this an excellent way to destroy your own data:</p>
+
+<pre><code><span class="p">$</span> sort names.txt > names.txt
+<span class="c">names.txt is now empty. Every name is gone.</span></code></pre>
+
+<p>The shell opened <code>names.txt</code> for writing, which truncated it to nothing, and only then started <code>sort</code>, which opened an empty file and had nothing to sort. There is no undo. Write to a different name, then rename.</p>
+
+<p>Second, errors do not go where output goes. Run <code>sort</code> on a file that is not there:</p>
+
+<pre><code><span class="p">$</span> sort nosuchfile.txt > out.txt
+<span class="e">sort: cannot read: nosuchfile.txt: No such file or directory</span></code></pre>
+
+<p>You redirected the output and the complaint still landed on your screen. That is on purpose, and it is one of the better decisions in the design of this system. If errors travelled with output, then every error message from a three-hour batch job would end up buried in the middle of the output file, and the one thing you want to see immediately is the thing you would be least likely to find. Errors get their own channel so that redirecting the answer never hides the problem.</p>
+
+<details class="check">
+<summary>Try it first
+<span class="q">You run <code>grep "ERROR" logfile.txt missing.txt > found.txt</code> and <code>missing.txt</code> does not exist. What is on screen, and what is in <code>found.txt</code>?</span></summary>
+<div class="body">
+<p>On screen: one complaint about <code>missing.txt</code>, because that is an error and errors were not redirected. In <code>found.txt</code>: the matching lines from <code>logfile.txt</code>, which <code>grep</code> found perfectly well and wrote to the redirected output.</p>
+<p>The command half worked and told you so. This is the normal case, not an unusual one, and it is the reason the two streams are separate.</p>
+</div>
+</details>
+
+<h2 id="three-numbers">Three numbers every program is born with</h2>
+
+<p>Now the part that makes everything else fall into place.</p>
+
+<p>When the operating system starts a program it hands it a small numbered table. Every open thing the program has, a file, a terminal, a network connection, a pipe, sits in a slot in that table, and the program refers to it by slot number. Those numbers are called file descriptors, and a program does not get to see anything more than the number. It asks the kernel to write to slot 1. What slot 1 is attached to is none of its business.</p>
+
+<p>Three slots are already filled in before your program's first instruction runs:</p>
+
+<ul>
+<li><strong>0, standard input.</strong> Where the program reads from. Usually the keyboard.</li>
+<li><strong>1, standard output.</strong> Where answers go. Usually the screen.</li>
+<li><strong>2, standard error.</strong> Where complaints go. Also usually the screen, which is why it looks like one place until you redirect and discover it is two.</li>
+</ul>
+
+<figure>
+<svg viewBox="0 0 620 240" role="img" aria-label="A process box containing three numbered file descriptor slots, all three connected to the terminal">
+<defs>
+<marker id="ar-out" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--out)"/></marker>
+<marker id="ar-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--in)"/></marker>
+<marker id="ar-err" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--err)"/></marker>
+</defs>
+<rect class="svg-box" x="20" y="30" width="250" height="185" rx="2"/>
+<text class="svg-title" x="34" y="52">sort</text>
+<text class="svg-small" x="34" y="68">its file descriptor table</text>
+<rect class="svg-fill" x="34" y="80" width="222" height="36"/>
+<text class="svg-label t-in" x="46" y="103">0   stdin</text>
+<rect class="svg-fill" x="34" y="122" width="222" height="36"/>
+<text class="svg-label t-out" x="46" y="145">1   stdout</text>
+<rect class="svg-fill" x="34" y="164" width="222" height="36"/>
+<text class="svg-label t-err" x="46" y="187">2   stderr</text>
+<path class="l-in" d="M470,98 L256,98" marker-end="url(#ar-in)"/>
+<path class="l-out" d="M256,140 L470,140" marker-end="url(#ar-out)"/>
+<path class="l-err" d="M256,182 L470,182" marker-end="url(#ar-err)"/>
+<rect class="svg-box" x="470" y="70" width="130" height="140" rx="2"/>
+<text class="svg-title" x="486" y="95">terminal</text>
+<text class="svg-small" x="486" y="115">keyboard</text>
+<text class="svg-small" x="486" y="132">screen</text>
+</svg>
+<figcaption>The default wiring. All three slots point at the terminal, which is why input, answers and complaints all appear to happen in the same place.</figcaption>
+</figure>
+
+<p>Redirection, all of it, is one sentence: <strong>the shell changes what a slot points at before the program starts.</strong></p>
+
+<p>Read the operators again with that in mind and they stop being four separate facts:</p>
+
+<ul>
+<li><code>&gt; file</code> makes slot 1 point at a file.</li>
+<li><code>&gt;&gt; file</code> makes slot 1 point at a file, positioned at the end.</li>
+<li><code>&lt; file</code> makes slot 0 point at a file.</li>
+<li><code>2&gt; file</code> makes slot 2 point at a file.</li>
+</ul>
+
+<p>One mechanism, four spellings. And now the mysterious <code>2</code> is not mysterious: it was the slot number all along. You can write <code>1&gt; file</code> if you like, and it means exactly what <code>&gt; file</code> means; the <code>1</code> is just the default you are allowed to leave out.</p>
+
+<figure>
+<svg viewBox="0 0 620 260" role="img" aria-label="The same process, with slot 1 now pointing at a file while slots 0 and 2 still point at the terminal">
+<rect class="svg-box" x="20" y="30" width="250" height="185" rx="2"/>
+<text class="svg-title" x="34" y="52">sort</text>
+<text class="svg-small" x="34" y="68">after <tspan class="svg-small">&gt; sorted.txt</tspan></text>
+<rect class="svg-fill" x="34" y="80" width="222" height="36"/>
+<text class="svg-label t-in" x="46" y="103">0   stdin</text>
+<rect class="svg-fill" x="34" y="122" width="222" height="36"/>
+<text class="svg-label t-out" x="46" y="145">1   stdout</text>
+<rect class="svg-fill" x="34" y="164" width="222" height="36"/>
+<text class="svg-label t-err" x="46" y="187">2   stderr</text>
+<path class="l-in" d="M470,98 L256,98" marker-end="url(#ar-in)"/>
+<path class="l-err" d="M256,182 L470,182" marker-end="url(#ar-err)"/>
+<path class="l-out" d="M256,140 L330,140 L330,232 L440,232" marker-end="url(#ar-out)"/>
+<rect class="svg-box" x="470" y="70" width="130" height="130" rx="2"/>
+<text class="svg-title" x="486" y="95">terminal</text>
+<text class="svg-small" x="486" y="115">keyboard</text>
+<text class="svg-small" x="486" y="132">screen</text>
+<rect class="svg-fill" x="440" y="212" width="160" height="38"/>
+<text class="svg-label" x="454" y="236">sorted.txt</text>
+</svg>
+<figcaption>One wire moved. <code>sort</code> is unchanged and unaware; it still writes to slot 1 exactly as before.</figcaption>
+</figure>
+
+<p>This is a bigger idea than shell syntax, and it is worth saying plainly. Because a program only ever deals in slot numbers, the same program works on a file, a terminal, a pipe, a network socket, a serial port. It was never written for any of them. That is what people mean when they say everything in Unix is a file: not that everything is stored on a disk, but that everything is <em>reached the same way</em>, through a numbered slot, with read and write.</p>
+
+<details class="check">
+<summary>Try it first
+<span class="q">What does <code>wc -l &lt; logfile.txt</code> print, and how is it different from <code>wc -l logfile.txt</code>?</span></summary>
+<div class="body">
+<pre><code><span class="p">$</span> wc -l logfile.txt
+10 logfile.txt
+<span class="p">$</span> wc -l < logfile.txt
+10</code></pre>
+<p>Same count, no filename. In the first, <code>wc</code> opened the file itself, so it knows the name and prints it. In the second, the shell attached the file to slot 0 and <code>wc</code> read from standard input, where there is nothing to know a name from. <code>wc</code> cannot print what it was never told.</p>
+<p>That difference is small here and large later. A command that opens files itself can name them in its error messages. A command reading standard input can only say "something on the input was wrong".</p>
+</div>
+</details>
+<h2 id="pipes">Pipes, and why they are not redirection</h2>
+
+<p>Go back to the working command:</p>
+
+<pre><code><span class="p">$</span> grep <span class="o">"ERROR"</span> logfile.txt | wc -l
+2</code></pre>
+
+<p>Here is what the shell built. It asked the kernel for a pipe, which is a buffer with two ends, a place to put bytes in and a place to take them out. It made slot 1 of <code>grep</code> point at the in end. It made slot 0 of <code>wc</code> point at the out end. Then it started both programs at once and stood back.</p>
+
+<figure>
+<svg viewBox="0 0 660 220" role="img" aria-label="Two process boxes, grep and wc, joined by a kernel buffer between the stdout slot of one and the stdin slot of the other">
+<rect class="svg-box" x="15" y="25" width="195" height="150" rx="2"/>
+<text class="svg-title" x="28" y="47">grep</text>
+<rect class="svg-fill" x="28" y="58" width="169" height="32"/>
+<text class="svg-label t-in" x="38" y="79">0</text><text class="svg-small" x="122" y="79">terminal</text>
+<rect class="svg-fill" x="28" y="96" width="169" height="32"/>
+<text class="svg-label t-out" x="38" y="117">1</text><text class="svg-small" x="132" y="117">pipe in</text>
+<rect class="svg-fill" x="28" y="134" width="169" height="32"/>
+<text class="svg-label t-err" x="38" y="155">2</text><text class="svg-small" x="122" y="155">terminal</text>
+
+<path class="l-out" d="M197,112 L262,112" marker-end="url(#ar-out)"/>
+<rect class="svg-fill" x="265" y="90" width="130" height="44" rx="12"/>
+<text class="svg-label" x="285" y="110">kernel</text>
+<text class="svg-label" x="285" y="126">buffer</text>
+<path class="l-in" d="M395,112 L430,112 L430,74 L462,74" marker-end="url(#ar-in)"/>
+
+<rect class="svg-box" x="450" y="25" width="195" height="150" rx="2"/>
+<text class="svg-title" x="463" y="47">wc</text>
+<rect class="svg-fill" x="463" y="58" width="169" height="32"/>
+<text class="svg-label t-in" x="473" y="79">0</text><text class="svg-small" x="560" y="79">pipe out</text>
+<rect class="svg-fill" x="463" y="96" width="169" height="32"/>
+<text class="svg-label t-out" x="473" y="117">1</text><text class="svg-small" x="557" y="117">terminal</text>
+<rect class="svg-fill" x="463" y="134" width="169" height="32"/>
+<text class="svg-label t-err" x="473" y="155">2</text><text class="svg-small" x="557" y="155">terminal</text>
+</svg>
+<figcaption>Slot 1 of the first program and slot 0 of the second are attached to opposite ends of one buffer. Notice that both programs still have their own stderr going straight to the screen, which is why an error from <code>grep</code> appears immediately and does not get counted by <code>wc</code>.</figcaption>
+</figure>
+
+<p>So far this sounds like redirection with extra steps, and the syntax encourages the confusion: <code>&gt;</code> and <code>|</code> are both single punctuation marks that sit between things. They are not the same and the difference is worth being precise about.</p>
+
+<h3>The difference that matters most</h3>
+
+<p>With a temporary file, the second program cannot begin until the first has finished, because until then the file is incomplete and there is no way for <code>wc</code> to know that more is coming.</p>
+
+<p>With a pipe, both programs run at the same time. <code>grep</code> finds a matching line and writes it. <code>wc</code> is already awake, waiting, and counts it. Then <code>grep</code> goes looking for the next one. On a 40-gigabyte log, the answer starts being computed on the first line, and the total amount of disk used by the intermediate result is zero, because there is no intermediate result. There is only a small buffer with data flowing through it.</p>
+
+<p>This is the producer and consumer arrangement, and the reason it works is that neither side has to know how fast the other one is. If <code>grep</code> races ahead and fills the buffer, the kernel puts <code>grep</code> to sleep until <code>wc</code> has taken some out. If <code>wc</code> gets ahead and empties the buffer, the kernel puts <code>wc</code> to sleep until <code>grep</code> writes more. Nobody wrote any code to coordinate this. It falls out of the buffer being a fixed size, and it is the whole reason you can pipe a file larger than your memory through five programs and nothing falls over.</p>
+
+<h3>The other differences, briefly</h3>
+
+<ul>
+<li><strong>A file has a name. A pipe does not.</strong> You cannot list it, open it later, or hand it to a program tomorrow. It exists only while the two programs are attached to it and then it is gone.</li>
+<li><strong>A file can be re-read. A pipe cannot.</strong> A program can jump back to the start of a file and read it again. Bytes taken out of a pipe are gone. This is why <code>sort</code> has to read its entire input before printing anything, while <code>grep</code> can print as it goes. <code>sort</code> cannot know the first line of its answer until it has seen the last line of its input.</li>
+<li><strong>A pipe goes one way.</strong> One end writes, the other reads, and there is no arguing with it.</li>
+<li><strong>A file survives you. A pipe does not.</strong> If you want the answer tomorrow, something in the chain has to end in a file.</li>
+</ul>
+
+<p>Which is why the two get used together constantly, and the combination reads exactly as it is built:</p>
+
+<pre><code><span class="p">$</span> grep <span class="o">"ERROR"</span> logfile.txt | sort | uniq -c > error-summary.txt</code></pre>
+
+<p>Three programs passing bytes between them with nothing on disk, and then the last one's output landing in a file because that part you want to keep.</p>
+
+<details class="check">
+<summary>Try it first
+<span class="q">Why does <code>grep "ERROR" huge.log | head -n 3</code> come back instantly, when <code>grep</code> would need several minutes to read the whole file?</span></summary>
+<div class="body">
+<p><code>head</code> prints three lines and then, having no further interest in anything, exits. That closes its end of the pipe. The next time <code>grep</code> tries to write, there is nobody at the other end, so the kernel sends it a signal called SIGPIPE, whose default behaviour is to kill the process on the spot.</p>
+<p><code>grep</code> never finishes reading the file. It gets shot in the head, politely, by a mechanism designed for exactly this. It is why you can safely pipe an enormous thing into <code>head</code> and why the same trick with a temporary file would make you wait for the entire run.</p>
+</div>
+</details>
+
+<h2 id="shell-does">What the shell actually does</h2>
+
+<p>Everything so far has been a description of results. Now the mechanism, because the mechanism explains several things that otherwise look arbitrary.</p>
+
+<p>When you type <code>sort names.txt &gt; sorted.txt</code>, the shell does not "run sort with redirection". The shell has no power to reach inside another program. What it does instead is stranger and simpler: it makes a copy of itself, rearranges the copy's file descriptor table while the copy is still the shell, and only then tells the copy to turn into <code>sort</code>.</p>
+
+<p>Step through it.</p>
+
+<div class="demo" id="dup2demo">
+<h4>Making one redirection happen</h4>
+<p class="sub">The child's file descriptor table, at each step of <code>sort names.txt &gt; sorted.txt</code></p>
+<div id="fdtable" class="fdtable"></div>
+<div class="step-caption" id="stepcap"></div>
+<div class="controls">
+<button id="prevbtn" type="button">back</button>
+<button id="nextbtn" type="button">next step</button>
+<span class="counter" id="stepcount"></span>
+</div>
+</div>
+
+<p>The thing to take away is step four. <code>dup2</code> does not move a file into slot 1 and it does not tell <code>sort</code> anything. It overwrites one entry in a table with a copy of another entry, and it quietly closes whatever slot 1 used to hold. After that, slot 1 and slot 3 are two names for the same open file, which is why slot 3 can be thrown away immediately without losing the file.</p>
+
+<p>And step six is the punchline: <code>exec</code> replaces the running program with a completely different one, and the file descriptor table survives that replacement untouched. That is the only reason any of this works. The table belongs to the process, not to the program, so the shell can set the table up and then hand the process over to a program that knows nothing about what was done to it.</p>
+
+<div class="note warn">
+<p><strong>A correction to something you may have read.</strong> Plenty of explanations, including the notes this page was built from, end the story with "and then the shell restores the original stdout". For an external command like <code>sort</code> that is not what happens, because the shell's own slot 1 was never touched. All the rearranging happened inside a child process that has now become <code>sort</code> and will shortly cease to exist. There is nothing to restore.</p>
+<p>The restore version is not invented out of nothing. It is true for commands that the shell runs itself without forking, the builtins, like <code>echo</code> and <code>cd</code>. For those there is no child, so the shell must save its own descriptors and put them back afterwards. Two different mechanisms that produce the same visible result, which is how the two accounts got mixed up. If you learn the fork version, everything you meet later will make sense; if you learn only the restore version, fork and exec will be a shock.</p>
+</div>
+
+<details class="check">
+<summary>Try it first
+<span class="q">Given that the table is copied into the child and survives <code>exec</code>: if you redirect in one command, why is the next command back to normal?</span></summary>
+<div class="body">
+<p>Because the rearranged table was the <em>child's</em> copy, and the child is gone. The shell's own table was never modified, so the next command's child inherits a clean copy.</p>
+<p>This also explains a thing that surprises people: <code>cd</code> works and persists, because <code>cd</code> is a builtin and the shell really does change its own state. A program that changed directory in a child would have no effect on you at all. That is why <code>cd</code> cannot be an ordinary program.</p>
+</div>
+</details>
+
+<h2 id="inside-pipe">Inside the pipe</h2>
+
+<p>The buffer in the middle of the diagram is a real object with a real size, and knowing its size explains behaviour you will otherwise find mystifying.</p>
+
+<p>On Linux a pipe holds 65,536 bytes, which is 64 kilobytes. When it is full, writers sleep. When it is empty, readers sleep. You can see the number on your own machine:</p>
+
+<pre><code><span class="p">$</span> cat /proc/sys/fs/pipe-max-size
+1048576</code></pre>
+
+<p>That is the largest a pipe may be enlarged to, not the default. The default of 64 KiB is set in the kernel and a program can request a different size for its own pipes.</p>
+
+<div class="note">
+<p><strong>About the 4 KB you will see everywhere.</strong> Older books and a great many web pages say a pipe buffer is 4 KB. That number is not made up, and it is worth knowing what it is, because you will run into it.</p>
+<p>Before Linux 2.6.11, released in 2005, the capacity really was one page, 4096 bytes. Separately, and still true today, there is a constant called <code>PIPE_BUF</code> which is 4096 on Linux and which means something else entirely: it is the largest write that is guaranteed not to be chopped up and interleaved with writes from another program sharing the same pipe. Capacity and atomicity, two different 4096s, and they have been getting confused with each other for twenty years. The capacity is 64 KiB.</p>
+</div>
+
+<h3>What happens at the ends</h3>
+
+<ul>
+<li><strong>Writer stops, reader keeps reading.</strong> The reader drains what is left and then sees end of file, exactly as if it had reached the end of a normal file. This is how <code>wc</code> knows to stop waiting and print its answer.</li>
+<li><strong>Reader stops, writer keeps writing.</strong> The writer gets SIGPIPE and dies, which is the <code>head</code> case from earlier. It looks brutal and it is the right design: continuing to compute an answer nobody will collect is a waste of a machine.</li>
+<li><strong>Both stop.</strong> The pipe is destroyed. It had no name and nothing referred to it, so there is nothing left behind.</li>
+</ul>
+
+<p>That last point is what "anonymous pipe" means. If you want a pipe with a name, one that two unrelated programs started at different times can both open, that exists too and it is called a FIFO: <code>mkfifo mypipe</code> makes one, and it shows up in <code>ls</code> as a real entry in the directory. It is the same buffer mechanism with a doorbell on the front. You will not need it often, but it is worth knowing it exists so that the word "anonymous" means something.</p>
+
+<div class="note">
+<p><strong>There are two buffers, not one, and only one of them is the kernel's.</strong> The kernel has the pipe buffer described above. Separately, most programs keep their own buffer inside themselves and only hand bytes to the kernel when it fills up. Worse, most programs change that behaviour depending on what slot 1 is attached to: when it is a terminal they flush every line so you see output as it happens, and when it is a pipe or a file they save up a few kilobytes first, for speed.</p>
+<p>This is the single most confusing thing in this whole area, because it means a command can behave differently when piped than when run alone, and nothing about the pipe caused it. The next section is a demonstration of exactly that, and it looks like a bug until you know this paragraph.</p>
+</div>
+<h2 id="python">Watching it happen in Python</h2>
+
+<p>Shell syntax hides the file descriptors. Python does not, so here is a short program that uses them by number, the way the kernel sees them. Save it as <code>file_descriptor.py</code>.</p>
+
+<pre><code><span class="c">import os</span>
+<span class="c">import sys</span>
+
+<span class="c"># open a file and get back a slot number</span>
+fd = os.open(<span class="o">"sample.txt"</span>, os.O_RDWR | os.O_CREAT)
+
+os.write(fd, <span class="o">b"Hello, File Descriptors!"</span>)
+os.lseek(fd, 0, os.SEEK_SET)        <span class="c"># jump back to the start</span>
+content = os.read(fd, 100)
+
+print(<span class="o">f"Read from file (stdout): {content.decode()}"</span>)
+print(<span class="o">"This is an error message!"</span>, file=sys.stderr)
+
+user_input = input(<span class="o">"Enter something for stdin demonstration: "</span>)
+print(<span class="o">f"You entered (stdout): {user_input}"</span>)
+
+os.close(fd)</code></pre>
+
+<p>Three things worth noticing before running it.</p>
+
+<p>The <code>lseek</code> call is the thing a pipe cannot do. The program writes 24 bytes, jumps back to position zero, and reads them again. A file has a position you can move. A pipe has no position at all, and the same program pointed at a pipe would fail on that line. This is the difference from the pipe section, made concrete in one call.</p>
+
+<p><code>os.read(fd, 100)</code> asks for 100 bytes and gets 24, because that is all there is. Reading fewer bytes than you asked for is normal and correct, and forgetting that is a classic source of bugs in programs that talk to pipes and networks, where a short read means "that is all I have <em>right now</em>", not "that is all there is".</p>
+
+<p>And <code>print</code> goes to slot 1 while <code>print(..., file=sys.stderr)</code> goes to slot 2. Same program, two channels, and from here on you can separate them from outside.</p>
+
+<h3>Sending the two channels to different places</h3>
+
+<pre><code><span class="p">$</span> python3 file_descriptor.py > output.txt 2> error.txt
+<span class="c">nothing appears, and the terminal sits there waiting for you to type</span></code></pre>
+
+<p>Type something, press Enter, and then:</p>
+
+<pre><code><span class="p">$</span> cat output.txt
+Read from file (stdout): Hello, File Descriptors!
+Enter something for stdin demonstration: You entered (stdout): hello
+<span class="p">$</span> cat error.txt
+This is an error message!</code></pre>
+
+<p>The two streams went to two files and neither knows about the other. Also, look at the second line of <code>output.txt</code>. The prompt and the answer are on the same line, because <code>input</code> writes its prompt without a newline after it, so the next thing printed lands right behind it. That is not a mistake, it is what a prompt is.</p>
+
+<h3>The freeze</h3>
+
+<p>Now the interesting one. Redirect only the output:</p>
+
+<pre><code><span class="p">$</span> python3 file_descriptor.py > output.txt
+This is an error message!
+<span class="c">and now nothing. The cursor sits there. It looks hung.</span></code></pre>
+
+<p>It is not hung. It is waiting for you to type, and it has asked you to, and you cannot see the question, because the question was printed to standard output and standard output is now a file. The error message got through because errors were not redirected.</p>
+
+<p>Press Enter and it completes normally. Nothing was wrong. A program politely asking a question into a file while you stare at a blank screen is the single most common way this trips people up, and once you have seen it once you will recognise it forever.</p>
+
+<p>The pipe version is worse:</p>
+
+<pre><code><span class="p">$</span> python3 file_descriptor.py | grep <span class="o">"stdout"</span>
+This is an error message!
+<span class="c">nothing, again, and this time even after you type</span></code></pre>
+
+<p>Now the prompt went into the pipe, <code>grep</code> is holding on to it waiting to see whether more is coming, and the program is still reading from your keyboard because only slot 1 was redirected, not slot 0. Type a line, press Enter, and everything appears at once when the program exits.</p>
+
+<details class="check">
+<summary>Try it first
+<span class="q">In that last command, where does <code>grep</code> get its input, and where does the Python program get its input? They are different. Say which is which before opening this.</span></summary>
+<div class="body">
+<p><code>grep</code> reads from the pipe. The Python program reads from the terminal, because <code>|</code> only rewires slot 1 of the left-hand command and slot 0 of the right-hand one. Nobody touched slot 0 of the Python program, so it still has the keyboard.</p>
+<p>This is why the shell prompt does not come back and why typing seems to do nothing: you are typing into a program whose output you cannot see.</p>
+</div>
+</details>
+
+<h3>Both channels into one file, and a surprise</h3>
+
+<p>Send everything to a single file and read it back:</p>
+
+<pre><code><span class="p">$</span> python3 file_descriptor.py > all_output.txt 2>&1 < /dev/null
+<span class="p">$</span> cat all_output.txt
+This is an error message!
+Read from file (stdout): Hello, File Descriptors!
+Enter something for stdin demonstration: Traceback (most recent call last):
+...
+EOFError: EOF when reading a line</code></pre>
+
+<p>The error message is first. In the program it is printed second. The lines came out in the wrong order.</p>
+
+<p>This is the two-buffer problem from the previous section, caught in the act. Standard error is unbuffered, because an error you never see is useless, so it goes straight out. Standard output, once it is pointed at a file rather than a terminal, is held in the program's own buffer and not handed over until the buffer fills or the program exits. Both are correct. Together they scramble the order, and no amount of staring at the shell command will explain it, because the shell had nothing to do with it.</p>
+
+<p>The <code>&lt; /dev/null</code> on that command is how you tell a program that there is no input and never will be. It reads immediately as end of file, which is why the program crashed with <code>EOFError</code> instead of waiting. The crash is the point: it proves the program got to the input line.</p>
+
+<div class="note">
+<p><strong>Two honest problems with this script,</strong> which are worth seeing because you will write the same ones.</p>
+<p><code>os.open</code> was called without a permission argument. Python's default is <code>0o777</code>, so after running this, <code>ls -l sample.txt</code> shows <code>-rwxr-xr-x</code>: a text file marked executable. Nothing breaks, and it is still wrong. The habit is to pass the mode you mean, <code>0o644</code> for an ordinary file.</p>
+<p>There is also no <code>O_TRUNC</code>, so re-running writes over the beginning of the existing file rather than replacing it. Here the text is the same length every time so you never notice. Write something shorter one day and the tail of the old content will still be sitting there.</p>
+</div>
+
+<h2 id="combining">Joining streams, and throwing them away</h2>
+
+<h3>2&gt;&amp;1, and why the order is not optional</h3>
+
+<p>Sometimes you do want both channels in one place. The spelling is <code>2&gt;&amp;1</code>, and it reads as: make slot 2 a copy of whatever slot 1 is <em>at this moment</em>.</p>
+
+<p>Those last three words are the whole thing. The shell processes redirections left to right, so these two commands, which look like the same command written in a different order, do different things:</p>
+
+<pre><code><span class="p">$</span> sort nosuchfile.txt > f1.txt 2>&1
+<span class="c">screen: nothing</span>
+<span class="c">f1.txt: sort: cannot read: nosuchfile.txt: No such file or directory</span>
+
+<span class="p">$</span> sort nosuchfile.txt 2>&1 > f2.txt
+<span class="e">sort: cannot read: nosuchfile.txt: No such file or directory</span>
+<span class="c">f2.txt: empty</span></code></pre>
+
+<p>Walk the first one. Slot 1 is pointed at <code>f1.txt</code>. Then slot 2 is made a copy of slot 1, which is now <code>f1.txt</code>. Both end up in the file.</p>
+
+<p>Walk the second. Slot 2 is made a copy of slot 1, which is still the terminal, because nothing has changed it yet. Then slot 1 is pointed at <code>f2.txt</code>. Slot 2 was copied from the old value and does not follow along afterwards. Errors go to the screen, output goes to the file.</p>
+
+<p>The second is not a mistake; it is occasionally exactly what you want. But it is almost never what someone means when they type it, and the reason it catches people is that <code>2&gt;&amp;1</code> looks like it declares a permanent relationship between the two slots. It does not. It copies a value, once, at the moment it is read.</p>
+
+<details class="check">
+<summary>Try it first
+<span class="q">You want both output and errors appended to <code>run.log</code>, keeping what is already in the file. Write it.</span></summary>
+<div class="body">
+<pre><code><span class="p">$</span> ./job.sh >> run.log 2>&1</code></pre>
+<p>Slot 1 first, positioned at the end of the file, then slot 2 copied from it. Bash also accepts <code>&amp;&gt;&gt; run.log</code> as a shorthand for the same thing, which is easier to type and does not work in every shell. The long form is worth knowing because it is the one that always works and the one that tells you what is happening.</p>
+</div>
+</details>
+
+<h3>tee — a fork in the stream</h3>
+
+<p>Every pipe so far has moved bytes from one place to exactly one other place. <code>tee</code> is the exception: it reads its input and writes it to a file <em>and</em> passes it along, so you can watch something and record it at the same time.</p>
+
+<pre><code><span class="p">$</span> grep <span class="o">"ERROR"</span> logfile.txt | tee errors.txt | wc -l
+2
+<span class="p">$</span> cat errors.txt
+2023-09-10 10:17:30 ERROR: Failed to connect to database
+2023-09-10 10:20:05 ERROR: Invalid input received</code></pre>
+
+<p>The count came out, and the lines that produced it were saved on the way past. This is the tool for the moment when a long pipeline gives you an answer you do not believe and you want to see what went into the middle of it. <code>tee -a</code> appends instead of overwriting.</p>
+
+<h3>/dev/null — the bin</h3>
+
+<p><code>/dev/null</code> is a file that discards everything written to it and is instantly empty when read. It is not a special shell feature; it is an ordinary path that behaves that way, which is a nice demonstration of the "everything is reached the same way" idea.</p>
+
+<pre><code><span class="p">$</span> find / -name <span class="o">"*.conf"</span> 2>/dev/null</code></pre>
+
+<p>Searching the whole filesystem produces hundreds of permission complaints that bury the results. Throwing slot 2 in the bin leaves the answers.</p>
+
+<div class="note warn">
+<p><strong>Use it deliberately.</strong> <code>2&gt;/dev/null</code> does not fix an error, it hides it, and a script that silences its own errors will fail silently at three in the morning and leave you nothing to read. Discard errors when you already know which ones you are discarding and why. Otherwise send them to a log.</p>
+</div>
+
+<h2 id="which">Which one do I reach for?</h2>
+
+<p>The decision is almost always obvious once the question is phrased right: <em>is the thing on the other end a program, or a place to keep bytes?</em></p>
+
+<table>
+<thead><tr><th></th><th>Redirection <code>&gt; &lt; 2&gt;</code></th><th>Pipe <code>|</code></th></tr></thead>
+<tbody>
+<tr><td>Other end</td><td>A file on disk</td><td>Another running program</td></tr>
+<tr><td>Timing</td><td>One thing at a time</td><td>Both at once, streaming</td></tr>
+<tr><td>Leaves behind</td><td>A file you can read later</td><td>Nothing</td></tr>
+<tr><td>Disk used</td><td>All of the data</td><td>None</td></tr>
+<tr><td>Can go back and re-read</td><td>Yes</td><td>No</td></tr>
+<tr><td>Has a name</td><td>Yes</td><td>No</td></tr>
+<tr><td>Good for</td><td>Keeping results, saving logs, feeding a program a fixed input</td><td>Composing tools, filtering huge inputs, anything you do not want on disk</td></tr>
+</tbody>
+</table>
+
+<p>In practice they are not rivals, and almost every real command line uses both: pipes through the middle where the data is still being worked on, and one redirection at the end where the answer stops being traffic and starts being a result.</p>
+
+<pre><code><span class="p">$</span> grep -v <span class="o">"DEBUG"</span> logfile.txt | cut -d<span class="o">" "</span> -f3 | sort | uniq -c | sort -rn > summary.txt 2> problems.txt</code></pre>
+
+<p>Five programs, all running at once, nothing touching the disk until the end, and then two files: one with the answer and one with anything that went wrong. You can now read that command left to right and say what each piece does and where each of the three streams of each program is attached. That is the whole subject.</p>
+
+<details class="check">
+<summary>One last one
+<span class="q">Why can the <code>sort</code> in the middle of that pipeline not print anything until <code>cut</code> has finished, while <code>grep</code> and <code>cut</code> print as they go?</span></summary>
+<div class="body">
+<p>Because sorting requires knowing all the input. The smallest line might be the last one to arrive, so <code>sort</code> has to hold everything until its input hits end of file, and only then can it produce the first line of its answer.</p>
+<p>Tools split into these two families and it is worth noticing which is which. <code>grep</code>, <code>cut</code>, <code>tee</code>, <code>head</code> are streaming: one line in, one line out, constant memory, works on a file bigger than your RAM. <code>sort</code>, <code>uniq -c</code> on unsorted data, and <code>wc</code> must see the end before they can speak. Putting a streaming tool early and a blocking tool late is what makes a long pipeline fast.</p>
+<p>Incidentally, <code>sort</code> on an input larger than memory does not give up. It writes temporary files to disk and merges them. The pipe saved you a temporary file, and <code>sort</code> quietly made some anyway, because that is the job.</p>
+</div>
+</details>
+
+<h2 id="setup">Setting up in Codespaces</h2>
+
+<p>Open the repository in a Codespace and you get a full Linux machine in the browser with a terminal at the bottom. Everything on this page runs there unchanged.</p>
+
+<p>To make the sample files, run the generator once:</p>
+
+<pre><code><span class="p">$</span> python3 setup_generator.py
+Created: hello.txt
+Created: names.txt
+Created: numbers.txt
+Created: logfile.txt
+Created: todo.txt</code></pre>
+
+<p>Five files: a two-line greeting, ten names in random order, twenty random numbers, the ten-line log from the top of this page, and a to-do list where some lines start with TODO and some do not. That last one is built for <code>grep</code> and <code>grep -v</code>.</p>
+
+<p>The names file has a surprise in it that is worth doing on purpose:</p>
+
+<pre><code><span class="p">$</span> cat names.txt
+Frank
+Alice
+Ivy
+Henry
+Eva
+David
+Charlie
+Grace
+Jack
+Bob
+<span class="p">$</span> wc -l names.txt
+9 names.txt</code></pre>
+
+<p>Ten names. Nine lines. This is the newline business from earlier, live: the generator joined the names with newlines <em>between</em> them and did not put one after the last, so there are nine newline characters and <code>wc -l</code> counts newline characters.</p>
+
+<p>If you want the honest count, <code>grep -c ""</code> matches every line whether or not it ends in a newline:</p>
+
+<pre><code><span class="p">$</span> grep -c <span class="o">""</span> names.txt
+10</code></pre>
+
+<p>Two tools, two answers, both correct, answering slightly different questions. Before you trust a number from a command, it is worth asking which question it actually answered.</p>
+
+<footer>
+<p>Sample files come from <code>setup_generator.py</code>. Every command and every piece of output on this page was run on Linux before being written down, including the ones that go wrong.</p>
+</footer>
+</main>
+</div>
+
+<script>
+(function(){
+  var TERM = "terminal";
+  var steps = [
+    {
+      owner:"the shell",
+      title:"the shell, before anything happens",
+      rows:[[0,TERM],[1,TERM],[2,TERM]],
+      changed:-1,
+      cap:"You press Enter on <code>sort names.txt &gt; sorted.txt</code>. The shell has read the line and understood it. Its own three slots point at the terminal, as they have all along."
+    },
+    {
+      owner:"the child",
+      title:"after fork()",
+      rows:[[0,TERM],[1,TERM],[2,TERM]],
+      changed:-1,
+      cap:"<code>fork()</code> makes a second process that is an exact copy of the shell, table and all. There are now two shells running. The copy is the one that will be sacrificed; everything after this happens inside it."
+    },
+    {
+      owner:"the child",
+      title:"after open(\"sorted.txt\")",
+      rows:[[0,TERM],[1,TERM],[2,TERM],[3,"sorted.txt"]],
+      changed:3,
+      cap:"The child opens the output file. The kernel puts it in the lowest free slot, which is 3, and truncates the file to nothing on the way. This is the moment your data would be destroyed if the output file were also the input file."
+    },
+    {
+      owner:"the child",
+      title:"after dup2(3, 1)",
+      rows:[[0,TERM],[1,"sorted.txt"],[2,TERM],[3,"sorted.txt"]],
+      changed:1,
+      cap:"<code>dup2</code> overwrites slot 1 with a copy of slot 3, closing whatever slot 1 held. Slots 1 and 3 are now two names for the same open file. Nothing was moved and no program was told anything; one entry in a table was written over."
+    },
+    {
+      owner:"the child",
+      title:"after close(3)",
+      rows:[[0,TERM],[1,"sorted.txt"],[2,TERM]],
+      changed:-1,
+      cap:"Slot 3 is no longer needed, because slot 1 refers to the same file. Closing it leaves a table that looks completely ordinary: three slots, and slot 1 happens to be a file."
+    },
+    {
+      owner:"sort",
+      title:"after exec(\"sort\")",
+      rows:[[0,TERM],[1,"sorted.txt"],[2,TERM]],
+      changed:-1,
+      cap:"<code>exec</code> throws away the program and loads <code>sort</code> into the same process. The table survives untouched, because it belongs to the process and not to the program. <code>sort</code> starts with no idea any of this happened and writes to slot 1 exactly as it always does."
+    },
+    {
+      owner:"the shell",
+      title:"meanwhile, back in the shell",
+      rows:[[0,TERM],[1,TERM],[2,TERM]],
+      changed:-1,
+      cap:"The original shell waited, and its own table was never touched. When <code>sort</code> exits, the child is gone and the next command starts from a clean copy. There was never anything to restore."
+    }
+  ];
+
+  var i = 0;
+  var table = document.getElementById("fdtable");
+  var cap = document.getElementById("stepcap");
+  var count = document.getElementById("stepcount");
+  var prev = document.getElementById("prevbtn");
+  var next = document.getElementById("nextbtn");
+  if(!table) return;
+
+  var names = ["stdin","stdout","stderr"];
+  var cls = ["r-in","r-out","r-err"];
+
+  function render(){
+    var s = steps[i];
+    var html = '<div class="fdowner">' + s.title + '</div>';
+    for(var r=0; r<s.rows.length; r++){
+      var n = s.rows[r][0];
+      var target = s.rows[r][1];
+      var c = n < 3 ? cls[n] : "r-extra";
+      var hot = (n === s.changed) ? " hot" : "";
+      html += '<div class="fdrow ' + c + hot + '">' +
+              '<span class="fdnum">' + n + '</span>' +
+              '<span class="fdname">' + (n < 3 ? names[n] : "") + '</span>' +
+              '<span class="fdtarget">' + target + '</span>' +
+              '</div>';
+    }
+    table.innerHTML = html;
+    cap.innerHTML = s.cap;
+    count.textContent = (i+1) + " / " + steps.length;
+    prev.disabled = (i === 0);
+    next.disabled = (i === steps.length - 1);
+  }
+
+  prev.addEventListener("click", function(){ if(i>0){ i--; render(); } });
+  next.addEventListener("click", function(){ if(i<steps.length-1){ i++; render(); } });
+  render();
+})();
+</script>
+</body>
+</html>
