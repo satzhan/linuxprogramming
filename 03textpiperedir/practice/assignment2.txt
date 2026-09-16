@@ -1,0 +1,177 @@
+Assignment #2: The Case of the Dropped Payroll Table
+====================================================
+
+Last night at 23:08 someone dropped the payroll table.
+Payroll is now a very expensive empty spreadsheet.
+Your job: find out who did it, using nothing but the command line.
+
+The rules of this detective agency:
+  - No text editors. No opening files in a GUI. Terminal only.
+  - Every conclusion needs a command that proves it.
+  - Keep a trail: paste every command you run (and a one-line note why)
+    into a file called trail.txt. A detective without notes is just a person with opinions.
+
+Setup
+-----
+    python3 case_generator.py <your group number>
+    cd case
+    ls -R | head -n 30
+
+You now have:
+    access.log          one event per line
+    staff.tsv           a staff directory, columns separated by TABs
+    badges.txt          badge records, each spread over several lines
+    floors/             four floor logs, 300 lines each
+    statements/         hundreds of witness statements (most are useless)
+    groups/             membership lists, one name per line
+
+The assignment is split into small standalone parts. Parts 1-7 each teach one
+skill and can be done in any order. Part 8 is the case itself and needs all of them.
+
+
+New tools you will need (look them up with man or --help, that is part of the job)
+------------------------------------------------------------------------------------
+    grep -c -v -w -o -F -i -A -B
+    cut -d -f
+    sort -n -r -u
+    uniq -c
+    comm -12
+    head -n N | tail -n 1
+
+
+PART 1 - Say exactly what you mean (precise matching)
+-----------------------------------------------------
+grep is a bloodhound: it finds the smell you give it, not the thing you meant.
+
+1a. Count lines matching INFO:            grep -c "INFO" access.log
+1b. Count lines whose LEVEL is INFO:      grep -c "\[INFO\]" access.log
+1c. The two numbers differ. Find the lines that explain the difference
+    (hint: lines that match INFO but are not INFO-level; grep -v is your friend).
+1d. Why do we need the backslashes in "\[INFO\]"? What does [INFO] mean to grep without them?
+1e. Produce a count of every log level in ONE pipeline (no running grep four times).
+    Hint: the level is the 3rd space-separated field.
+
+Save the output of 1e to level_counts.txt.
+
+
+PART 2 - Why "uniq" lied to you
+-------------------------------
+2a. Run:  grep "\[ERROR\]" access.log | sort | uniq -c | sort -nr | head -n 5
+    Look at the counts. Explain in one sentence why this does NOT find the most common errors.
+2b. Fix it: strip each line down to just the message before counting.
+    Hint: the message is everything after the last ": ". Think about which
+    character cut should split on, and which field(s) you need (-f4- means "field 4 onward").
+2c. Save the top 5 error messages with counts to top_errors.txt.
+2d. Which MODULE produces the most errors? (field 4 this time)
+
+
+PART 3 - Time is a field too
+----------------------------
+3a. Which hour of the day is busiest? Show the top 3 hours with counts.
+    Hint: two cuts in a row. First on space, then on colon.
+3b. Show every event that happened in the 23:00 hour.
+    Be careful: " 23:" and "23:" match different things. Try both. Which is right and why?
+3c. Show all CRITICAL events. Write down what they tell you. (You will need this later.)
+
+
+PART 4 - Tables with tabs
+-------------------------
+staff.tsv is a table. cut's default delimiter is already TAB, handy.
+
+4a. How many people are in the directory? (The header lines start with # and are not people.)
+4b. How many people work in each department, largest first?
+4c. Some usernames are prefixes of other usernames (like abc and abc2).
+    Find one such pair in staff.tsv (hint: grep for a username ending in 2).
+    Now look up the SHORTER username with  grep "<username>" staff.tsv  .
+    Then try grep -w. What went wrong with the first one, and why does -w fix it?
+4d. Print only the names of people on floor 4.
+
+
+PART 5 - Records that span several lines
+----------------------------------------
+Every badge record looks like this:
+
+    Badge: B-1234
+    Holder: Some Name
+    Dept: Something
+    Color: Something
+    Clearance: N
+
+grep only ever looks at one line at a time, like reading a book through a keyhole.
+-A (after) and -B (before) let you widen the keyhole.
+
+5a. How many Red badges are there?
+5b. List the holders of Red badges (names only). Hint: the Holder line is 2 lines above Color.
+5c. Challenge: list the full records (all 5 lines) of people with Clearance 5.
+5d. Challenge: list the holders of Red badges with Clearance 5.
+    There is more than one way. Describe the one you chose.
+
+
+PART 6 - "Go to line 173"
+-------------------------
+6a. Print ONLY line 50 of floors/floor-1.txt.
+6b. Count how many lines in floors/floor-1.txt mention "SEE STATEMENT".
+    Explain why grep "SEE STATEMENT" alone is useless for finding THE important statement.
+6c. Print the last 3 lines of line range 100-120 of floor-2.txt (i.e. lines 118-120)
+    using only head and tail.
+6d. Given statement number 1234, which file would you open? Use ls and grep to check
+    whether it exists, without scrolling through 400 filenames by eye.
+
+
+PART 7 - Who is in both clubs? (set intersection)
+-------------------------------------------------
+Each file in groups/ is a set of names.
+
+7a. How many people are in each group? One command for all four files.
+7b. Who is in BOTH coffee-club.txt and oncall.txt?
+    Try  comm -12 groups/coffee-club.txt groups/oncall.txt  first.
+    It complains or gives a wrong answer. Why? Fix it.
+    (Hint: comm needs something from its input. You can use  <(sort file)  to give it that.)
+7c. Do 7b a second way using  grep -Fxf  . Look up what -F, -x and -f each do.
+    Why is -x important here? What could go wrong without it?
+7d. Who is in all three of coffee-club, oncall and vpn-users?
+
+
+PART 8 - The Case
+-----------------
+No hints about commands in this part. You have all the tools from Parts 1-7.
+
+What we know:
+  * The payroll table was dropped at 23:08 from a specific machine. The log knows which.
+  * That machine is a shared lab computer. Several people logged into it that evening.
+  * A door alarm went off right after. Security left a note in the log about
+    where the night guard's shift log lives.
+  * The night guard gave a statement. The shift log tells you which one.
+
+Your steps (in whatever order you like):
+  8a. Identify the machine (IP) used for the drop.
+  8b. List every username that logged in from exactly that IP.
+      Warning: some IPs look very similar. Make sure your match is exact.
+  8c. Turn those usernames into full names.
+  8d. Find and read the guard's statement.
+  8e. Use the statement to narrow your suspect list, one clue at a time.
+      For each suspect you eliminate, write the command that eliminates them.
+  8f. Name the culprit.
+
+Hand in:
+  - trail.txt         every command + a one-line note
+  - level_counts.txt  (Part 1)
+  - top_errors.txt    (Part 2)
+  - verdict.txt       the culprit's name, plus a short paragraph:
+                      "I know it is X because ..." with each claim pointing to a command in trail.txt
+  - answers.txt       your written answers to the "why" questions in Parts 1-7
+
+Bonus (optional, pick any):
+  B1. Write ONE pipeline that goes from access.log to the list of suspects' full names.
+  B2. Was the culprit also a DB admin? Does that make the case stronger or weaker?
+      What would a good lawyer say about it?
+  B3. Your group number changed the case. Run the generator with a different number
+      and solve that case in fewer than 10 commands.
+
+
+Reflection (short answers)
+--------------------------
+R1. Which mistake did you make that grep did NOT warn you about? How did you notice?
+R2. In Part 8, which clue did the most work in shrinking the suspect list? Which did the least?
+R3. You will soon meet a bigger mystery with files that look a lot like these.
+    Which of the Part 1-7 skills do you expect to need most, and why?
