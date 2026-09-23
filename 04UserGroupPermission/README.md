@@ -1,1 +1,1 @@
-## [Read the guide](https://satzhan.github.io/linuxprogramming/04usergrouppermission/who-gets-in.html)
+## [Read the guide](https://satzhan.github.io/linuxprogramming/04UserGroupPermission/who-gets-in.html)
