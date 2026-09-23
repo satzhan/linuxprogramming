@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="A readable Linux reference for users, groups, permissions, umask, and sudo, with examples for a separate practice lab.">
+<title>Linux access — A learner's reference</title>
+<style>
+:root{--paper:#f8f6f0;--card:#fffefa;--ink:#202f39;--muted:#52616a;--line:#d6dcd6;--accent:#215b60;--soft:#e7efeb;--warm:#f4e6cd;--warm-ink:#624017;--code:#ecf0ed;--blue:#e6ecf3;--max:960px;color-scheme:light}
+:root[data-theme="dark"]{--paper:#172229;--card:#1e2d35;--ink:#ecf0eb;--muted:#b6c6ca;--line:#43555b;--accent:#96d4cb;--soft:#243e40;--warm:#463924;--warm-ink:#f5d59e;--code:#253840;--blue:#293c50;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:28px}body{margin:0;background:var(--paper);color:var(--ink);font:18px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:4px}a:hover{text-decoration-thickness:2px}button,a,summary{touch-action:manipulation}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}.skip{position:absolute;left:12px;top:-100px;padding:8px;background:var(--card);z-index:10}.skip:focus{top:10px}.layout{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1470px;margin:auto;min-height:100vh}.rail{padding:42px 26px 30px;border-right:1px solid var(--line);position:sticky;top:0;align-self:start;height:100vh;display:flex;flex-direction:column;gap:26px}.brand{font:700 16px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.01em}.brand span{color:var(--accent)}.rail small{display:block;font-size:13px;color:var(--muted);line-height:1.6;margin-top:6px}.rail nav{display:grid;gap:6px}.rail nav a{font-size:15px;text-decoration:none;padding:10px 8px;border-radius:4px;line-height:1.45}.rail nav a:hover{background:var(--soft)}.rail nav b{font-family:ui-monospace,monospace;display:inline-block;width:30px;color:var(--muted)}.rail-bottom{margin-top:auto;font-size:13px;color:var(--muted)}button{font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--line);padding:8px 13px;border-radius:5px;cursor:pointer}.theme{align-self:start}.content{min-width:0;padding:62px 64px 50px}.content>*{max-width:var(--max);margin-left:auto;margin-right:auto}.eyebrow{font:700 12px/1.5 ui-monospace,monospace;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);margin-bottom:19px}h1,h2,h3{line-height:1.15;letter-spacing:-.03em}h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:400}h1{font-size:clamp(46px,5.2vw,76px);margin:0 0 24px;max-width:760px}h2{font-size:clamp(34px,3.7vw,49px);margin:10px 0 23px}h3{font-size:23px;letter-spacing:-.018em;margin:34px 0 14px}p{margin:0 0 18px}li{margin:5px 0}strong{font-weight:650}.lede{font-size:21px;line-height:1.6;max-width:750px}.subtle,.caption{color:var(--muted);font-size:15px}.hero{padding-bottom:32px}.topic{border-top:1px solid var(--line);padding:48px 0 40px;scroll-margin-top:24px}.section-no{font:600 13px/1.5 ui-monospace,monospace;color:var(--accent);letter-spacing:.1em}.map{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:7px;overflow:hidden;margin:29px 0 22px}.map a{padding:22px;background:var(--card);text-decoration:none;color:var(--ink);display:block}.map b{display:block;font-size:18px;line-height:1.4;margin-bottom:6px}.map span{font-size:15px;color:var(--muted);line-height:1.5;display:block}.map em{font:normal 12px ui-monospace,monospace;color:var(--accent);display:block;margin-bottom:9px}.note{background:var(--soft);border-left:3px solid var(--accent);padding:18px 22px;margin:24px 0}.note p:last-child{margin-bottom:0}.note.warm{background:var(--warm);border-color:var(--warm-ink);color:var(--warm-ink)}code,kbd{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-size:.86em}p code,li code,td code,figcaption code{background:var(--code);border-radius:3px;padding:2px 5px;overflow-wrap:anywhere}pre{background:var(--code);padding:19px 22px;border-radius:6px;overflow:auto;font-size:16px;line-height:1.65;margin:14px 0 22px;border:1px solid var(--line);tab-size:4}pre code{font-size:inherit;background:none;padding:0}.code-label{font:600 11px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:20px 0 -8px}.table-wrap{overflow-x:auto;margin:20px 0 24px}table{border-collapse:collapse;width:100%;font-size:16px;text-align:left}th{background:var(--soft);font-weight:600;font-size:14px}th,td{padding:13px 15px;vertical-align:top;border-bottom:1px solid var(--line)}caption{text-align:left;font-size:14px;color:var(--muted);margin-bottom:9px}figure{margin:26px 0;padding:24px;background:var(--card);border:1px solid var(--line);border-radius:7px}figcaption{font-size:14px;color:var(--muted);line-height:1.6;margin-top:16px}.fig-title{font:600 12px ui-monospace,monospace;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.state{padding:20px;background:var(--soft);border-radius:5px}.state.alt{background:var(--blue)}.state h4{margin:0 0 12px;font-size:17px}.state p{font-size:15px;line-height:1.65;margin:10px 0 0}.pill{display:inline-block;border:1px solid var(--line);background:var(--card);padding:3px 10px;border-radius:30px;font:14px/1.8 ui-monospace,monospace;margin:3px 3px 3px 0}.permission-strip{display:grid;grid-template-columns:.6fr 1fr 1fr 1fr;gap:8px;text-align:center}.permission-strip>div{padding:17px 6px;background:var(--soft);border-radius:5px}.permission-strip strong{font:600 27px/1.4 ui-monospace,monospace;letter-spacing:.05em;display:block}.permission-strip small{display:block;color:var(--muted);font-size:13px;margin-top:7px}.permission-strip .filetype{background:var(--code)}.selection{display:grid;gap:10px}.selection>div{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;background:var(--soft);padding:13px 15px;border-radius:5px;font-size:16px}.selection b{font:600 14px ui-monospace,monospace;color:var(--accent)}.selection code{font-size:15px}.path{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.path>div{border:1px solid var(--line);padding:16px 9px;text-align:center;border-radius:5px;background:var(--soft)}.path code{font-size:15px;display:block;overflow-wrap:anywhere}.path span{display:block;margin-top:10px;font-size:13px;color:var(--muted)}.mask-diagram{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.mask-diagram>div{padding:20px 10px;background:var(--soft);text-align:center;border-radius:5px}.mask-diagram strong{font:600 32px ui-monospace,monospace;display:block;margin:8px}.mask-diagram small{display:block;font-size:13px;color:var(--muted)}.mask-diagram .result{background:var(--blue)}details{border:1px solid var(--line);border-radius:5px;padding:15px 19px;margin:22px 0}summary{cursor:pointer;font-size:16px;font-weight:600}details[open] summary{margin-bottom:16px}details p{font-size:16px}details p:last-child{margin-bottom:0}.project{font-size:16px;border-top:1px dashed var(--line);margin-top:30px;padding-top:18px;color:var(--muted)}.project b{color:var(--ink)}.cmd-list td:first-child{width:45%}.footer{padding-top:30px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}.footer ul{padding-left:20px}.footer li{margin:8px 0}.footer h2{font-family:inherit;font-size:22px;font-weight:600;letter-spacing:0}.tag{display:inline-block;font:12px ui-monospace,monospace;border:1px solid var(--line);padding:5px 9px;border-radius:3px;margin:4px 5px 0 0;color:var(--muted)}
+@media(min-width:1550px){.content{padding-left:80px;padding-right:80px}}@media(max-width:1050px){.layout{grid-template-columns:210px minmax(0,1fr)}.rail{padding:30px 17px}.content{padding:40px 30px}.path{grid-template-columns:repeat(2,1fr)}}@media(max-width:760px){body{font-size:17px}.layout{display:block}.rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px;gap:17px}.rail nav{grid-template-columns:1fr 1fr;gap:3px}.rail nav a{padding:7px 0;font-size:14px}.rail-bottom{display:none}.brand small{display:none}.theme{position:absolute;top:19px;right:18px}.content{padding:34px 20px}.topic{padding-top:33px}h1{font-size:46px}.lede{font-size:19px}h3{font-size:21px}.two{grid-template-columns:1fr}.map a{padding:16px}.map b{font-size:17px}figure{padding:16px}.permission-strip strong{font-size:23px}.permission-strip small{font-size:11px}.selection>div{grid-template-columns:25px 1fr;font-size:15px}.selection code{grid-column:2}.mask-diagram{gap:5px}.mask-diagram>div{padding:12px 3px}.mask-diagram strong{font-size:26px;margin:8px 0}.mask-diagram small{font-size:11px}pre{font-size:14px;padding:15px}th,td{padding:11px;font-size:14px}.cmd-list td:first-child{width:auto}}
+@media print{html{scroll-padding-top:0}:root,:root[data-theme="dark"]{--paper:#fff;--card:#fff;--ink:#000;--muted:#333;--line:#ccc;--accent:#24484a;--soft:#f0f3f1;--warm:#f7f1e6;--warm-ink:#382c18;--code:#f4f4f4;--blue:#eef1f7;color-scheme:light}body{font-size:11pt;line-height:1.5}.layout{display:block}.rail,.skip{display:none}.content{padding:0;max-width:none}h1{font-size:36pt}h2{font-size:26pt}h3{font-size:17pt}.topic{padding-top:25px}pre{white-space:pre-wrap;font-size:10pt}.table-wrap{overflow:visible}figure,.note,pre,tr{break-inside:avoid}.map{display:none}.two{grid-template-columns:1fr 1fr}.path{grid-template-columns:repeat(4,1fr)}.footer a{overflow-wrap:anywhere}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the reference</a>
+<div class="layout">
+<aside class="rail" aria-label="Page navigation">
+  <div class="brand"><span>~/</span> linux access<small>A learner's reference<br>Read here. Practice in lab.md.</small></div>
+  <nav aria-label="Contents">
+    <a href="#users"><b>01</b> Users &amp; groups</a>
+    <a href="#permissions"><b>02</b> Permissions</a>
+    <a href="#umask"><b>03</b> Umask</a>
+    <a href="#sudo"><b>04</b> Sudo</a>
+    <a href="#commands"><b>↳</b> Command lookup</a>
+  </nav>
+  <button class="theme" id="theme" type="button" aria-pressed="false" hidden>Dark theme</button>
+  <div class="rail-bottom">Ubuntu · Bash<br>One page, available offline.<br><br>Use your browser's Find command to locate a command or concept.</div>
+</aside>
+<main class="content" id="main">
+<header class="hero">
+  <div class="eyebrow">Linux / accounts and access</div>
+  <h1>Who can do what?</h1>
+  <p class="lede">A file belongs to a user and a group. Its permissions decide what other accounts can do with it. Most of this topic is learning to read those few pieces of information together.</p>
+  <p>Alex and Bob share a small Python project. We will use their accounts to explain users, groups, permissions, and administrative access. The separate <strong>lab.md</strong> walks through creating the setup and trying the commands.</p>
+  <div class="map">
+    <a href="#users"><em>01 / IDENTITY</em><b>Users &amp; groups</b><span>Which account is running the command?</span></a>
+    <a href="#permissions"><em>02 / ACCESS</em><b>Permissions</b><span>What is that account allowed to do?</span></a>
+    <a href="#umask"><em>03 / CREATION</em><b>Umask</b><span>Which permissions start switched off?</span></a>
+    <a href="#sudo"><em>04 / ADMINISTRATION</em><b>Sudo</b><span>May this command run as another user?</span></a>
+  </div>
+  <p class="subtle">Examples use Ubuntu, Bash, and ordinary Linux permissions. Expected outputs show the relevant fields; your IDs, dates, and error wording may differ. These reference examples are not a setup script—follow the lab for the full sequence.</p>
+</header>
+
+<section class="topic" id="users" aria-labelledby="users-title">
+  <div class="section-no">01 / USERS &amp; GROUPS</div>
+  <h2 id="users-title">Start with the account.</h2>
+  <p>When you type a command, Linux runs a process under an account. That account supplies the identity used for ordinary permission checks. It might be your login, a developer account, or an account used by a background service.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Term</th><th scope="col">Meaning</th><th scope="col">In this example</th></tr></thead>
+    <tbody>
+    <tr><td>User / UID</td><td>An account and its numeric user ID.</td><td><code>dev_alex</code>, <code>dev_bob</code></td></tr>
+    <tr><td>Group / GID</td><td>A named set of accounts and its numeric group ID.</td><td><code>dev_team</code></td></tr>
+    <tr><td>Primary group</td><td>The account's main group. In the lab, newly created files normally start with this group.</td><td>Alex's private group: <code>dev_alex</code></td></tr>
+    <tr><td>Supplementary group</td><td>An additional membership used in access checks.</td><td>Alex also belongs to <code>dev_team</code>.</td></tr>
+    <tr><td>Home directory</td><td>The account's usual personal workspace.</td><td><code>/home/dev_alex</code></td></tr>
+    <tr><td>Root</td><td>The administrative account, UID 0, with broad privileges.</td><td><code>root</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>A group is useful when several people need the same access. Give a project file to <code>dev_team</code>, set its group permissions, and manage who belongs to the team. Membership does not grant access to every file on the machine.</p>
+  <figure>
+    <div class="fig-title">Adding Bob to a project team</div>
+    <div class="two">
+      <div class="state"><h4>Before</h4><span class="pill">dev_alex</span><span class="pill">dev_team</span><p>Alex belongs to the team.<br>Bob has only his private group.</p></div>
+      <div class="state alt"><h4>After adding Bob</h4><span class="pill">dev_alex</span><span class="pill">dev_bob</span><p>Both belong to <code>dev_team</code>.<br>Bob needs a fresh session to use it.</p></div>
+    </div>
+    <figcaption><code>sudo usermod -aG dev_team dev_bob</code> updates Bob's account membership. It does not change any file's permissions.</figcaption>
+  </figure>
+
+  <h3>Read the identity first</h3>
+  <pre><code>whoami
+id
+id dev_bob
+getent passwd dev_alex
+getent group dev_team</code></pre>
+  <p><code>whoami</code> prints your effective account name. <code>id</code> shows the identity and groups of the current process. <code>id dev_bob</code> looks up Bob's account information instead. That distinction matters after changing a group.</p>
+  <p><code>getent</code> asks the system's configured account databases for an entry. Local accounts are normally recorded in <code>/etc/passwd</code> and <code>/etc/group</code>; a system can also use other account sources.</p>
+
+  <h3>Create an account, then add membership</h3>
+  <div class="code-label">Run from an authorized admin account</div>
+  <pre><code>sudo groupadd dev_team
+sudo useradd -m -U -s /bin/bash dev_alex
+sudo usermod -aG dev_team dev_alex</code></pre>
+  <p><code>-m</code> creates the home directory, <code>-U</code> creates a matching private primary group, and <code>-s</code> selects the login shell. To set a password, use <code>sudo passwd dev_alex</code>.</p>
+  <div class="note warm"><p><strong>Keep the <code>-a</code> in <code>-aG</code>.</strong> <code>-G</code> supplies a supplementary group list. By itself, it replaces the old list. Adding <code>-a</code> appends memberships and keeps the groups already there.</p></div>
+
+  <h3>Switch account without losing your place</h3>
+  <pre><code>sudo -iu dev_alex
+whoami
+pwd
+exit</code></pre>
+  <p><code>sudo -iu dev_alex</code> starts a login-style shell as Alex, using your current account's sudo authorization. <code>exit</code> returns to the shell you came from. Alternatively, <code>su - dev_alex</code> normally asks for Alex's password.</p>
+  <div class="note"><p><strong>New membership, new session.</strong> An open Bob shell keeps the groups it started with. After an admin adds Bob to <code>dev_team</code>, leave that shell and start a fresh <code>sudo -iu dev_bob</code> session. Run <code>id</code> inside it to verify.</p></div>
+  <details><summary>Reading an account record</summary>
+    <p>A <code>getent passwd dev_alex</code> entry has seven colon-separated fields: username, password placeholder, UID, primary GID, comment, home directory, and login shell. The numbers vary by machine. The group list in <code>/etc/group</code> does not necessarily list users whose <em>primary</em> group it is; use <code>id username</code> to inspect membership.</p>
+  </details>
+  <p class="project"><b>For a course project:</b> a group can collect the people who maintain a project. A separate service account can identify the program that runs it. People and programs both need an account under which their actions occur.</p>
+</section>
+
+<section class="topic" id="permissions" aria-labelledby="permissions-title">
+  <div class="section-no">02 / PERMISSIONS</div>
+  <h2 id="permissions-title">Read the file's access rules.</h2>
+  <p>A file has one owning user, one owning group, and three sets of ordinary permissions: owner, group, and others. The same structure applies to directories, though the permission letters mean something different there.</p>
+  <pre><code>ls -l hello.py
+stat -c '%A %a %U %G %n' hello.py</code></pre>
+  <div class="code-label">Expected stat output for the lab file</div>
+  <pre><code>-rwxr-x--- 750 dev_alex dev_team hello.py</code></pre>
+  <figure>
+    <div class="fig-title">One type character, then three permission sets</div>
+    <div class="permission-strip">
+      <div class="filetype"><strong>-</strong><small>regular file</small></div>
+      <div><strong>rwx</strong><small>owner · Alex</small></div>
+      <div><strong>r-x</strong><small>group · dev_team</small></div>
+      <div><strong>---</strong><small>others</small></div>
+    </div>
+    <figcaption>The first character is <code>d</code> for a directory. After the mode, a long listing includes the link count, owner, group, size, time, and name.</figcaption>
+  </figure>
+
+  <h3>Linux chooses one set</h3>
+  <p>For these ordinary permission checks, Linux does not combine all three columns. It picks the applicable set, then checks whether that set allows the requested operation.</p>
+  <figure>
+    <div class="fig-title">Which permissions apply to this process?</div>
+    <div class="selection">
+      <div><b>1</b><span>Does its user ID match the file's owner?<br><small>If yes, use owner permissions.</small></span><code>rwx</code></div>
+      <div><b>2</b><span>Otherwise, does one of its groups match the file's group?<br><small>If yes, use group permissions.</small></span><code>r-x</code></div>
+      <div><b>3</b><span>Otherwise, use others.</span><code>---</code></div>
+    </div>
+    <figcaption>Alex uses the owner set. Bob, after joining <code>dev_team</code> and starting a new session, uses the group set. A third ordinary account uses others. There is no fallback to a more generous column.</figcaption>
+  </figure>
+  <p>For example, if Alex owns a file with mode <code>040</code>, Alex cannot read its contents through an ordinary read operation, even if Alex belongs to its group. The owner set is selected and has no read bit. Alex can still change the mode as the owner.</p>
+
+  <h3>Files and directories are different</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Bit</th><th scope="col">On a regular file</th><th scope="col">On a directory</th></tr></thead>
+    <tbody>
+      <tr><td><code>r</code> · read</td><td>Read the file's contents.</td><td>List the names stored in the directory.</td></tr>
+      <tr><td><code>w</code> · write</td><td>Change the file's contents.</td><td>Add, remove, or rename entries; normally also needs <code>x</code>.</td></tr>
+      <tr><td><code>x</code> · execute / search</td><td>Permit direct execution as a program.</td><td>Look up names and pass through the directory.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Think of a directory as a list of names pointing to files. Editing a file changes the file. Deleting it removes a name from that directory. Those are different operations on different objects.</p>
+  <div class="note"><p><strong>A read-only file can still be deleted.</strong> In an ordinary directory, write and search permission on the containing directory can let you remove an entry even when you cannot modify the file's contents. The lab demonstrates this with a disposable copy.</p></div>
+
+  <h3>Every directory on the path matters</h3>
+  <p>To read <code>/srv/access-lab/hello.py</code>, Bob must reach the file first. A readable file behind a directory Bob cannot search is still inaccessible.</p>
+  <figure>
+    <div class="fig-title">Reading a file: checks along the path</div>
+    <div class="path">
+      <div><code>/</code><span>directory: needs x</span></div>
+      <div><code>srv/</code><span>directory: needs x</span></div>
+      <div><code>access-lab/</code><span>directory: needs x</span></div>
+      <div><code>hello.py</code><span>file: needs r</span></div>
+    </div>
+    <figcaption>All these checks must pass. Listing filenames additionally needs directory <code>r</code>. Knowing a filename can be enough when you have directory <code>x</code> but not <code>r</code>.</figcaption>
+  </figure>
+  <p>Use <code>ls -ld /srv/access-lab</code> to inspect the folder itself. Without <code>-d</code>, <code>ls -l</code> normally lists what is inside. A private home directory can block access to a file even after its group has been changed; that is why the lab uses a separate project folder.</p>
+
+  <h3>Change the bits with chmod</h3>
+  <p>Symbolic permissions name the affected class: <code>u</code> for owner, <code>g</code> for group, <code>o</code> for others, or <code>a</code> for all three. Here <code>u</code> means the file's owner, not whichever user happens to type the command.</p>
+  <pre><code>chmod g+w hello.py           # add group write
+chmod g-w hello.py           # remove group write
+chmod u=rwx,g=rx,o= hello.py  # set all three classes
+chmod 750 hello.py           # same ordinary bits</code></pre>
+  <p>Each octal digit represents three switches. Read contributes <strong>4</strong>, write <strong>2</strong>, and execute <strong>1</strong>. Add the enabled values within each class: <code>r-x</code> is 4 + 1 = 5.</p>
+  <div class="table-wrap"><table>
+    <caption>Octal lookup · use one digit each for owner, group, and others</caption>
+    <thead><tr><th scope="col">Digit</th><th scope="col">Permissions</th><th scope="col">Digit</th><th scope="col">Permissions</th></tr></thead>
+    <tbody><tr><td>0</td><td><code>---</code></td><td>4</td><td><code>r--</code></td></tr><tr><td>1</td><td><code>--x</code></td><td>5</td><td><code>r-x</code></td></tr><tr><td>2</td><td><code>-w-</code></td><td>6</td><td><code>rw-</code></td></tr><tr><td>3</td><td><code>-wx</code></td><td>7</td><td><code>rwx</code></td></tr></tbody>
+  </table></div>
+  <p><code>640</code> suits a file the owner may edit and the group may read. <code>750</code> suits a program the owner may edit and the group may run. <code>770</code> also lets the group edit it. Choose the access needed for the job; <code>777</code> gives every account all ordinary permissions.</p>
+
+  <h3>Change ownership with chown or chgrp</h3>
+  <pre><code>chgrp dev_team hello.py
+sudo chown dev_bob hello.py
+sudo chown dev_alex:dev_team hello.py</code></pre>
+  <p>The owner can normally change a file's group to a group they belong to. Transferring the owning user normally requires administrative privilege. <code>chmod</code> changes the permissions; <code>chown</code> and <code>chgrp</code> change who those permissions apply to.</p>
+  <p>Having write permission is not the same as owning the file. A group member may be able to edit its contents without being allowed to change its mode.</p>
+
+  <h3>Two ways to run a Python script</h3>
+  <p>The lab's file contains:</p>
+  <pre><code>#!/usr/bin/env python3
+print("Hello, dev_team!")</code></pre>
+  <div class="two">
+    <div class="state"><h4><code>./hello.py</code></h4><p>Linux is asked to execute the script. It needs execute permission and a usable interpreter line. Python also needs to read this script.</p></div>
+    <div class="state alt"><h4><code>python3 hello.py</code></h4><p>Linux executes Python. Python reads the script as input. The script needs read permission; its own execute bit is not required.</p></div>
+  </div>
+  <p style="margin-top:18px">With mode <code>640</code>, Alex can use the second form but cannot use the first. Adding <code>x</code> changes direct execution; it does not create a separate barrier against someone who can read and interpret the source.</p>
+  <details><summary>What these examples leave out</summary><p>The reference uses ordinary permission bits and ordinary users. Additional access control lists, special mode bits, mount settings, and security policies can affect real systems. Root can bypass many ordinary checks, so testing as root does not tell you what Bob can do. The lab tests with Bob's identity.</p></details>
+  <p class="project"><b>For a course project:</b> separate the right to run a program from the right to edit it. Check the project directory as well as the file. A readable configuration file is still private if only the intended account can reach and read it.</p>
+</section>
+
+<section class="topic" id="umask" aria-labelledby="umask-title">
+  <div class="section-no">03 / UMASK</div>
+  <h2 id="umask-title">Choose the starting permissions.</h2>
+  <p><code>chmod</code> changes a file that already exists. A <strong>umask</strong> blocks selected permission bits when a process creates something new. Read it as “leave these permissions switched off.”</p>
+  <p>For a newly created regular file, tools such as <code>touch</code> normally request <code>666</code>, or <code>rw-rw-rw-</code>. A plain <code>mkdir</code> normally requests <code>777</code>. The mask removes bits from that request. Programs can request less access; a mask cannot add what they did not request.</p>
+  <pre><code>umask          # show this shell's current mask
+umask 027      # change it in this shell
+touch notes.txt
+mkdir notes</code></pre>
+  <p>With fresh names, those last two commands normally produce a <code>640</code> file and a <code>750</code> directory.</p>
+  <figure>
+    <div class="fig-title">New regular file with umask 027</div>
+    <div class="mask-diagram">
+      <div><small>Program requests</small><strong>666</strong><code>rw- rw- rw-</code></div>
+      <div><small>Mask blocks</small><strong>027</strong><code>--- -w- rwx</code></div>
+      <div class="result"><small>Permissions left</small><strong>640</strong><code>rw- r-- ---</code></div>
+    </div>
+    <figcaption>Owner: remove nothing. Group: remove write. Others: remove every requested permission. The mask has no execute bit to remove from the file's original request.</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Mask</th><th scope="col">New file</th><th scope="col">New directory</th><th scope="col">Typical effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>002</code></td><td><code>664</code></td><td><code>775</code></td><td>Keep group write; block others' write.</td></tr>
+      <tr><td><code>022</code></td><td><code>644</code></td><td><code>755</code></td><td>Only owner keeps write.</td></tr>
+      <tr><td><code>027</code></td><td><code>640</code></td><td><code>750</code></td><td>Group can read; others get no access.</td></tr>
+      <tr><td><code>077</code></td><td><code>600</code></td><td><code>700</code></td><td>Owner-only starting access.</td></tr>
+      <tr><td><code>033</code></td><td><code>644</code></td><td><code>744</code></td><td>Remove group/others write and execute.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warm"><p><strong>Do not subtract the numbers.</strong> With <code>033</code>, a new file is <code>644</code>, not <code>633</code>. The mask removes named bits; removing a bit that is already off leaves it off.</p></div>
+  <p>The number also is not a simple “more private” scale. Mask <code>003</code> blocks others' write and execute but leaves their read bit. Mask <code>004</code> blocks read but leaves write. Look at which bits each digit represents.</p>
+  <h3>It belongs to the process</h3>
+  <p>Bash's <code>umask</code> command changes the current shell's setting. Programs started by that shell inherit it. Another terminal that is already open keeps its own setting. A new login may load a mask from the system or shell's startup configuration.</p>
+  <p>Changing the mask does not alter existing files. Running <code>touch</code> on an existing file updates its timestamps; it does not apply the new mask. Use a fresh filename when experimenting, or use <code>chmod</code> to change an old file.</p>
+  <p>If the shell prints <code>0027</code>, it means the same mask as <code>027</code>. The leading zero is octal formatting here; it is not a fourth mask that controls special permissions.</p>
+  <details><summary>The bitwise version</summary>
+    <p>The rule is <code>requested_mode &amp; ~mask</code>, considering the nine ordinary permission bits. Invert the mask to mark the bits that may remain, then keep only bits present in both that inverted mask and the request.</p>
+    <div class="table-wrap"><table><thead><tr><th>Step</th><th>Owner</th><th>Group</th><th>Others</th></tr></thead><tbody><tr><td>Request 666</td><td><code>110</code></td><td><code>110</code></td><td><code>110</code></td></tr><tr><td>Mask 027</td><td><code>000</code></td><td><code>010</code></td><td><code>111</code></td></tr><tr><td>Inverted mask</td><td><code>111</code></td><td><code>101</code></td><td><code>000</code></td></tr><tr><td>AND result 640</td><td><code>110</code></td><td><code>100</code></td><td><code>000</code></td></tr></tbody></table></div>
+    <p>The examples assume no inherited default access control list. Default ACLs can change the creation rules; they are outside this lab.</p>
+  </details>
+  <p class="project"><b>For a course project:</b> a script that creates private configuration files can start with <code>umask 077</code>. That protects ordinary new files from group and other access. It still needs to run under the intended account and use an appropriate directory.</p>
+</section>
+
+<section class="topic" id="sudo" aria-labelledby="sudo-title">
+  <div class="section-no">04 / SUDO</div>
+  <h2 id="sudo-title">Run a command with another identity.</h2>
+  <p><code>sudo</code> checks policy and, if permitted, runs a command as another account. The usual default target is root. It does not mean “ignore any error,” and it does not permanently change the account in your current shell.</p>
+  <figure>
+    <div class="fig-title">Inside a newuser session, after access is granted</div>
+    <div class="mask-diagram">
+      <div><small>Current shell</small><p><code>whoami</code></p><b>newuser</b></div>
+      <div class="result"><small>One sudo command</small><p><code>sudo whoami</code></p><b>root</b></div>
+      <div><small>Back in the shell</small><p><code>whoami</code></p><b>newuser</b></div>
+    </div>
+    <figcaption>This is why you can use sudo for one administrative command and continue ordinary work under your own account.</figcaption>
+  </figure>
+  <h3>The Ubuntu sudo group</h3>
+  <div class="code-label">Run from an existing authorized admin account</div>
+  <pre><code>sudo useradd -m -U -s /bin/bash newuser
+sudo passwd newuser
+sudo usermod -aG sudo newuser
+sudo -l -U newuser</code></pre>
+  <p>On a standard Ubuntu setup, policy authorizes members of the <code>sudo</code> group. A rule commonly looks like this:</p>
+  <pre><code>%sudo ALL=(ALL:ALL) ALL</code></pre>
+  <p><code>%sudo</code> selects the group. The rule grants its members broad permission to run commands as other users and groups. A group with that name has no special power by itself; the policy grants the power.</p>
+  <p>Open a fresh Newuser session after adding membership. Run <code>sudo whoami</code> there to check the result. If it asks for a password, standard sudo policy asks for <strong>newuser's password</strong>, not root's. Some environments use cached authentication or passwordless rules.</p>
+  <div class="table-wrap"><table class="cmd-list"><thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
+    <tr><td><code>sudo -l</code></td><td>List what your current account may run.</td></tr>
+    <tr><td><code>sudo -l -U newuser</code></td><td>As an authorized administrator, inspect another account's sudo privileges.</td></tr>
+    <tr><td><code>sudo -k</code></td><td>Invalidate cached authentication for the current session context; the next sudo use follows the policy's authentication requirements.</td></tr>
+    <tr><td><code>sudo -u dev_bob command</code></td><td>Run one command as Bob, useful for testing Bob's access.</td></tr>
+    <tr><td><code>sudo -iu dev_bob</code></td><td>Start a login-style shell as Bob.</td></tr>
+    <tr><td><code>sudo visudo -c</code></td><td>Check sudoers configuration syntax without editing it.</td></tr>
+  </tbody></table></div>
+  <p>For an authorized policy change, use <code>sudo visudo</code>; it checks syntax when saving. The practice lab uses Ubuntu's existing group policy and requires no sudoers edits.</p>
+  <h3>Removing access</h3>
+  <pre><code>sudo gpasswd -d newuser sudo</code></pre>
+  <p>This removes the membership from the account database. Leave the old Newuser shell, open a new one, and test again. Removing a group does not terminate old shells or commands that are already running, and another sudo rule could still grant access.</p>
+  <details><summary>Login records and shell history</summary>
+    <p><code>last -n 5</code> reads recorded login events. A container may have no login records or may omit the command. Bash's <code>history 10</code> shows recent entries in the current shell; <code>~/.bash_history</code> is saved history and can lag behind an active session.</p>
+    <p>An authorized administrator can often read another user's saved history with a command such as <code>sudo cat /home/dev_alex/.bash_history</code>. Read someone else's history only for an authorized purpose. History can be incomplete, changed, or contain secrets; it is not a complete audit trail.</p>
+  </details>
+  <p class="project"><b>For a course project:</b> installing system packages or creating accounts may require sudo. Editing a project file that you own usually does not. Run each command under the account whose access you intend to use.</p>
+</section>
+
+<section class="topic" id="commands" aria-labelledby="commands-title">
+  <div class="section-no">QUICK LOOKUP</div>
+  <h2 id="commands-title">Find the command for the job.</h2>
+  <div class="table-wrap"><table class="cmd-list"><thead><tr><th scope="col">Job</th><th scope="col">Command</th></tr></thead><tbody>
+    <tr><td>Check current identity and groups</td><td><code>whoami</code>, <code>id</code></td></tr>
+    <tr><td>Inspect an account / group</td><td><code>id dev_bob</code>, <code>getent group dev_team</code></td></tr>
+    <tr><td>Create a group</td><td><code>sudo groupadd dev_team</code></td></tr>
+    <tr><td>Create a Bash user with a home</td><td><code>sudo useradd -m -U -s /bin/bash dev_alex</code></td></tr>
+    <tr><td>Set an account's password</td><td><code>sudo passwd dev_alex</code></td></tr>
+    <tr><td>Add a supplementary group</td><td><code>sudo usermod -aG dev_team dev_bob</code></td></tr>
+    <tr><td>Remove one group membership</td><td><code>sudo gpasswd -d dev_bob dev_team</code></td></tr>
+    <tr><td>Inspect a file / the directory itself</td><td><code>ls -l hello.py</code>, <code>ls -ld /srv/access-lab</code></td></tr>
+    <tr><td>Give owner full access, group read + execute</td><td><code>chmod 750 hello.py</code></td></tr>
+    <tr><td>Add only group write</td><td><code>chmod g+w hello.py</code></td></tr>
+    <tr><td>Change the owning group</td><td><code>chgrp dev_team hello.py</code></td></tr>
+    <tr><td>Change owner and group</td><td><code>sudo chown dev_alex:dev_team hello.py</code></td></tr>
+    <tr><td>Block group / others on new creations</td><td><code>umask 077</code></td></tr>
+    <tr><td>Inspect your sudo permissions</td><td><code>sudo -l</code></td></tr>
+    <tr><td>Delete a finished practice account and home</td><td><code>sudo userdel -r newuser</code></td></tr>
+    <tr><td>Delete a finished practice group</td><td><code>sudo groupdel dev_team</code></td></tr>
+  </tbody></table></div>
+  <p>Delete practice accounts only after their shells have exited and their work is no longer needed. <code>userdel</code> without <code>-r</code> normally leaves the home directory; <code>-r</code> removes it and the mail spool, but does not remove every file the account may own elsewhere.</p>
+  <div class="note"><p><strong>When access fails:</strong> check the account, check its active groups, check the file's owner and mode, then check every directory on the path. Change the part that explains the failure.</p></div>
+</section>
+
+<footer class="footer">
+  <h2>About this reference</h2>
+  <p>Adapted from the supplied Linux account, permission, umask, and sudo course materials. The companion <strong>lab.md</strong> includes complete setup, practice variations, troubleshooting, and cleanup. This HTML contains its own styles and diagrams; it needs no network connection.</p>
+  <p>Local help: <code>man chmod</code>, <code>man usermod</code>, <code>man sudo</code>, and Bash's <code>help umask</code>. The documentation links below are optional and require an internet connection.</p>
+  <ul>
+    <li><a href="https://www.gnu.org/software/coreutils/manual/html_node/File-permissions.html">GNU Coreutils: file permissions and command reference</a></li>
+    <li><a href="https://man7.org/linux/man-pages/man8/usermod.8.html">Linux manual: usermod</a></li>
+    <li><a href="https://man7.org/linux/man-pages/man7/path_resolution.7.html">Linux manual: pathname lookup</a></li>
+    <li><a href="https://man7.org/linux/man-pages/man2/umask.2.html">Linux manual: umask</a></li>
+    <li><a href="https://man7.org/linux/man-pages/man5/sudoers.5.html">Sudo manual: sudoers policy</a></li>
+  </ul>
+  <span class="tag">Offline reference</span><span class="tag">Static diagrams</span><span class="tag">Print-friendly</span>
+</footer>
+</main>
+</div>
+<script>
+(() => {
+  const button = document.getElementById('theme');
+  const root = document.documentElement;
+  const apply = dark => {
+    root.dataset.theme = dark ? 'dark' : 'light';
+    button.textContent = dark ? 'Light theme' : 'Dark theme';
+    button.setAttribute('aria-pressed', String(dark));
+  };
+  let dark = false;
+  try { dark = localStorage.getItem('linux-access-theme') === 'dark'; } catch (_) {}
+  apply(dark);
+  button.hidden = false;
+  button.addEventListener('click', () => {
+    dark = root.dataset.theme !== 'dark';
+    apply(dark);
+    try { localStorage.setItem('linux-access-theme', dark ? 'dark' : 'light'); } catch (_) {}
+  });
+})();
+</script>
+</body>
+</html>
