@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who gets in: users, permissions, umask and sudo on Linux</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --paper: #F3F5F4;
+  --panel: #E6ECEA;
+  --ink: #1C2329;
+  --muted: #56626B;
+  --rule: #C9D2D0;
+  --owner: #1B6A87;
+  --group: #93560C;
+  --others: #85346E;
+  --link: #1B6A87;
+  --term-bg: #1D2830;
+  --term-fg: #E7EEF2;
+  --term-out: #B4C4CD;
+  --term-prompt: #EDB764;
+  --term-note: #8EA2AD;
+  --serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, "Iowan Old Style", Georgia, serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #151B1E;
+    --panel: #1E272B;
+    --ink: #E3E9EB;
+    --muted: #9AA8AF;
+    --rule: #33424A;
+    --owner: #6DBEDB;
+    --group: #E2A55A;
+    --others: #DB8EC6;
+    --link: #6DBEDB;
+    --term-bg: #0E161A;
+    --term-out: #AABCC6;
+  }
+}
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.62;
+}
+
+a { color: var(--link); text-underline-offset: 0.15em; }
+a:focus-visible { outline: 3px solid var(--owner); outline-offset: 2px; }
+
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 1rem; top: 1rem; background: var(--paper); padding: .5rem .8rem; z-index: 10; }
+
+/* ---------- page frame ---------- */
+.top {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 3.5rem 1.25rem 1rem;
+}
+.top h1 {
+  font-size: clamp(2.6rem, 7vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  margin: 0 0 .8rem;
+}
+@media (min-width: 64rem) { .top { padding-left: calc(1.25rem + 15.5rem); } }
+.lede { font-size: 1.25rem; color: var(--muted); max-width: 38rem; margin: 0 0 2.4rem; }
+
+.wrap {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+}
+@media (min-width: 64rem) {
+  .wrap { grid-template-columns: 12rem minmax(0, 44rem); gap: 3.5rem; }
+  .toc { position: sticky; top: 1.5rem; align-self: start; }
+}
+
+.toc { font-size: .98rem; border-left: 2px solid var(--rule); padding-left: 1rem; }
+.toc p { margin: 0 0 .4rem; color: var(--muted); }
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li { margin: .25rem 0; }
+.toc a { text-decoration: none; color: var(--ink); }
+.toc a:hover { text-decoration: underline; }
+.toc .n { color: var(--muted); display: inline-block; width: 1.3rem; }
+
+main { min-width: 0; }
+
+h2 {
+  font-size: clamp(1.75rem, 3.4vw, 2.2rem);
+  line-height: 1.15;
+  margin: 3.5rem 0 1rem;
+  padding-top: 1.1rem;
+  border-top: 2px solid var(--ink);
+}
+h2 .n { color: var(--muted); font-weight: 400; margin-right: .4rem; }
+main > section:first-child h2 { margin-top: 1rem; }
+h3 { font-size: 1.28rem; line-height: 1.3; margin: 2.4rem 0 .5rem; }
+p { margin: 0 0 1rem; }
+
+code {
+  font-family: var(--mono);
+  font-size: .86em;
+  white-space: nowrap;
+  background: var(--panel);
+  padding: .08em .32em;
+  border-radius: 3px;
+}
+
+/* ---------- terminal blocks ---------- */
+.term {
+  background: var(--term-bg);
+  color: var(--term-fg);
+  font-family: var(--mono);
+  font-size: .9rem;
+  line-height: 1.55;
+  padding: 1rem 1.15rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 1rem 0 1.4rem;
+}
+.term .p { color: var(--term-prompt); user-select: none; -webkit-user-select: none; }
+.term .o { color: var(--term-out); }
+.term .c { color: var(--term-note); }
+
+.src {
+  font-family: var(--mono);
+  font-size: .92rem;
+  background: var(--panel);
+  border-left: 3px solid var(--muted);
+  padding: .8rem 1rem;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 1rem 0 1.4rem;
+}
+
+/* ---------- tables ---------- */
+.tbl { overflow-x: auto; margin: 1rem 0 1.6rem; }
+table { border-collapse: collapse; width: 100%; font-size: 1rem; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: .5rem .9rem .5rem 0; border-bottom: 1px solid var(--rule); }
+thead th { border-bottom: 2px solid var(--ink); font-weight: 600; }
+td code, th code { white-space: nowrap; }
+table.digits { width: auto; }
+table.digits th, table.digits td { text-align: center; padding: .4rem .55rem; }
+table.digits th { text-align: left; font-weight: 600; }
+
+/* ---------- colour keys for owner / group / others ---------- */
+.k-type   { --c: var(--ink); }
+.k-owner  { --c: var(--owner); }
+.k-group  { --c: var(--group); }
+.k-others { --c: var(--others); }
+.k-plain  { --c: var(--muted); }
+.t-owner  { color: var(--owner); }
+.t-group  { color: var(--group); }
+.t-others { color: var(--others); }
+
+/* ---------- anatomy: a line of text with labelled parts ---------- */
+.anatomy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem .45rem;
+  margin: 1.3rem 0 1.7rem;
+}
+.seg { display: flex; flex-direction: column; align-items: stretch; }
+.seg > code {
+  background: none;
+  white-space: pre;
+  padding: 0 .12em;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--c, var(--ink));
+  text-align: center;
+  white-space: pre;
+}
+.seg > span {
+  border-top: 3px solid var(--c, var(--muted));
+  margin-top: .2rem;
+  padding-top: .3rem;
+  font-size: .84rem;
+  line-height: 1.3;
+  text-align: center;
+  max-width: 9.5rem;
+}
+.seg.sep > code { color: var(--muted); font-weight: 400; }
+.seg.sep > span { border-top-color: transparent; }
+
+.hero { gap: 1.1rem .7rem; margin: 0 0 1.8rem; }
+.hero .seg > code { font-size: clamp(2.8rem, 11vw, 5rem); font-weight: 700; line-height: 1; }
+.hero .seg > span { font-size: 1rem; max-width: 11.5rem; border-top-width: 4px; }
+@media (max-width: 40rem) {
+  .hero { flex-wrap: nowrap; gap: .5rem; }
+  .hero .seg { width: min-content; }
+  .hero .seg > code { font-size: clamp(2.3rem, 12vw, 3rem); }
+  .hero .seg > span { font-size: .8rem; }
+}
+
+/* ---------- umask bit strips ---------- */
+.bits { margin: 1.3rem 0 1.8rem; display: grid; gap: .7rem; }
+.bitrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+@media (min-width: 40rem) {
+  .bitrow { grid-template-columns: 11.5rem auto minmax(0, 1fr); align-items: center; gap: 1rem; }
+}
+.bitrow .lbl { font-size: .95rem; color: var(--muted); line-height: 1.3; }
+.bitrow .val { font-family: var(--mono); font-size: .98rem; }
+.cells { display: flex; gap: .55rem; }
+.tri { display: flex; gap: 3px; }
+.tri i {
+  font-style: normal;
+  font-family: var(--mono);
+  font-weight: 600;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--c);
+  color: var(--c);
+  border-radius: 3px;
+  font-size: 1rem;
+}
+.tri i.on { background: color-mix(in srgb, var(--c) 16%, transparent); }
+.tri i.empty { border-style: dashed; border-color: var(--rule); }
+.tri i.tape {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 7px);
+  opacity: .8;
+}
+.head .tri i { border-color: transparent; color: var(--c); font-weight: 400; height: 1.3rem; }
+.bitrow.wrong .val { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: var(--others); }
+.bitrow.wrong .tri i { opacity: .55; }
+.bitrow.wrong .lbl { color: var(--others); }
+
+/* ---------- diagrams ---------- */
+figure { margin: 1.6rem 0 2rem; }
+figure svg { display: block; width: 100%; height: auto; max-width: 35rem; }
+figure svg[viewBox^="0 0 440"] { max-width: 28rem; }
+figcaption { font-size: .95rem; color: var(--muted); margin-top: .6rem; max-width: 36rem; }
+.dg text { font-family: var(--serif); font-size: 18px; fill: var(--ink); }
+.dg .sm { font-size: 15px; fill: var(--muted); }
+.dg .mono { font-family: var(--mono); font-size: 18px; font-weight: 600; }
+.dg .box { fill: var(--panel); stroke: var(--rule); stroke-width: 1.5; }
+.dg .ln { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+.dg .lead { stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 2 5; fill: none; }
+.dg .ah { fill: var(--muted); }
+.dg .s-owner { stroke: var(--owner); stroke-width: 2.2; }
+.dg .s-group { stroke: var(--group); stroke-width: 2.2; }
+.dg .s-others { stroke: var(--others); stroke-width: 2.2; }
+.dg .s-ink { stroke: var(--ink); stroke-width: 2; }
+.dg .f-owner { fill: var(--owner); }
+.dg .f-group { fill: var(--group); }
+.dg .f-others { fill: var(--others); }
+.dg .team { fill: var(--group); fill-opacity: .08; stroke: var(--group); stroke-width: 2; }
+.dg .priv { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.dg .pill { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+.dg .badge { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+
+.note { font-size: 1rem; color: var(--muted); }
+
+footer { max-width: 64rem; margin: 0 auto; padding: 2rem 1.25rem 3rem; color: var(--muted); font-size: .95rem; border-top: 1px solid var(--rule); }
+
+@media print {
+  .toc, .skip { display: none; }
+  .wrap { display: block; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .term { background: #f3f3f3; color: #000; border: 1px solid #bbb; white-space: pre-wrap; }
+  .term .p, .term .o, .term .c { color: #333; }
+  h2 { break-after: avoid; }
+  figure, .term, table { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to the content</a>
+
+<header class="top">
+  <h1>Who gets in</h1>
+  <p class="lede">Users, groups, permissions, umask and sudo on Linux. A reference to read, come back to, and keep open in another tab while you work through the lab.</p>
+
+  <div class="anatomy hero" role="img" aria-label="The permission string -rwxr-x---: a dash for a regular file, then rwx for the owner, r-x for the group, and three dashes for everyone else.">
+    <div class="seg k-type"><code>-</code><span>a regular file</span></div>
+    <div class="seg k-owner"><code>rwx</code><span>owner dev_alex: read, write, run</span></div>
+    <div class="seg k-group"><code>r-x</code><span>group dev_team: read, run</span></div>
+    <div class="seg k-others"><code>---</code><span>everyone else: nothing</span></div>
+  </div>
+
+  <p style="max-width:40rem">Those ten characters start every line that <code>ls -l</code> prints, and most of this page is about reading them. Who counts as the owner, who counts as the group, who is left over as everyone else. Then two shorter topics: umask, which decides what the letters look like on a brand-new file, and sudo, which lets a trusted person step past all of it for one command.</p>
+  <p style="max-width:40rem">A Linux machine is a shared apartment building. Lots of people and programs live there at the same time, every door has a lock, and the building needs a rule for who holds which key. Everything below is that rule, in detail.</p>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="On this page">
+    <p>On this page</p>
+    <ol>
+      <li><a href="#users"><span class="n">1</span>Users and groups</a></li>
+      <li><a href="#perms"><span class="n">2</span>Permissions and ownership</a></li>
+      <li><a href="#umask"><span class="n">3</span>umask</a></li>
+      <li><a href="#sudo"><span class="n">4</span>sudo</a></li>
+      <li><a href="#ref"><span class="n"></span>Quick reference</a></li>
+    </ol>
+  </nav>
+
+<main id="content">
+
+<!-- ================================================================ -->
+<section id="users">
+<h2><span class="n">1</span>Users and groups</h2>
+
+<h3>A user is a number wearing a name tag</h3>
+<p>You see <code>dev_alex</code>. The kernel sees 1001. Every running program carries a user ID, every file records one as its owner, and nearly every "may I?" question on the system gets answered by comparing those numbers. The names are there for humans. The system works more like a coat check: it has no interest in who you are, only in the number on your ticket.</p>
+<p>One number is special. <code>root</code> is user 0, and the permission checks mostly wave it through without looking. That's the reason nobody works as root day to day. A typo made as root doesn't get stopped by anything.</p>
+
+<h3>Groups, and why everyone gets one of their own</h3>
+<p>A group is a named list of users. It lets you open a door for a whole team at once instead of person by person, and it's where the middle triplet in <code>-rwxr-x---</code> gets its meaning.</p>
+<p>Every user has exactly one <em>primary</em> group and any number of <em>supplementary</em> ones. On Ubuntu, creating a user quietly creates a primary group with the same name, with that user as the only member. A club with one member sounds pointless until you notice what it protects. New files belong to their creator's primary group, so if that group is just you, nobody picks up group access to your files by accident.</p>
+
+<figure>
+<svg class="dg" viewBox="0 0 560 240" role="img" aria-labelledby="g1t g1d">
+  <title id="g1t">Primary and supplementary groups</title>
+  <desc id="g1d">dev_alex sits alone inside a primary group named dev_alex, and dev_bob alone inside a primary group named dev_bob. A larger group, dev_team, surrounds both of them.</desc>
+  <rect class="team" x="24" y="24" width="512" height="196" rx="18"/>
+  <text class="mono f-group" x="44" y="54">dev_team</text>
+  <text class="sm" x="134" y="54">supplementary group, shared</text>
+  <rect class="priv" x="64" y="78" width="200" height="118" rx="12"/>
+  <text class="sm" x="80" y="102">primary group: dev_alex</text>
+  <rect class="pill" x="109" y="128" width="110" height="36" rx="18"/>
+  <text class="mono" x="164" y="152" text-anchor="middle">dev_alex</text>
+  <rect class="priv" x="296" y="78" width="200" height="118" rx="12"/>
+  <text class="sm" x="312" y="102">primary group: dev_bob</text>
+  <rect class="pill" x="341" y="128" width="110" height="36" rx="18"/>
+  <text class="mono" x="396" y="152" text-anchor="middle">dev_bob</text>
+</svg>
+<figcaption>Where everyone stands by the end of the permissions part of the lab. Each user is alone in a primary group named after them, and both share dev_team.</figcaption>
+</figure>
+
+<p>Joining <code>dev_team</code> leaves alex's primary group alone. Files he creates still come out belonging to the group <code>dev_alex</code>, and handing them to the team is a separate step (section 2 shows how).</p>
+
+<h3>Where the system writes it down</h3>
+<p>In two plain text files that anyone can read. Each line of <code>/etc/passwd</code> is one account:</p>
+
+<div class="anatomy" role="img" aria-label="An /etc/passwd line: dev_alex, x, 1001, 1003, an empty comment, /home/dev_alex, /bin/bash, separated by colons.">
+  <div class="seg k-owner"><code>dev_alex</code><span>name</span></div>
+  <div class="seg sep"><code>:</code><span>&nbsp;</span></div>
+  <div class="seg k-plain"><code>x</code><span>password lives elsewhere</span></div>
+  <div class="seg sep"><code>:</code><span>&nbsp;</span></div>
+  <div class="seg k-owner"><code>1001</code><span>user ID</span></div>
+  <div class="seg sep"><code>:</code><span>&nbsp;</span></div>
+  <div class="seg k-group"><code>1003</code><span>primary group ID</span></div>
+  <div class="seg k-plain"><code>::</code><span>empty comment field</span></div>
+  <div class="seg k-type"><code>/home/dev_alex</code><span>home directory</span></div>
+  <div class="seg sep"><code>:</code><span>&nbsp;</span></div>
+  <div class="seg k-type"><code>/bin/bash</code><span>login shell</span></div>
+</div>
+
+<p>That <code>x</code> is a leftover. Passwords, scrambled, used to sit right there. But <code>/etc/passwd</code> has to be readable by everyone (it's how <code>ls -l</code> turns 1001 back into <code>dev_alex</code>), so the scrambled passwords moved to <code>/etc/shadow</code>, which only root can read. The scrambling only goes one way. When you log in, the system scrambles what you typed the same way and compares the results.</p>
+
+<p><code>/etc/group</code> works the same way, with four fields:</p>
+
+<div class="anatomy" role="img" aria-label="An /etc/group line: dev_team, x, 1002, then the members dev_alex and dev_bob.">
+  <div class="seg k-group"><code>dev_team</code><span>group name</span></div>
+  <div class="seg k-plain"><code>:x:</code><span>unused password field</span></div>
+  <div class="seg k-group"><code>1002</code><span>group ID</span></div>
+  <div class="seg sep"><code>:</code><span>&nbsp;</span></div>
+  <div class="seg k-type"><code>dev_alex,dev_bob</code><span>supplementary members</span></div>
+</div>
+
+<p>A user's primary group doesn't appear in that member list; it comes from the fourth field of their passwd line. So the line <code>dev_alex:x:1003:</code>, with nothing after the last colon, is not an empty group. alex is in it.</p>
+
+<div class="term"><span class="p">$ </span>getent passwd dev_alex
+<span class="o">dev_alex:x:1001:1003::/home/dev_alex:/bin/bash</span>
+<span class="p">$ </span>getent group dev_team
+<span class="o">dev_team:x:1002:dev_alex,dev_bob</span></div>
+
+<p><code>grep dev_team /etc/group</code> would print the same line here. <code>getent</code> asks the system's account lookup instead of reading the file directly, which matters on machines that also pull accounts from a network directory, like many university systems.</p>
+
+<h3>Making and changing accounts</h3>
+
+<div class="term"><span class="p">$ </span>sudo groupadd dev_team
+<span class="p">$ </span>sudo useradd -m -s /bin/bash dev_alex
+<span class="p">$ </span>sudo passwd dev_alex
+<span class="o">New password:
+Retype new password:
+passwd: password updated successfully</span>
+<span class="p">$ </span>sudo usermod -aG dev_team dev_alex
+<span class="p">$ </span>id dev_alex
+<span class="o">uid=1001(dev_alex) gid=1003(dev_alex) groups=1003(dev_alex),1002(dev_team)</span></div>
+
+<p>On <code>useradd</code>, <code>-m</code> makes the home directory and <code>-s /bin/bash</code> sets the login shell. Leave <code>-s</code> off and Ubuntu gives the account <code>/bin/sh</code>. Everything still works, but there's no tab completion and no arrow-key history, and typing in it feels like typing in oven mitts.</p>
+<p>Passwords don't echo. Not a letter, not a dot. That's normal.</p>
+<p>Ubuntu and Debian also ship <code>adduser</code>, a friendlier wrapper that asks a few questions and does everything above in one go, bash included. <code>useradd</code> is the one you'll find on every distribution, which is why the lab uses it.</p>
+
+<h3>The one-letter difference in usermod</h3>
+<p>In <code>usermod -aG</code>, the <code>-G</code> names supplementary groups and the <code>-a</code> means <em>append</em>. Drop the <code>-a</code> and <code>-G</code> replaces the whole list with whatever you typed. You meant to add a name to the guest list and instead you tore it up and wrote one name on a fresh sheet.</p>
+
+<div class="term"><span class="p">$ </span>sudo usermod -G scratch dev_alex
+<span class="p">$ </span>id dev_alex
+<span class="o">uid=1001(dev_alex) gid=1003(dev_alex) groups=1003(dev_alex),1004(scratch)</span></div>
+
+<p>dev_team is gone. <code>sudo gpasswd -a dev_alex dev_team</code> does the same job as <code>usermod -aG</code> and has no replace mode to fall into, which is a point in its favour.</p>
+
+<h3>Group changes wait for the next login</h3>
+<p>Your groups are looked up once, when you log in, and every program you start after that inherits the list. Add dev_bob to a group while he's logged in and his current shell carries on without it. It works the other way too, which surprises people more: take him out of a group and the session he already has open keeps the access until he logs out.</p>
+<p>Two commands can seem to disagree about this. <code>id dev_bob</code>, with a name, reads the account files and shows the change straight away. Plain <code>id</code>, typed inside bob's old shell, shows the list that shell is actually carrying, and that's the list file access uses.</p>
+
+<h3>Becoming someone else</h3>
+
+<div class="term"><span class="p">$ </span>su - dev_alex
+<span class="o">Password:</span>
+<span class="p">$ </span>whoami
+<span class="o">dev_alex</span>
+<span class="p">$ </span>exit
+<span class="o">logout</span></div>
+
+<p><code>su</code> asks for the target user's password, not yours. The dash matters. It gives you a real login as that user, starting in their home directory with their settings. Without the dash you become them but keep standing in your old directory with your old environment, which gets confusing quickly.</p>
+<p>Each <code>su</code> opens a new shell on top of the one you were in, and <code>exit</code> closes one. Go from your own account into alex and from alex into bob, and it takes two exits to get home. <code>whoami</code> always tells you where you are, and on most setups the prompt does too (<code>dev_alex@...</code>).</p>
+<p>If you have sudo rights, <code>sudo -iu dev_alex</code> gets you the same login without knowing alex's password. It asks for yours instead, if it asks at all.</p>
+
+<h3>Removing accounts</h3>
+
+<div class="term"><span class="p">$ </span>sudo userdel -r dev_alex
+<span class="o">userdel: dev_alex mail spool (/var/mail/dev_alex) not found</span>
+<span class="p">$ </span>sudo groupdel dev_team</div>
+
+<p><code>-r</code> removes the home directory too. Without it the account disappears and its files stay behind, owned by a number nobody answers to anymore. In <code>ls -l</code> you'd see <code>1001</code> where the name used to be.</p>
+<p>The mail spool line is harmless: userdel tried to tidy a mailbox that never existed. A message like <code style="white-space:normal">user dev_alex is currently used by process 586</code> is different. Something is still running as alex, usually a <code>su</code> session you forgot to exit. And a group can't be deleted while it's still someone's primary group.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="perms">
+<h2><span class="n">2</span>Permissions and ownership</h2>
+
+<h3>Reading one line of ls -l</h3>
+<p>Every file and every directory records one owner and one group. <code>ls -l</code> shows both, together with the permission string:</p>
+
+<div class="anatomy" role="img" aria-label="An ls -l line: permissions -rwxrwx---, link count 1, owner dev_alex, group dev_team, size 49 bytes, modified Sep 23 16:33, name hello.py.">
+  <div class="seg k-type"><code>-rwxrwx---</code><span>type and permissions</span></div>
+  <div class="seg k-plain"><code>1</code><span>links</span></div>
+  <div class="seg k-owner"><code>dev_alex</code><span>owner</span></div>
+  <div class="seg k-group"><code>dev_team</code><span>group</span></div>
+  <div class="seg k-plain"><code>49</code><span>size in bytes</span></div>
+  <div class="seg k-plain"><code>Sep 23 16:33</code><span>last modified</span></div>
+  <div class="seg k-type"><code>hello.py</code><span>name</span></div>
+</div>
+
+<p>The first character is the type: <code>-</code> for a regular file, <code>d</code> for a directory, <code>l</code> for a symbolic link. After it come three groups of three. Each slot holds either its letter or a dash, and the order never changes: r, then w, then x. The first three belong to the <span class="t-owner">owner</span>, the next three to members of the file's <span class="t-group">group</span>, the last three to <span class="t-others">everyone else</span>.</p>
+<p><code>stat</code> says the same thing at greater length, and shows the permissions both ways at once:</p>
+
+<div class="term"><span class="p">$ </span>stat hello.py
+<span class="o">  File: hello.py
+  Size: 49        	Blocks: 8          IO Block: 4096   regular file
+Device: 254,0	Inode: 573515      Links: 1
+Access: (0770/-rwxrwx---)  Uid: ( 1001/dev_alex)   Gid: ( 1002/dev_team)</span>
+<span class="c">(a few timestamp lines follow)</span></div>
+
+<h3>Exactly one triplet applies to you</h3>
+<p>When you try to use a file, Linux picks one of the three triplets and ignores the other two. It asks its questions in a fixed order and stops at the first yes.</p>
+
+<figure>
+<svg class="dg" viewBox="0 0 560 410" role="img" aria-labelledby="f1t f1d">
+  <title id="f1t">Which triplet applies to you</title>
+  <desc id="f1d">For a file with permissions -rwxr-x--- owned by dev_alex and group dev_team. First question: are you root? If yes, you are mostly let in. If no: are you the owner? If yes, the owner triplet rwx applies. If no: are you in the file's group? If yes, the group triplet r-x applies. If no, the everyone-else triplet, three dashes, applies.</desc>
+  <defs>
+    <marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="box" x="20" y="10" width="300" height="46" rx="6"/>
+  <text x="170" y="39" text-anchor="middle">You try to open hello.py</text>
+  <path class="ln" d="M170 56 V86" marker-end="url(#ah1)"/>
+
+  <rect class="box" x="20" y="90" width="300" height="56" rx="6"/>
+  <text x="170" y="124" text-anchor="middle">Are you root?</text>
+  <path class="ln" d="M320 118 H371" marker-end="url(#ah1)"/>
+  <text class="sm" x="345" y="110" text-anchor="middle">yes</text>
+  <rect class="box" x="375" y="90" width="170" height="56" rx="6"/>
+  <text x="460" y="124" text-anchor="middle">mostly let in</text>
+  <path class="ln" d="M170 146 V170" marker-end="url(#ah1)"/>
+  <text class="sm" x="180" y="163">no</text>
+
+  <rect class="box" x="20" y="174" width="300" height="56" rx="6"/>
+  <text x="170" y="208" text-anchor="middle">Are you the owner (dev_alex)?</text>
+  <path class="ln" d="M320 202 H371" marker-end="url(#ah1)"/>
+  <text class="sm" x="345" y="194" text-anchor="middle">yes</text>
+  <rect class="box s-owner" x="375" y="174" width="170" height="56" rx="6"/>
+  <text class="sm" x="460" y="197" text-anchor="middle">owner triplet</text>
+  <text class="mono f-owner" x="460" y="220" text-anchor="middle">rwx</text>
+  <path class="ln" d="M170 230 V254" marker-end="url(#ah1)"/>
+  <text class="sm" x="180" y="247">no</text>
+
+  <rect class="box" x="20" y="258" width="300" height="56" rx="6"/>
+  <text x="170" y="292" text-anchor="middle">In the file's group (dev_team)?</text>
+  <path class="ln" d="M320 286 H371" marker-end="url(#ah1)"/>
+  <text class="sm" x="345" y="278" text-anchor="middle">yes</text>
+  <rect class="box s-group" x="375" y="258" width="170" height="56" rx="6"/>
+  <text class="sm" x="460" y="281" text-anchor="middle">group triplet</text>
+  <text class="mono f-group" x="460" y="304" text-anchor="middle">r-x</text>
+  <path class="ln" d="M170 314 V338" marker-end="url(#ah1)"/>
+  <text class="sm" x="180" y="331">no</text>
+
+  <rect class="box s-others" x="20" y="342" width="300" height="56" rx="6"/>
+  <text class="sm" x="170" y="365" text-anchor="middle">everyone-else triplet</text>
+  <text class="mono f-others" x="170" y="388" text-anchor="middle">---</text>
+</svg>
+<figcaption>The check for <code>-rwxr-x---</code>, owner dev_alex, group dev_team. The first yes decides, and the remaining triplets are never read.</figcaption>
+</figure>
+
+<p>No adding up, no best of three. That has a strange consequence. If dev_alex sets his own file to <code>----rwx---</code>, the group can read it and alex can't, even though he is a member of the group. The check found him as the owner and never looked any further.</p>
+
+<div class="term"><span class="p">$ </span>chmod 070 hello.py
+<span class="p">$ </span>ls -l hello.py
+<span class="o">----rwx--- 1 dev_alex dev_team 49 Sep 23 16:33 hello.py</span>
+<span class="p">$ </span>cat hello.py
+<span class="o">cat: hello.py: Permission denied</span></div>
+
+<p>He isn't locked out for good. The right to change a file's permissions doesn't come from the bits at all; the owner can always <code>chmod</code> their own file, so <code>chmod 770 hello.py</code> puts it back.</p>
+<p>root skips the read and write checks entirely. To run a file as a program, though, even root needs at least one x to be set on it somewhere.</p>
+
+<h3>What r, w and x mean</h3>
+<p>On a file the letters mean what you'd guess. On a directory they mean something different, and it helps to stop picturing a directory as a box with files inside. A directory is a list of names, like one page of a phone book, and each entry points at a file stored somewhere else on the disk. With that picture:</p>
+
+<div class="tbl">
+<table>
+<thead><tr><th></th><th>on a file</th><th>on a directory</th></tr></thead>
+<tbody>
+<tr><td><code>r</code></td><td>read what's in it</td><td>read the list of names (<code>ls</code> works)</td></tr>
+<tr><td><code>w</code></td><td>change what's in it</td><td>change the list: create, delete and rename entries (needs x as well)</td></tr>
+<tr><td><code>x</code></td><td>run it as a program</td><td>go through it: <code>cd</code> into it, reach anything inside by name</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Deleting is a change to the directory</h3>
+<p>Removing a file means erasing its name from the directory's list. That's an edit to the directory, so the directory's w and x decide, and the file's own bits don't get a vote. A read-only file sitting in a folder you can write to is a file you can delete. Here dev_bob, a member of dev_team, is in a folder where dev_team has <code>rwx</code>:</p>
+
+<div class="term"><span class="p">$ </span>ls -l notes.txt
+<span class="o">-r--r--r-- 1 dev_alex dev_alex 23 Sep 23 16:33 notes.txt</span>
+<span class="p">$ </span>rm notes.txt
+<span class="o">rm: remove write-protected regular file 'notes.txt'? </span>y
+<span class="p">$ </span>ls
+<span class="o">hello.py</span></div>
+
+<p>That question is <code>rm</code> being polite, not the system objecting; <code>rm -f</code> skips it. Shared folders deal with this using the <em>sticky bit</em>, the <code>t</code> at the end of <code>drwxrwxrwt</code> on <code>/tmp</code>. In a sticky directory you can only delete files you own (the directory's owner can still delete anything). After <code>sudo chmod +t</code> on the folder, the same attempt gets:</p>
+
+<div class="term"><span class="p">$ </span>rm -f notes.txt
+<span class="o">rm: cannot remove 'notes.txt': Operation not permitted</span></div>
+
+<h3>Every door along the hallway</h3>
+<p>Before the file's own bits even come up, you have to reach it. Opening <code>/srv/devteam/hello.py</code> needs x on <code>/</code>, on <code>/srv</code> and on <code>/srv/devteam</code>, in that order, and only then r on the file. One locked door anywhere along the hallway and it doesn't matter how wide open the last room is.</p>
+
+<figure>
+<svg class="dg" viewBox="0 0 440 250" role="img" aria-labelledby="p1t p1d">
+  <title id="p1t">Walking the path to a file</title>
+  <desc id="p1d">To open /srv/devteam/hello.py you need x on the root directory, x on srv, x on devteam, and then r on hello.py to read it, plus x on it to run it directly.</desc>
+  <text class="mono" x="24" y="45">/</text>
+  <path class="lead" d="M42 39 H262"/>
+  <rect class="badge" x="270" y="25" width="30" height="28" rx="5"/>
+  <text class="mono" x="285" y="45" text-anchor="middle">x</text>
+  <text x="312" y="45">pass through</text>
+
+  <path class="ln" d="M30 52 V94 H54"/>
+  <text class="mono" x="60" y="100">srv</text>
+  <path class="lead" d="M104 94 H262"/>
+  <rect class="badge" x="270" y="80" width="30" height="28" rx="5"/>
+  <text class="mono" x="285" y="100" text-anchor="middle">x</text>
+  <text x="312" y="100">pass through</text>
+
+  <path class="ln" d="M66 107 V149 H90"/>
+  <text class="mono" x="96" y="155">devteam</text>
+  <path class="lead" d="M182 149 H262"/>
+  <rect class="badge" x="270" y="135" width="30" height="28" rx="5"/>
+  <text class="mono" x="285" y="155" text-anchor="middle">x</text>
+  <text x="312" y="155">pass through</text>
+
+  <path class="ln" d="M102 162 V204 H126"/>
+  <text class="mono" x="132" y="210">hello.py</text>
+  <path class="lead" d="M230 204 H262"/>
+  <rect class="badge s-owner" x="270" y="190" width="30" height="28" rx="5"/>
+  <text class="mono f-owner" x="285" y="210" text-anchor="middle">r</text>
+  <text x="312" y="210">read it</text>
+  <text class="sm" x="312" y="232">and x to run it</text>
+</svg>
+<figcaption>Each directory on the way has to let you through (x) before the file's own permissions are even looked at.</figcaption>
+</figure>
+
+<p>This is why other users can't read anything in your home directory on recent Ubuntu, whatever the files inside say. New home directories are created as <code>drwxr-x---</code>. Everyone else gets no x, so they stop at the front door:</p>
+
+<div class="term"><span class="p">$ </span>ls -ld /home/dev_alex
+<span class="o">drwxr-x--- 2 dev_alex dev_alex 4096 Sep 23 16:33 /home/dev_alex</span>
+<span class="c"># meanwhile, logged in as dev_bob:</span>
+<span class="p">$ </span>ls /home/dev_alex
+<span class="o">ls: cannot open directory '/home/dev_alex': Permission denied</span></div>
+
+<p>Older releases made home directories <code>drwxr-xr-x</code>, so check yours rather than assume. Notice the group on that home directory, too: it's <code>dev_alex</code>, not <code>dev_team</code>. Joining the team wouldn't help bob get in. For files a team shares, the usual answer is a folder outside anyone's home, like the lab's <code>/srv/devteam</code>. (<code>/srv</code> is the traditional place for data a machine serves.)</p>
+
+<h3>Reading a script is not running it</h3>
+<p><code>python3 hello.py</code> doesn't run hello.py. It runs python3, and python3 opens hello.py and reads it like any text file, so it needs r and nothing else. The x bit only matters when you run the file itself, as <code>./hello.py</code>. For that, the first line of the file has to say which interpreter should handle it:</p>
+
+<div class="src">#!/usr/bin/env python3
+print("Hello, dev_team!")</div>
+
+<div class="term"><span class="p">$ </span>chmod 660 hello.py
+<span class="p">$ </span>python3 hello.py
+<span class="o">Hello, dev_team!</span>
+<span class="p">$ </span>./hello.py
+<span class="o">-bash: ./hello.py: Permission denied</span></div>
+
+<h3>Changing permissions with chmod</h3>
+<p>There are two ways to say the same thing. The symbolic way names <em>who</em> (<code>u</code> owner, <code>g</code> group, <code>o</code> others, <code>a</code> all three), then an operation (<code>+</code> add, <code>-</code> remove, <code>=</code> set exactly), then the letters.</p>
+
+<div class="term"><span class="p">$ </span>chmod u+x hello.py              <span class="c"># owner may run it</span>
+<span class="p">$ </span>chmod g+w hello.py              <span class="c"># group may edit it</span>
+<span class="p">$ </span>chmod o-r hello.py              <span class="c"># others may no longer read it</span>
+<span class="p">$ </span>chmod u=rwx,g=rx,o= hello.py    <span class="c"># exactly rwxr-x---</span></div>
+
+<p>The numeric way gives each letter a value: r is 4, w is 2, x is 1. Add them up for each triplet and write the three sums side by side. It's like paying with coins worth 4, 2 and 1. Every amount from 0 to 7 can be paid in exactly one way, so every digit decodes to exactly one set of letters.</p>
+
+<div class="tbl">
+<table class="digits">
+<tr><th>digit</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+<tr><th>letters</th><td><code>---</code></td><td><code>--x</code></td><td><code>-w-</code></td><td><code>-wx</code></td><td><code>r--</code></td><td><code>r-x</code></td><td><code>rw-</code></td><td><code>rwx</code></td></tr>
+</table>
+</div>
+
+<p>So <code>750</code> reads as <span class="t-owner">7 for the owner (rwx)</span>, <span class="t-group">5 for the group (r-x)</span>, <span class="t-others">0 for everyone else (---)</span>. A handful of modes cover most real situations:</p>
+
+<div class="tbl">
+<table>
+<thead><tr><th>mode</th><th>looks like</th><th>typical use</th></tr></thead>
+<tbody>
+<tr><td><code>644</code></td><td><code>rw-r--r--</code></td><td>ordinary files: you edit, others read</td></tr>
+<tr><td><code>600</code></td><td><code>rw-------</code></td><td>private files, SSH keys</td></tr>
+<tr><td><code>640</code></td><td><code>rw-r-----</code></td><td>config a team needs to read</td></tr>
+<tr><td><code>755</code></td><td><code>rwxr-xr-x</code></td><td>programs, ordinary directories</td></tr>
+<tr><td><code>750</code></td><td><code>rwxr-x---</code></td><td>team can read and run, others can't</td></tr>
+<tr><td><code>770</code></td><td><code>rwxrwx---</code></td><td>team can do everything, others nothing</td></tr>
+<tr><td><code>700</code></td><td><code>rwx------</code></td><td>private directories</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><code>chmod -R</code> applies a change to a directory and everything under it. Handy, and also the classic way to make a thousand text files executable when you only meant the folders. A capital <code>X</code> helps: it means "x, but only on directories and on files that already had an x somewhere," which is usually what you wanted. <code>chmod -R g+rX shared/</code> lets the group into every folder and read every file, without turning notes into programs.</p>
+
+<h3>Changing the owner and the group</h3>
+
+<div class="term"><span class="p">$ </span>chgrp dev_team hello.py                 <span class="c"># group only</span>
+<span class="p">$ </span>chown :dev_team hello.py                <span class="c"># same thing</span>
+<span class="p">$ </span>sudo chown dev_bob hello.py             <span class="c"># new owner</span>
+<span class="p">$ </span>sudo chown dev_bob:dev_team hello.py    <span class="c"># both at once</span></div>
+
+<p>The rules are lopsided on purpose. Only root can give a file to a different owner; otherwise you could plant a file that looks like someone else wrote it, or fill their disk quota with your junk. The owner can change the file's group, as long as it's a group they belong to. That's why dev_alex can run <code>chgrp dev_team hello.py</code> with no sudo at all.</p>
+
+<h3>The occasional s or t</h3>
+<p>Now and then you'll see an <code>s</code> or <code>t</code> where an x would normally be. These are the special bits. In numeric form they're the extra leading digit in modes like <code>2770</code> or <code>1777</code>.</p>
+
+<div class="tbl">
+<table>
+<thead><tr><th>you see</th><th>called</th><th>what it does</th></tr></thead>
+<tbody>
+<tr><td><code>s</code> in the owner triplet of a program</td><td>setuid</td><td>The program runs as its owner instead of as you. <code>/usr/bin/passwd</code> is <code>-rwsr-xr-x root</code>, which is how you can update the root-only <code>/etc/shadow</code>, but only through that one program.</td></tr>
+<tr><td><code>s</code> in the group triplet of a directory</td><td>setgid</td><td>New files inside get the directory's group instead of their creator's primary group. Team folders love this: no more <code>chgrp</code> after every new file.</td></tr>
+<tr><td><code>t</code> at the end, on a directory</td><td>sticky</td><td>You can delete only your own files inside. <code>/tmp</code> has it.</td></tr>
+</tbody>
+</table>
+</div>
+<p>A capital <code>S</code> or <code>T</code> means the special bit is set but the x underneath it isn't, which is rarely what anyone intended.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="umask">
+<h2><span class="n">3</span>umask: what new files start with</h2>
+
+<p>When a program creates a file, it asks the kernel for a set of permissions. Most programs ask for <code>666</code> on files (read and write for everyone) and <code>777</code> on directories. Nobody really wants every new file writable by the whole building, so before the request is granted, the kernel strikes out every bit listed in your umask.</p>
+<p>The name is literal. It's a mask. Picture painter's tape stuck over some of the nine permission slots: tape keeps paint off, and it can't add any. That also explains why new files never come out executable. The program didn't ask for x, and umask has no way to put one there.</p>
+
+<div class="bits" role="img" aria-label="A new file asks for 666, rw-rw-rw-. umask 022 tapes over group write and others write. The result is 644, rw-r--r--.">
+  <div class="bitrow head" aria-hidden="true">
+    <span class="lbl"></span>
+    <span class="cells"><span class="tri k-owner"><i>r</i><i>w</i><i>x</i></span><span class="tri k-group"><i>r</i><i>w</i><i>x</i></span><span class="tri k-others"><i>r</i><i>w</i><i>x</i></span></span>
+    <span></span>
+  </div>
+  <div class="bitrow">
+    <span class="lbl">a new file asks for</span>
+    <span class="cells"><span class="tri k-owner"><i class="on">1</i><i class="on">1</i><i>0</i></span><span class="tri k-group"><i class="on">1</i><i class="on">1</i><i>0</i></span><span class="tri k-others"><i class="on">1</i><i class="on">1</i><i>0</i></span></span>
+    <span class="val">666  rw-rw-rw-</span>
+  </div>
+  <div class="bitrow">
+    <span class="lbl">umask 022 tapes over</span>
+    <span class="cells"><span class="tri k-owner"><i class="empty"></i><i class="empty"></i><i class="empty"></i></span><span class="tri k-group"><i class="empty"></i><i class="tape"></i><i class="empty"></i></span><span class="tri k-others"><i class="empty"></i><i class="tape"></i><i class="empty"></i></span></span>
+    <span class="val">022</span>
+  </div>
+  <div class="bitrow">
+    <span class="lbl">what you get</span>
+    <span class="cells"><span class="tri k-owner"><i class="on">1</i><i class="on">1</i><i>0</i></span><span class="tri k-group"><i class="on">1</i><i class="tape">0</i><i>0</i></span><span class="tri k-others"><i class="on">1</i><i class="tape">0</i><i>0</i></span></span>
+    <span class="val">644  rw-r--r--</span>
+  </div>
+</div>
+
+<p>Directories go under the same tape. <code>777</code> with 022 masked off becomes <code>755</code>, which is <code>drwxr-xr-x</code>.</p>
+
+<h3>Why subtraction gives the wrong answer (sometimes)</h3>
+<p>666 minus 022 happens to be 644, so it's tempting to treat umask as subtraction. Try 033. Subtraction predicts 633, which would be <code>rw--wx-wx</code>: a file others can write to but not read. What you actually get is 644.</p>
+
+<div class="bits" role="img" aria-label="With umask 033: the file asks for 666, the mask tapes over write and execute for group and others, and the result is 644. Subtraction would wrongly predict 633, rw--wx-wx.">
+  <div class="bitrow head" aria-hidden="true">
+    <span class="lbl"></span>
+    <span class="cells"><span class="tri k-owner"><i>r</i><i>w</i><i>x</i></span><span class="tri k-group"><i>r</i><i>w</i><i>x</i></span><span class="tri k-others"><i>r</i><i>w</i><i>x</i></span></span>
+    <span></span>
+  </div>
+  <div class="bitrow">
+    <span class="lbl">a new file asks for</span>
+    <span class="cells"><span class="tri k-owner"><i class="on">1</i><i class="on">1</i><i>0</i></span><span class="tri k-group"><i class="on">1</i><i class="on">1</i><i>0</i></span><span class="tri k-others"><i class="on">1</i><i class="on">1</i><i>0</i></span></span>
+    <span class="val">666  rw-rw-rw-</span>
+  </div>
+  <div class="bitrow">
+    <span class="lbl">umask 033 tapes over</span>
+    <span class="cells"><span class="tri k-owner"><i class="empty"></i><i class="empty"></i><i class="empty"></i></span><span class="tri k-group"><i class="empty"></i><i class="tape"></i><i class="tape"></i></span><span class="tri k-others"><i class="empty"></i><i class="tape"></i><i class="tape"></i></span></span>
+    <span class="val">033</span>
+  </div>
+  <div class="bitrow">
+    <span class="lbl">what you get</span>
+    <span class="cells"><span class="tri k-owner"><i class="on">1</i><i class="on">1</i><i>0</i></span><span class="tri k-group"><i class="on">1</i><i class="tape">0</i><i class="tape">0</i></span><span class="tri k-others"><i class="on">1</i><i class="tape">0</i><i class="tape">0</i></span></span>
+    <span class="val">644  rw-r--r--</span>
+  </div>
+  <div class="bitrow wrong">
+    <span class="lbl">what 666 − 033 would say</span>
+    <span class="cells"><span class="tri k-owner"><i>1</i><i>1</i><i>0</i></span><span class="tri k-group"><i>0</i><i>1</i><i>1</i></span><span class="tri k-others"><i>0</i><i>1</i><i>1</i></span></span>
+    <span class="val">633  rw--wx-wx</span>
+  </div>
+</div>
+
+<p>033 says "no w and no x" for the group and for others. There was never an x in the request, so that part of the tape lands on bare wall and does nothing. Subtraction goes wrong because it lets the missing x borrow from the bits next to it, and tape never borrows. Written as a rule: <code>result = request AND NOT umask</code>.</p>
+<p>Subtraction gives the right answer exactly when every bit in the mask was requested in the first place. Directories ask for everything (777), so for them it always works, and 777 − 033 really is 744. Files never ask for x, so any mask containing an x can trip it up.</p>
+
+<h3>Common values</h3>
+<div class="tbl">
+<table>
+<thead><tr><th>umask</th><th>new file</th><th>new directory</th><th>suits</th></tr></thead>
+<tbody>
+<tr><td><code>022</code></td><td><code>rw-r--r--</code> 644</td><td><code>rwxr-xr-x</code> 755</td><td>the usual default; others can read</td></tr>
+<tr><td><code>002</code></td><td><code>rw-rw-r--</code> 664</td><td><code>rwxrwxr-x</code> 775</td><td>people who share work through a group</td></tr>
+<tr><td><code>027</code></td><td><code>rw-r-----</code> 640</td><td><code>rwxr-x---</code> 750</td><td>group reads, others get nothing</td></tr>
+<tr><td><code>007</code></td><td><code>rw-rw----</code> 660</td><td><code>rwxrwx---</code> 770</td><td>group gets everything, others nothing</td></tr>
+<tr><td><code>077</code></td><td><code>rw-------</code> 600</td><td><code>rwx------</code> 700</td><td>private</td></tr>
+<tr><td><code>033</code></td><td><code>rw-r--r--</code> 644</td><td><code>rwxr--r--</code> 744</td><td>nobody; others can list that directory but can't enter it</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Reading it and setting it</h3>
+
+<div class="term"><span class="p">$ </span>umask
+<span class="o">0022</span>
+<span class="p">$ </span>umask -S
+<span class="o">u=rwx,g=rx,o=rx</span>
+<span class="p">$ </span>umask 027
+<span class="p">$ </span>touch report.txt
+<span class="p">$ </span>ls -l report.txt
+<span class="o">-rw-r----- 1 dev_alex dev_alex 0 Sep 23 16:33 report.txt</span></div>
+
+<p>The leading 0 is the slot for the special bits and is almost always 0. <code>umask -S</code> shows the opposite view: which letters are still allowed through, rather than which are taped over.</p>
+<p>A umask you type lasts only for that shell and the programs started from it; close the terminal and you're back to the default. It shapes files created afterwards and never touches existing ones (that's <code>chmod</code>'s job). To make a value permanent for your account, add a line like <code>umask 027</code> to the end of <code>~/.bashrc</code>. New shells will pick it up.</p>
+<p>The default comes from <code>/etc/login.defs</code> (<code>UMASK 022</code> on Ubuntu) and is applied when you log in. Ubuntu can hand some accounts 002 instead, depending on how their private group is set up, so seeing <code>0022</code> on one machine and <code>0002</code> on another is normal.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="sudo">
+<h2><span class="n">4</span>sudo: root's keys, one command at a time</h2>
+
+<p><code>su</code> and <code>sudo</code> both let you act as someone else. They're built on different ideas, though.</p>
+<p><code>su - newuser</code> asks for newuser's password and hands you a whole shell as them. It's like being given someone's house keys. You're in for as long as you like, and nobody asks what you did in there.</p>
+<p><code>sudo command</code> runs one command as root. It asks for <em>your own</em> password, checks your name against the rules in <code>/etc/sudoers</code>, and if you're allowed, runs the command and writes it in a log. Think of a building manager with a clipboard: you show your own ID, the manager finds you on the list, unlocks the one door you asked for, and notes that you went through it.</p>
+
+<figure>
+<svg class="dg" viewBox="0 0 560 330" role="img" aria-labelledby="s1t s1d">
+  <title id="s1t">What happens when you type sudo</title>
+  <desc id="s1d">You type sudo ls -la /root. sudo asks for your own password, skipped if you typed it recently. It checks whether you, or a group you are in, are on the list in /etc/sudoers. If yes, it runs the command as root and logs it. If no, it refuses and logs that too.</desc>
+  <defs>
+    <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="box" x="20" y="10" width="320" height="46" rx="6"/>
+  <text x="180" y="39" text-anchor="middle">You type <tspan class="mono" style="font-size:16px">sudo ls -la /root</tspan></text>
+  <path class="ln" d="M180 56 V84" marker-end="url(#ah2)"/>
+
+  <rect class="box" x="20" y="88" width="320" height="56" rx="6"/>
+  <text x="180" y="112" text-anchor="middle">sudo asks for your own password</text>
+  <text class="sm" x="180" y="133" text-anchor="middle">skipped if you typed it recently</text>
+  <path class="ln" d="M180 144 V172" marker-end="url(#ah2)"/>
+
+  <rect class="box" x="20" y="176" width="320" height="56" rx="6"/>
+  <text x="180" y="200" text-anchor="middle">On the list in /etc/sudoers?</text>
+  <text class="sm" x="180" y="221" text-anchor="middle">you by name, or a group you're in</text>
+  <path class="ln" d="M340 204 H381" marker-end="url(#ah2)"/>
+  <text class="sm" x="360" y="196" text-anchor="middle">yes</text>
+  <rect class="box s-ink" x="385" y="176" width="160" height="56" rx="6"/>
+  <text x="465" y="200" text-anchor="middle">runs it as root</text>
+  <text class="sm" x="465" y="221" text-anchor="middle">and logs it</text>
+  <path class="ln" d="M180 232 V260" marker-end="url(#ah2)"/>
+  <text class="sm" x="190" y="252">no</text>
+
+  <rect class="box s-others" x="20" y="264" width="320" height="56" rx="6"/>
+  <text x="180" y="288" text-anchor="middle">refused</text>
+  <text class="sm" x="180" y="309" text-anchor="middle">and that gets logged too</text>
+</svg>
+<figcaption>The order you'll notice in practice: the password prompt comes first, even for someone who turns out not to be on the list.</figcaption>
+</figure>
+
+<div class="tbl">
+<table>
+<thead><tr><th></th><th><code>su - someone</code></th><th><code>sudo command</code></th></tr></thead>
+<tbody>
+<tr><td>whose password</td><td>theirs</td><td>yours</td></tr>
+<tr><td>what you get</td><td>a whole shell as them</td><td>one command as root</td></tr>
+<tr><td>who decides</td><td>anyone who knows the password</td><td>the rules in <code>/etc/sudoers</code></td></tr>
+<tr><td>what's logged</td><td>that the session started</td><td>every command</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>That's why sudo won on most systems. Nobody has to share root's password, access can be given to one person and taken back from one person, and the log says who did what.</p>
+
+<h3>The line that grants it</h3>
+
+<div class="anatomy" role="img" aria-label="The sudoers line %sudo ALL=(ALL:ALL) ALL: members of group sudo, on any machine, may act as any user and any group, and run any command.">
+  <div class="seg k-group"><code>%sudo</code><span>who: % means a group, here "sudo"</span></div>
+  <div class="seg k-plain"><code>ALL</code><span>on any machine</span></div>
+  <div class="seg sep"><code>=</code><span>&nbsp;</span></div>
+  <div class="seg k-owner"><code>(ALL:ALL)</code><span>as any user : any group</span></div>
+  <div class="seg k-type"><code>ALL</code><span>any command</span></div>
+</div>
+
+<p>Ubuntu ships that line already, so on Ubuntu joining the <code>sudo</code> group is all it takes. Fedora, RHEL and their relatives use a group called <code>wheel</code> for the same job.</p>
+
+<div class="term"><span class="p">$ </span>sudo usermod -aG sudo newuser
+<span class="p">$ </span>groups newuser
+<span class="o">newuser : newuser sudo</span></div>
+
+<p>Other ways to grant or take it: <code>sudo gpasswd -a newuser sudo</code>, <code>sudo gpasswd -d newuser sudo</code>, and on Ubuntu or Debian <code>sudo adduser newuser sudo</code>. Like any group change, it counts from the next login.</p>
+
+<h3>What you'll see</h3>
+<p>Before newuser is on the list:</p>
+<div class="term"><span class="p">$ </span>sudo ls -la /root
+<span class="o">[sudo] password for newuser:
+newuser is not in the sudoers file.</span></div>
+<p>Older versions of sudo add "This incident will be reported." The wording changed; the answer didn't. After joining the group and logging in again:</p>
+
+<div class="term"><span class="p">$ </span>sudo ls -la /root
+<span class="o">[sudo] password for newuser:
+total 24
+drwx------  4 root root 4096 Apr 18 18:13 .
+drwxr-xr-x 22 root root 4096 Sep 23 16:32 ..
+-rw-r--r--  1 root root 3106 Apr 22  2024 .bashrc
+drwxr-xr-x  4 root root 4096 Apr 18 18:10 .config
+-rw-r--r--  1 root root  161 Apr 22  2024 .profile
+drwx------  2 root root 4096 Apr 18 18:08 .ssh</span>
+<span class="p">$ </span>sudo -l
+<span class="o">Matching Defaults entries for newuser on vm:
+    env_reset, mail_badpass, secure_path=..., use_pty
+
+User newuser may run the following commands on vm:
+    (ALL : ALL) ALL</span></div>
+
+<p>A plain <code>sudo ls /root</code> often prints nothing at all. That's not a failure. Root's home usually holds only hidden files, and <code>ls</code> hides those unless you add <code>-a</code>.</p>
+<p>After one correct password, sudo trusts you for a while (15 minutes by default) and doesn't ask again. <code>sudo -k</code> makes it forget right away.</p>
+
+<h3>Looking at the rules, and changing them</h3>
+<p>Read the file with <code>sudo cat /etc/sudoers</code>. To change it, use <code>sudo visudo</code> and nothing else. visudo checks the syntax before it saves. A typo saved straight into <code>/etc/sudoers</code> can break sudo for everyone, you included, and then you need root to repair the file that gives you root.</p>
+<p>Most systems also read every file in <code>/etc/sudoers.d/</code> (the <code>@includedir</code> line near the bottom of sudoers does that), so a rule for one person can live in a small file of its own: <code>sudo visudo -f /etc/sudoers.d/newuser</code>. Easy to add, easy to delete.</p>
+
+<div class="tbl">
+<table>
+<thead><tr><th>command</th><th>does</th></tr></thead>
+<tbody>
+<tr><td><code>sudo -l</code></td><td>lists what you're allowed to run</td></tr>
+<tr><td><code>sudo -i</code></td><td>opens a root shell; use sparingly, it's su with better paperwork</td></tr>
+<tr><td><code>sudo -iu dev_alex</code></td><td>a login shell as dev_alex, using your password rather than his</td></tr>
+<tr><td><code>sudo -k</code></td><td>forgets the remembered password now</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="note">On a full Ubuntu install the log lives in <code>/var/log/auth.log</code>, and <code>journalctl</code> shows the same entries. Containers, including many cloud development environments, often don't keep one.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="ref">
+<h2>Quick reference</h2>
+<div class="tbl">
+<table>
+<thead><tr><th>to</th><th>type</th></tr></thead>
+<tbody>
+<tr><td>see who you are</td><td><code>whoami</code>, <code>id</code>, <code>groups</code></td></tr>
+<tr><td>look up an account or group</td><td><code>getent passwd NAME</code>, <code>getent group NAME</code></td></tr>
+<tr><td>create a group</td><td><code>sudo groupadd GROUP</code></td></tr>
+<tr><td>create a user</td><td><code>sudo useradd -m -s /bin/bash USER</code>, then <code>sudo passwd USER</code></td></tr>
+<tr><td>add a user to a group</td><td><code>sudo usermod -aG GROUP USER</code> or <code>sudo gpasswd -a USER GROUP</code></td></tr>
+<tr><td>remove a user from a group</td><td><code>sudo gpasswd -d USER GROUP</code></td></tr>
+<tr><td>become another user</td><td><code>su - USER</code> or <code>sudo -iu USER</code>; <code>exit</code> to come back</td></tr>
+<tr><td>delete a user and their home</td><td><code>sudo userdel -r USER</code></td></tr>
+<tr><td>delete a group</td><td><code>sudo groupdel GROUP</code></td></tr>
+<tr><td>see permissions</td><td><code>ls -l FILE</code>, <code>ls -ld DIR</code>, <code>stat FILE</code></td></tr>
+<tr><td>set permissions</td><td><code>chmod 750 FILE</code>, <code>chmod u+x FILE</code>, <code>chmod -R g+rX DIR</code></td></tr>
+<tr><td>change group</td><td><code>chgrp GROUP FILE</code></td></tr>
+<tr><td>change owner</td><td><code>sudo chown USER:GROUP FILE</code></td></tr>
+<tr><td>see or set umask</td><td><code>umask</code>, <code>umask -S</code>, <code>umask 027</code></td></tr>
+<tr><td>run one command as root</td><td><code>sudo COMMAND</code></td></tr>
+<tr><td>check your sudo rights</td><td><code>sudo -l</code></td></tr>
+<tr><td>edit the sudo rules safely</td><td><code>sudo visudo</code></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+</main>
+</div>
+
+<footer>
+  Every command and output on this page was run on Ubuntu 24.04 in September 2026. On your machine the user IDs, dates and sizes will differ, and so may a few defaults: home directory permissions, the umask, the name of the admin group. The ideas carry over unchanged.
+</footer>
+</body>
+</html>
