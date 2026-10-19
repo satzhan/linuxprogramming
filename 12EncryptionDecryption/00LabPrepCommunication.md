@@ -8,12 +8,14 @@ look for eth0: inet you should see IPv4
 
 
 Setup ftp server on a fly using Python inside folder in Linux
+```
 python3 -m http.server
-
+```
 
 Obtain a file from an ftp server
+```
 wget http://IP_ADDRESS_OF_FTP_SERVER:8000/path/to/your/file
-
+```
 Ok now is assignment
 On server side
 Create an textfile,containing a message you plan to encode 
@@ -21,7 +23,7 @@ Create an textfile,containing a message you plan to encode
 
 Then run decode 
 python3 encrypt.py
-
+```
 def encrypt(plain_text, shift):
     encrypted_text = ""
     for char in plain_text:
@@ -52,7 +54,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-
+```
 run ftp server where that encrypted file is located 
 
 
@@ -62,7 +64,7 @@ get the encrypted file
 
 then run
 decrypt.py
-
+```
 def decrypt(encrypted_text, shift):
     decrypted_text = ""
     for char in encrypted_text:
@@ -93,7 +95,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-
+```
 
 Usage Instructions:
 On the Server Side (encode.py): Run this script to encrypt a file. It will ask for the filename and the shift value. 
