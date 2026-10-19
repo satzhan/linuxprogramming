@@ -1,5 +1,7 @@
-
-
+```
+hostname -I
+```
+to see the IP_ADD
 
 Command ifconfig allows you to learn your local IP address
 look for eth0: inet you should see IPv4
