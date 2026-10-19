@@ -22,7 +22,9 @@ Create an textfile,containing a message you plan to encode
 
 
 Then run decode 
+```
 python3 encrypt.py
+```
 ```
 def encrypt(plain_text, shift):
     encrypted_text = ""
