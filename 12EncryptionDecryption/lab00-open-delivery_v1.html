@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="A simple group Linux lab: serve a note, download it from a teammate’s VM, and explain what changes when you change tools, addresses, ports, or protocols."><title>Lab 00 · One file. Two machines.</title><style>
+:root{--paper:#f7f5ef;--ink:#1f3436;--muted:#536765;--green:#1c6559;--line:#d6ddd4;--white:#fffefa;--tint:#edf2e9;--gold:#dfaf55}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea{font:inherit}a{color:var(--green);text-underline-offset:3px}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #ae7313;outline-offset:4px}.hero,nav,main{max-width:950px;margin:auto}.hero{padding:58px 40px 30px}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:2px;font-weight:750}.eyebrow span{padding:0 12px;color:var(--green)}h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(52px,8vw,88px);letter-spacing:-3px;line-height:1.02;margin:24px 0;color:var(--green)}.lead{font-size:22px;line-height:1.55;margin:25px 0}.meta{display:flex;flex-wrap:wrap;gap:9px 22px;color:var(--muted);font-size:13px}.meta span+span:before{content:'·';margin-right:20px;color:#9ba89d}.route{font-size:14px;margin-top:26px;font-weight:600}nav{padding:15px 40px;display:flex;flex-wrap:wrap;gap:10px 23px;border-block:1px solid var(--line);font-size:13px}nav a{text-decoration:none}main{padding:0 40px 45px}section{padding:40px 0;border-bottom:1px solid var(--line)}h2{font-size:29px;line-height:1.25;letter-spacing:-.8px;margin:0 0 21px}h3{font-size:20px;line-height:1.4;margin:32px 0 14px}p{margin:14px 0}.section-label{color:var(--green);font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:10px}.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;border-block:1px solid var(--line);margin:25px 0;padding:8px 0}.roles p{font-size:14px}.roles strong{display:block;margin-bottom:6px;color:var(--green)}.small{font-size:13px;color:var(--muted)}.callout,.question{border-left:3px solid var(--green);padding:16px 20px;margin:25px 0;background:var(--tint);font-size:16px}.question{border-color:var(--gold);background:#f7edd5}.step{display:inline-grid;place-items:center;width:27px;height:27px;border:1px solid var(--line);border-radius:50%;font-size:12px;vertical-align:middle;margin-right:9px}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.88em}p code,dd code,td code,dt code{background:#e8ece4;padding:1px 4px;border-radius:3px;overflow-wrap:anywhere}kbd{font-size:.8em;background:var(--white);border:1px solid #b8c2b6;border-bottom-width:2px;border-radius:4px;padding:2px 5px;white-space:nowrap}.terminal{border-radius:9px;overflow:hidden;background:#203437;color:#f2f7ef;margin:17px 0}.terminal-head{background:#2d4547;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:9px 15px;font-size:12px;color:#c5e1d5}.copy{border:1px solid #6e8887;border-radius:5px;background:transparent;color:white;padding:3px 11px;font-size:12px;min-width:59px}.copy:hover{background:#405a59}pre{padding:17px 19px;margin:0;overflow:auto;line-height:1.8;font-size:14px}pre code{font-size:inherit}.explain{display:grid;grid-template-columns:220px 1fr;column-gap:20px;row-gap:9px;margin:21px 0;font-size:15px}.explain dt{font-weight:600}.explain dd{margin:0;color:#405451}.address-box{border:1px solid #b9cabb;border-radius:10px;padding:22px;margin:27px 0;background:var(--white)}.address-box label{font-weight:700;font-size:15px}.input-row{display:flex;align-items:center;gap:17px;margin:10px 0 22px}.input-row input{max-width:220px;min-width:0;margin:0;font-family:ui-monospace,monospace}.input-row span{font-size:12px;color:var(--muted)}.url-parts{display:grid;grid-template-columns:1fr 1.4fr .9fr 1.2fr;gap:12px}.url-parts div{padding-top:10px;border-top:3px solid #8aab91;min-width:0}.url-parts div:nth-child(2){border-color:#cb9434}.url-parts div:nth-child(3){border-color:#658a9d}.url-parts div:nth-child(4){border-color:#b27d6e}.url-parts code{font-size:16px;overflow-wrap:anywhere}.url-parts small{display:block;font-size:11px;line-height:1.4;color:var(--muted);margin-top:6px}details{background:var(--white);border:1px solid var(--line);border-radius:8px;margin:18px 0}summary{cursor:pointer;padding:17px 19px;font-weight:650;font-size:15px}.details-body{padding:0 20px 20px}.details-body p:last-child{margin-bottom:0}.experiment{margin:14px 0}.experiment>summary{display:flex;align-items:center;gap:16px;padding:19px}.experiment>summary:after{content:'+';margin-left:auto;color:var(--green);font-size:23px;font-weight:400}.experiment[open]>summary:after{content:'−'}.choice{display:grid;place-items:center;flex:0 0 32px;height:32px;border:1px solid #b8c9b8;border-radius:50%;font-family:Georgia,serif;font-size:20px;color:var(--green)}summary small{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:3px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.55}td,th{padding:12px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:var(--tint)}label{display:block;font-size:15px;font-weight:650;margin-top:19px}.hint{display:block;color:var(--muted);font-size:13px;font-weight:400;margin:5px 0}input,textarea{display:block;width:100%;background:var(--white);color:var(--ink);border:1px solid #b3c1b2;border-radius:6px;padding:11px 12px;margin-top:9px;font-size:15px;font-weight:400}textarea{resize:vertical;line-height:1.55}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.actions button{border:1px solid var(--green);border-radius:6px;background:var(--white);color:var(--green);padding:10px 16px;font-size:14px;font-weight:650}.actions .primary{background:var(--green);color:white}.actions button:hover{filter:brightness(.95)}footer{padding-top:30px;color:var(--muted);font-size:12px}footer summary{font-size:12px}footer li{margin:6px 0}noscript p{padding:15px;border:1px solid var(--gold)}
+@media(max-width:650px){body{font-size:16px}.hero{padding:35px 22px 22px}.hero h1{letter-spacing:-2px}.lead{font-size:19px}nav{padding:15px 22px;gap:9px 16px;font-size:12px}main{padding:0 22px 35px}section{padding:32px 0}h2{font-size:25px}h3{font-size:18px}.roles{grid-template-columns:1fr;gap:0;padding:7px 0}.roles p{margin:9px 0}.roles strong{display:inline;margin-right:8px}.meta{gap:6px 13px}.meta span+span:before{margin-right:11px}.explain{grid-template-columns:1fr;gap:5px}.explain dd{margin-bottom:8px}.input-row{display:block}.input-row input{max-width:none}.input-row span{display:block;margin-top:8px}.url-parts{grid-template-columns:1fr 1fr;gap:15px}.address-box{padding:17px}.terminal-head{font-size:11px;padding:9px 12px}pre{font-size:12px;padding:15px}.details-body{padding:0 15px 16px}.question,.callout{padding:14px 16px}.experiment>summary{padding:15px;gap:12px}summary small{font-size:12px}.actions button{flex:1}table{min-width:500px}.route{font-size:13px}}
+@media print{body{font-size:10pt;color:black;background:white}.hero,main{max-width:none;padding:0}nav,.copy,.actions,.input-row,.address-box>label,#save-status{display:none!important}.hero{padding-bottom:20px}h1{font-size:35pt;letter-spacing:-1px}.lead{font-size:14pt}.meta,.route{font-size:9pt}h2{font-size:17pt}h3{font-size:13pt}section{padding:20px 0}.terminal{background:#f3f3f3;color:black;border:1px solid #bbb;break-inside:avoid}.terminal-head{background:#eee;color:black}pre{font-size:8pt;white-space:pre-wrap;overflow-wrap:anywhere}.roles{grid-template-columns:repeat(3,1fr)}details{break-inside:auto}summary{font-size:10pt}.question,.callout{break-inside:avoid}.table-wrap{overflow:visible}table{min-width:0;font-size:9pt}input,textarea{background:white;color:black}textarea{field-sizing:content;min-height:65px}.explain{font-size:10pt;grid-template-columns:180px 1fr}.url-parts{grid-template-columns:repeat(4,1fr)}.hint,.small{font-size:9pt}a{color:inherit}footer{font-size:8pt}}
+</style></head><body>
+<header class="hero">
+  <p class="eyebrow">Linux together <span>/</span> Lab 00</p>
+  <h1>One file.<br>Two machines.</h1>
+  <p class="lead">Your teammate has a file. You want a copy.<br>What has to happen between those two facts?</p>
+  <div class="meta"><span>25–30 minutes</span><span>Groups of 2–3</span><span>One team logbook</span></div>
+  <p class="route">Make a connection. Compare two tools. Change one thing. Explain it.</p>
+</header>
+<nav aria-label="Sections"><a href="#step0">0 · Connect</a><a href="#clients">1 · Compare</a><a href="#explore">2 · Try a variation</a><a href="#access">3 · Who gets a copy?</a><a href="#logbook">Logbook</a></nav>
+<main>
+<section class="intro" aria-labelledby="before">
+  <h2 id="before">Before we start</h2>
+  <p>A <strong>server</strong> is a program waiting for requests. A <strong>client</strong> is a program making one. These are jobs: your VM can do either job, or both. <strong>HTTP</strong> is a set of rules clients and servers use to request and deliver resources, such as files.</p>
+  <p>Think of an address on an envelope. The <strong>IP address</strong> identifies the machine. The <strong>port</strong> identifies the service on that machine. The <strong>file path</strong> says what you want from that service.</p>
+  <div class="roles"><p><strong>Alice · serves</strong>Creates a note and runs the server.</p><p><strong>Bob · downloads</strong>Gets the note from a different VM.</p><p><strong>Mallory · compares</strong>Watches, predicts, then asks for her own copy.</p></div>
+  <p class="small">In a pair, Bob also plays Mallory. Take turns at the keyboard and explaining results. Use only your group's machines and made-up notes.</p>
+  <div class="callout"><strong>Which terminal?</strong> Use your usual SSH connection to open each person's own VM. Run the commands below <em>inside those VM sessions</em>. A terminal on your laptop and a terminal logged into a VM are different places. Refer to the earlier Host/Guest team lab if you need help connecting; this activity creates no new accounts.</div>
+</section>
+
+<section id="step0">
+  <div class="section-label">Start here · about 8 minutes</div>
+  <h2>Step 0 — Testing cross-VM operation check</h2>
+  <p>We will check the connection by sending the actual note. Success means Bob receives Alice's words on a <strong>different VM</strong>.</p>
+  <h3><span class="step">A</span> Alice: make something to share</h3>
+  <div class="terminal"><div class="terminal-head"><span>Alice · inside her own VM</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">mkdir -p ~/lab00-share
+cd ~/lab00-share
+echo &quot;Meet our group by the blue door.&quot; &gt; note.txt</code></pre></div>
+  <dl class="explain"><dt><code>mkdir -p</code></dt><dd>Makes a folder, or keeps it if it already exists. <code>~</code> means your home folder.</dd><dt><code>cd</code></dt><dd>Moves your shell into that folder.</dd><dt><code>echo … &gt; note.txt</code></dt><dd>Writes the quoted words into a file. <code>&gt;</code> replaces the file's previous contents. Change the words to a short note your group will recognize.</dd></dl>
+  <p>Keep only practice files in this folder. The next command makes its readable contents available to anyone who can reach the server.</p>
+  <h3><span class="step">B</span> Alice: find your address and start the server</h3>
+  <div class="terminal"><div class="terminal-head"><span>Alice · same terminal, in ~/lab00-share</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">hostname -I
+python3 -m http.server 8000 --bind 0.0.0.0</code></pre></div>
+  <p><code>hostname -I</code> prints your VM's addresses; the <code>I</code> is uppercase. Share the private IPv4 address on its Azure network, often beginning with <code>10.</code>. If several addresses appear, ask the instructor which belongs to the lab network.</p>
+  <dl class="explain"><dt><code>python3 -m http.server</code></dt><dd>Runs Python's built-in file-serving module from this folder.</dd><dt><code>8000</code></dt><dd>The port where this server waits. We choose 8000; HTTP can use other ports.</dd><dt><code>--bind 0.0.0.0</code></dt><dd>Listens on all of this VM's IPv4 interfaces. It does not change Azure or Ubuntu firewall rules. Clients use Alice's actual IP, never <code>0.0.0.0</code>.</dd></dl>
+  <p><strong>Leave this terminal running.</strong> It is busy serving files, so the usual prompt disappears. A second SSH terminal to Alice's VM lets Alice run other commands.</p>
+  <div class="address-box">
+    <label for="alice-ip">Alice's private IPv4 address</label>
+    <div class="input-row"><input id="alice-ip" type="text" inputmode="decimal" placeholder="e.g. 10.0.0.5" autocomplete="off" spellcheck="false" aria-describedby="ip-status"><span id="ip-status" role="status">Enter it to fill the commands below, or replace ALICE_IP yourself.</span></div>
+    <div class="url-parts" aria-label="Parts of the request address"><div><code>http://</code><small>protocol · how we ask</small></div><div><code data-address>ALICE_IP</code><small>address · which machine</small></div><div><code>:8000</code><small>port · which service</small></div><div><code>/note.txt</code><small>path · which file</small></div></div>
+  </div>
+  <h3><span class="step">C</span> Bob: collect the note</h3>
+  <div class="terminal"><div class="terminal-head"><span>Bob · inside his own VM</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">mkdir -p ~/lab00-downloads
+cd ~/lab00-downloads
+wget http://ALICE_IP:8000/note.txt
+cat note.txt</code></pre></div>
+  <p><code>wget</code> requests the file and saves a local copy, normally under its original name. <code>cat</code> prints that local file. Alice should see a request with status <code>200</code> in her server terminal: the server answered successfully. If you repeat the download and wget saves <code>note.txt.1</code>, use <code>cat note.txt.1</code> to read that new copy.</p>
+  <div class="question"><strong>Pause together.</strong> Can Bob read Alice's distinctive note? Can Alice see Bob's request? Record who served, who downloaded, and the address used. This is your cross-VM check.</div>
+  <details><summary>If it does not work</summary><div class="details-body">
+    <p>Stop a waiting command with <kbd>Ctrl</kbd> + <kbd>C</kbd>. Record the exact message before changing anything.</p>
+    <div class="table-wrap"><table><thead><tr><th>What you see</th><th>What it suggests</th><th>Check first</th></tr></thead><tbody><tr><td>Connection refused</td><td>The connection was rejected; often nothing is listening there.</td><td>Is Alice's server still running on that address and port?</td></tr><tr><td>Timeout / keeps waiting</td><td>No answer arrived. It does not tell us why.</td><td>Both VMs running? Correct private IP? Ask the instructor to check network/firewall rules.</td></tr><tr><td>404 File not found</td><td>An HTTP server answered, but could not find that path.</td><td>File spelling and the folder Alice started the server from.</td></tr><tr><td>Address already in use</td><td>A program already occupies that listening address and port.</td><td>Check your existing server terminal. Do not kill an unknown process.</td></tr><tr><td>Command not found</td><td>The named tool is missing.</td><td>Ask the instructor; do not spend the activity installing tools.</td></tr></tbody></table></div>
+    <p><code>127.0.0.1</code> points back to whichever machine runs the command. On Bob's VM it means Bob, not Alice. Also, the public address used for Azure SSH is a different route; adding <code>:8000</code> to it does not publish your HTTP server.</p>
+  </div></details>
+</section>
+
+<section id="clients">
+  <div class="section-label">Compare · about 4 minutes</div>
+  <h2>1. Same note, different tool</h2>
+  <p>Bob has used <code>wget</code>. Now try <code>curl</code> from the same VM, asking for exactly the same URL.</p>
+  <div class="terminal"><div class="terminal-head"><span>Bob · same terminal</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">curl http://ALICE_IP:8000/note.txt
+curl -o note-curl.txt http://ALICE_IP:8000/note.txt
+cat note-curl.txt</code></pre></div>
+  <p><code>curl</code> normally prints the response body in the terminal. The second command uses lowercase <code>-o</code> to save it in <code>note-curl.txt</code> instead. Neither command changes Alice's file.</p>
+  <details><summary>Can wget choose the output name too?</summary><div class="details-body"><div class="terminal"><div class="terminal-head"><span>Bob · same terminal</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">wget -O note-wget.txt http://ALICE_IP:8000/note.txt</code></pre></div><p>Yes: uppercase <code>-O</code> chooses the output file. Here it replaces <code>note-wget.txt</code> if that file exists. Without <code>-O</code>, a repeated ordinary download will usually create <code>note.txt.1</code>, then <code>note.txt.2</code>. Check which copy you are reading after Alice edits her note.</p></div></details>
+  <div class="question"><strong>Explain it to Alice.</strong> Where did each command put the downloaded bytes? Did switching from <code>wget</code> to <code>curl</code> change the machine, the port, or the protocol?</div>
+  <p>Both tools are HTTP clients in this experiment. Switching tools does not encrypt the transfer; these URLs still begin with <code>http://</code>.</p>
+</section>
+
+<section id="explore">
+  <div class="section-label">Choose one · about 7 minutes</div>
+  <h2>2. Change one thing</h2>
+  <p>Choose one experiment together. <strong>Before running it, each person makes a prediction.</strong> Let someone who has typed less run this part. Afterwards, each person explains the difference in their own words.</p>
+  <details class="experiment"><summary><span class="choice">A</span><span>Change the address<small>What does “this machine” mean?</small></span></summary><div class="details-body">
+    <p>Alice keeps the server running. Open a second SSH terminal to <strong>Alice's VM</strong>, then run:</p>
+    <div class="terminal"><div class="terminal-head"><span>Alice · second terminal to her VM</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">curl --max-time 5 http://127.0.0.1:8000/note.txt</code></pre></div>
+    <p>Now Bob runs the exact same command on <strong>Bob's VM</strong>:</p>
+    <div class="terminal"><div class="terminal-head"><span>Bob · on his VM</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">curl --max-time 5 http://127.0.0.1:8000/note.txt</code></pre></div>
+    <p><code>127.0.0.1</code> is the loopback address: it sends the request back into the machine making it. Alice should get her note. Bob is asking Bob's own VM; if he has no server there, the connection should fail. <code>--max-time 5</code> limits the request to five seconds.</p>
+    <p>Bob now repeats his request using Alice's private IP:</p>
+    <div class="terminal"><div class="terminal-head"><span>Bob · on his VM</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">curl --max-time 5 http://ALICE_IP:8000/note.txt</code></pre></div>
+    <div class="question"><strong>Explain:</strong> Why can the same command succeed on one VM and fail on the other? Why does Alice's successful loopback request tell us nothing about Bob's access?</div>
+    <details><summary>One extra twist: listen only to yourself</summary><div class="details-body"><p>Alice presses <kbd>Ctrl</kbd> + <kbd>C</kbd> in the server terminal, then restarts it there:</p><div class="terminal"><div class="terminal-head"><span>Alice · original server terminal</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">python3 -m http.server 8000 --bind 127.0.0.1</code></pre></div><p>Repeat Alice's loopback request and Bob's private-IP request. The server now accepts connections only through Alice's loopback interface. Afterwards, stop it and restore the original server:</p><div class="terminal"><div class="terminal-head"><span>Alice · original server terminal</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">python3 -m http.server 8000 --bind 0.0.0.0</code></pre></div><p>What changed: the client's destination, or the addresses the server listens on?</p></div></details>
+  </div></details>
+  <details class="experiment"><summary><span class="choice">B</span><span>Change the port<small>Same machine. Different service address.</small></span></summary><div class="details-body">
+    <p>Alice stops her server with <kbd>Ctrl</kbd> + <kbd>C</kbd> and restarts it in the same folder on port <strong>8001</strong>:</p>
+    <div class="terminal"><div class="terminal-head"><span>Alice · original server terminal</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">python3 -m http.server 8001 --bind 0.0.0.0</code></pre></div>
+    <p>Bob tries the old port, then the new one:</p>
+    <div class="terminal"><div class="terminal-head"><span>Bob · on his VM</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">curl --max-time 5 http://ALICE_IP:8000/note.txt
+curl --max-time 5 http://ALICE_IP:8001/note.txt</code></pre></div>
+    <p>The file and VM have not moved. The listening port has. The old request should fail if nothing else is listening on 8000. The new request should work if the network permits 8001. A timeout alone is not proof that the server is stopped.</p>
+    <div class="question"><strong>Explain:</strong> What did Bob have to change? Does using port 8001 make this transfer encrypted?</div>
+    <p>Alice stops the server and restores port 8000 before the next part:</p><div class="terminal"><div class="terminal-head"><span>Alice · original server terminal</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">python3 -m http.server 8000 --bind 0.0.0.0</code></pre></div>
+  </div></details>
+  <details class="experiment"><summary><span class="choice">C</span><span>Use SSH to copy the file<small>For teams whose earlier Host/Guest setup is ready.</small></span></summary><div class="details-body">
+    <p><code>scp</code> copies files through an encrypted SSH connection. It uses an account on the receiving or serving machine. Use an authorized Guest account from the earlier team lab; no new accounts are needed here.</p>
+    <p>Alice puts a copy in the earlier lab's shared folder so that the Guest account can read it:</p>
+    <div class="terminal"><div class="terminal-head"><span>Alice · second terminal to her VM</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">cp ~/lab00-share/note.txt /srv/team/lab00-note.txt
+chmod a+r /srv/team/lab00-note.txt</code></pre></div>
+    <p><code>cp</code> copies the file. <code>chmod a+r</code> adds read permission for all local users to this practice copy. The existing shared-folder permissions must also allow the Guest to enter <code>/srv/team</code>.</p>
+    <p>On Bob's VM, replace <code>GUEST_USER</code> with Bob's authorized account name <em>on Alice's VM</em>:</p>
+    <div class="terminal"><div class="terminal-head"><span>Bob · in ~/lab00-downloads on his VM</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">scp GUEST_USER@ALICE_IP:/srv/team/lab00-note.txt note-scp.txt
+cat note-scp.txt</code></pre></div>
+    <p>The left side names the remote account, machine, and file. The final name is Bob's local destination. This uses SSH's usual private-network port, <strong>22</strong>, independently of the Python server on 8000. A key may authenticate you without a password prompt. Follow the earlier lab's host-key verification step if SSH asks about an unfamiliar machine.</p>
+    <div class="question"><strong>Explain:</strong> Which method required an account? Which encrypted the connection? Could <code>scp</code> still work after Alice stopped her Python server? Try stopping it, then repeat the copy.</div>
+    <p>SSH protects the transfer between its endpoints. Alice's source and Bob's downloaded text file are still readable on their respective machines.</p>
+    <details><summary>How does the Azure public SSH address fit in?</summary><div class="details-body"><p>Your usual Azure connection may use a public host and an assigned SSH port. That port is forwarded to SSH on the chosen VM. To use that route with <code>scp</code>, the port flag is uppercase <code>-P</code>:</p><div class="terminal"><div class="terminal-head"><span>Optional · using the public SSH connection details</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">scp -P AZURE_SSH_PORT GUEST_USER@AZURE_SSH_HOST:/srv/team/lab00-note.txt note-public.txt</code></pre></div><p>Replace all three uppercase placeholders using Alice's actual connection details and your authorized Guest account. This is optional; it can be run from your laptop's terminal using its existing SSH access. Private-IP access from Bob's VM uses a different route. Neither route exposes Python's port 8000 to the public internet.</p></div></details>
+    <p>Restart Alice's HTTP server for the next part if you stopped it:</p><div class="terminal"><div class="terminal-head"><span>Alice · original server terminal, in ~/lab00-share</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">python3 -m http.server 8000 --bind 0.0.0.0</code></pre></div>
+  </div></details>
+</section>
+
+<section id="access">
+  <div class="section-label">Ask one more person · about 3 minutes</div>
+  <h2>3. Was the note only for Bob?</h2>
+  <p>Alice's server should be back on port 8000. Mallory uses her own VM to ask for the same note. In a pair, Bob makes this second request while playing Mallory.</p>
+  <div class="terminal"><div class="terminal-head"><span>Mallory · on her VM; Bob in a pair</span><button type="button" class="copy">Copy</button></div><pre tabindex="0"><code class="command">curl http://ALICE_IP:8000/note.txt</code></pre></div>
+  <p>Mallory has not guessed a password or intercepted somebody else's connection. She asked the server for a file. This simple server does not authenticate downloaders, so anyone who can reach it can request its readable files.</p>
+  <div class="question"><strong>Discuss:</strong> Alice said “this note is for Bob.” Where, in the commands we used, did she enforce that rule?</div>
+  <p><strong>Access control</strong> decides who may obtain something. <strong>Encryption</strong> makes the contents unreadable without the right key. Those solve different problems. Adding encryption to a connection would not, by itself, tell a server to refuse Mallory.</p>
+  <p class="small">This exercise demonstrates an open download, not passive eavesdropping. Successful HTTP delivery alone does not show who else can observe network traffic.</p>
+</section>
+
+<section id="logbook">
+  <div class="section-label">Explain · about 5 minutes</div>
+  <h2>One logbook, everybody's explanation</h2>
+  <p>One person records. Each person explains at least one comparison aloud, and the others ask a question. A few sentences and a useful command or result are enough.</p>
+  <form id="notes" onsubmit="return false">
+    <label for="team">Names and roles<input id="team" data-note="Names and roles" type="text" placeholder="Alice: … · Bob: … · Mallory: …"></label>
+    <label for="evidence">1. Show that the file crossed between VMs.<span class="hint">Who ran the server? Who ran the download? Record the URL and a distinctive line received. Say which machine each command ran on.</span><textarea id="evidence" data-note="Cross-VM evidence" rows="3"></textarea></label>
+    <label for="comparisons">2. Explain your comparisons, with a name beside each explanation.<span class="hint">Include wget vs curl and your chosen variation. What did you predict, what changed, and what did you observe? Everyone contributes.</span><textarea id="comparisons" data-note="Our comparisons" rows="4"></textarea></label>
+    <label for="security">3. Why could Mallory get a copy?<span class="hint">What would need to change to limit access to Bob? Would changing the tool or port accomplish that?</span><textarea id="security" data-note="Who can get a copy?" rows="3"></textarea></label>
+    <div class="actions"><button type="button" id="download-log" class="primary">Download team logbook</button><button type="button" id="print">Print this lab</button></div>
+    <p class="small" id="save-status" role="status">Notes stay in this browser when storage is available. Download your logbook before leaving.</p>
+  </form>
+  <noscript><p>All instructions work without JavaScript. Replace ALICE_IP manually and keep your logbook in a text file. Browser print also works.</p></noscript>
+</section>
+
+<section id="finish">
+  <h2>Finish</h2>
+  <p>Alice presses <kbd>Ctrl</kbd> + <kbd>C</kbd> in the server terminal. Keep your tiny practice files if you want to revisit them; no cleanup script is needed. If you tried SCP, Alice can remove the shared practice copy with <code>rm /srv/team/lab00-note.txt</code> after the group finishes.</p>
+  <details><summary>A small comparison card to keep</summary><div class="details-body"><div class="table-wrap"><table><thead><tr><th>Method</th><th>Where does it connect?</th><th>What changes?</th></tr></thead><tbody><tr><td>HTTP to <code>127.0.0.1:8000</code></td><td>The machine running the command</td><td>Checks its own server; no cross-VM transfer.</td></tr><tr><td>HTTP to Alice's private IP, port 8000</td><td>Alice's HTTP server, if reachable</td><td>Crosses VMs when requested from Bob's VM.</td></tr><tr><td><code>wget</code> vs <code>curl</code>, same HTTP URL</td><td>The same service</td><td>Different default output behavior; same unencrypted HTTP protocol here.</td></tr><tr><td><code>scp</code> to Alice's private IP</td><td>SSH, normally port 22</td><td>Uses account authentication and encrypts the connection.</td></tr><tr><td><code>scp -P</code> through Azure's public SSH endpoint</td><td>SSH through Azure's assigned port mapping</td><td>A different network route to SSH; not a public HTTP endpoint.</td></tr></tbody></table></div></div></details>
+</section>
+<footer><p>Lab 00 · One file. Two machines. · Standalone handout</p><details><summary>Command references</summary><ul><li><a href="https://docs.python.org/3.8/library/http.server.html">Python: the HTTP server and listening addresses</a></li><li><a href="https://www.gnu.org/software/wget/manual/html_node/Download-Options.html">GNU Wget: download options</a></li><li><a href="https://curl.se/docs/manpage.html">curl: output and time limits</a></li><li><a href="https://man.openbsd.org/scp">OpenSSH: scp</a></li><li><a href="https://learn.microsoft.com/en-us/azure/lab-services/classroom-labs-fundamentals">Microsoft: Azure Lab Services network architecture</a></li></ul><p>Commands target the Ubuntu tools used in class. This page needs no internet connection; following these reference links does.</p></details></footer>
+</main>
+<script>
+(() => {
+  'use strict';
+  const key = 'linux-lab00-simple-v2';
+  const ip = document.getElementById('alice-ip');
+  const status = document.getElementById('save-status');
+  const fields = [...document.querySelectorAll('[data-note]')];
+  const commands = [...document.querySelectorAll('.command')];
+  commands.forEach(el => el.dataset.template = el.textContent);
+  function validIP(value) {
+    const parts = value.split('.');
+    return parts.length === 4 && parts.every(p => /^(0|[1-9][0-9]{0,2})$/.test(p) && Number(p) <= 255) && value !== '0.0.0.0' && parts[0] !== '127';
+  }
+  function updateAddress() {
+    const value = ip.value.trim();
+    const valid = validIP(value);
+    const address = valid ? value : 'ALICE_IP';
+    commands.forEach(el => el.textContent = el.dataset.template.replaceAll('ALICE_IP', address));
+    document.querySelectorAll('[data-address]').forEach(el => el.textContent = address);
+    ip.setAttribute('aria-invalid', String(value.length > 0 && !valid));
+    document.getElementById('ip-status').textContent = valid ? 'Commands now use this address. Confirm it belongs to Alice’s VM.' : value ? 'Use Alice’s IPv4 address, not 127.0.0.1 or 0.0.0.0.' : 'Enter it to fill the commands below, or replace ALICE_IP yourself.';
+  }
+  function save() {
+    const notes = Object.fromEntries(fields.map(el => [el.id, el.value]));
+    try { localStorage.setItem(key, JSON.stringify({ip: ip.value, notes})); status.textContent = 'Saved in this browser. Download your logbook before leaving.'; }
+    catch (_) { status.textContent = 'Browser storage is unavailable. Download your logbook to keep it.'; }
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    if (typeof saved.ip === 'string') ip.value = saved.ip;
+    fields.forEach(el => { if (typeof saved.notes?.[el.id] === 'string') el.value = saved.notes[el.id]; });
+  } catch (_) { status.textContent = 'Browser storage is unavailable. Download your logbook to keep it.'; }
+  updateAddress();
+  ip.addEventListener('input', () => { updateAddress(); save(); });
+  fields.forEach(el => el.addEventListener('input', save));
+  document.querySelectorAll('.copy').forEach(button => button.addEventListener('click', async () => {
+    const code = button.closest('.terminal').querySelector('.command');
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('No clipboard');
+      await navigator.clipboard.writeText(code.textContent);
+      button.textContent = 'Copied';
+    } catch (_) {
+      const selection = window.getSelection();
+      const range = document.createRange(); range.selectNodeContents(code); selection.removeAllRanges(); selection.addRange(range);
+      button.textContent = 'Selected';
+    }
+    setTimeout(() => { button.textContent = 'Copy'; }, 1700);
+  }));
+  document.getElementById('download-log').addEventListener('click', () => {
+    const text = '# Lab 00 — One file. Two machines.\n\n' + 'Alice’s private IP: ' + (ip.value.trim() || '(not entered)') + '\n\n' + fields.map(el => '## ' + el.dataset.note + '\n\n' + (el.value.trim() || '(not recorded)')).join('\n\n') + '\n';
+    const url = URL.createObjectURL(new Blob([text], {type: 'text/markdown;charset=utf-8'}));
+    const a = document.createElement('a'); a.href = url; a.download = 'lab00-team-logbook.md'; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    status.textContent = 'Logbook download requested. Check your Downloads folder.';
+  });
+  let printState = [];
+  window.addEventListener('beforeprint', () => { printState = [...document.querySelectorAll('details')].map(el => [el, el.open]); printState.forEach(([el]) => el.open = true); });
+  window.addEventListener('afterprint', () => { printState.forEach(([el, opened]) => el.open = opened); });
+  document.getElementById('print').addEventListener('click', () => window.print());
+})();
+</script></body></html>
