@@ -2,5 +2,8 @@
 ## [Lab01](https://satzhan.github.io/linuxprogramming/12EncryptionDecryption/lab01-who-can-access-revised.html)
 ## [Lab02](https://satzhan.github.io/linuxprogramming/12EncryptionDecryption/linux_lab_02_encryption.html)
 ## [Lab04](https://satzhan.github.io/linuxprogramming/12EncryptionDecryption/lab04-digital-signatures-revised.html)
+## [Lab03](https://satzhan.github.io/linuxprogramming/12EncryptionDecryption/lab03-the-sealed-message_v2.html.html)
+
+
 
 
