@@ -1,0 +1,218 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lab 03 — The Sealed Message</title><style>
+:root {
+  --page: #faf9f6;
+  --white: #fff;
+  --ink: #202727;
+  --muted: #546160;
+  --line: #d9ded9;
+  --accent: #937137;
+  --dark: #1b2326;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+a { color: #315f58; text-underline-offset: 3px; }
+h1, h2, h3 { font-family: inherit; letter-spacing: normal; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.4rem); line-height: 1.2; font-weight: 690; margin: 0 0 10px; }
+h2 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 16px; }
+h3 { font-size: 1.08rem; line-height: 1.4; margin: 0 0 8px; }
+p { margin: 10px 0 16px; max-width: 80ch; }
+code, pre { font-family: var(--mono); }
+code { font-size: .88em; }
+p code, li code, td code { padding: .1em .23em; background: #edede9; border-radius: 3px; }
+header { background: var(--white); border-bottom: 1px solid var(--line); }
+.hero { max-width: 920px; margin: auto; padding: 42px 24px 30px; }
+.hero .dek { font-size: 1.07rem; color: var(--muted); margin: 0; }
+nav { background: var(--white); border-bottom: 1px solid var(--line); }
+.nav-inner { max-width: 920px; margin: auto; display: flex; gap: 20px; overflow-x: auto; padding: 11px 24px; }
+nav a { flex: none; text-decoration: none; color: var(--muted); font-size: .86rem; }
+nav a:hover, nav a:focus { color: var(--ink); text-decoration: underline; }
+main { max-width: 920px; margin: 0 auto; padding: 0 24px 64px; }
+section { padding: 36px 0; border-bottom: 1px solid var(--line); }
+section:last-child { border: 0; }
+.split, .roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.roles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.role { background: var(--white); border: 1px solid var(--line); padding: 13px 15px; }
+.role strong { display: block; }
+.role small { color: var(--muted); display: block; margin-top: 4px; font-size: .85rem; line-height: 1.5; }
+.story { background: #f1f3f0; border-left: 3px solid #96a7a0; padding: 13px 17px; margin: 16px 0; }
+.story.red, .story.dark { background: #f1f3f0; color: var(--ink); border-color: #96a7a0; }
+.story p { margin: 0; }
+.stage { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .9rem; color: var(--muted); margin: 0 0 16px; }
+.stage span { display: inline; padding: 0; background: transparent; font: inherit; }
+.instruction { margin: 25px 0 29px; }
+.instruction > p { margin: 7px 0 12px; }
+.terminal { margin: 12px 0 9px; background: var(--dark); color: #e9eee9; border-radius: 4px; overflow: hidden; }
+.termbar { padding: 7px 10px 7px 15px; border-bottom: 1px solid #424b4b; color: #d9e0dd; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .78rem; }
+.copy { border: 1px solid #616d6d; background: #303a3c; color: white; padding: 5px 10px; border-radius: 3px; cursor: pointer; font: .79rem system-ui, sans-serif; }
+.copy:hover, .copy:focus { background: #465355; }
+pre { margin: 0; padding: 15px 17px; font-size: .85rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; }
+.why { font-size: .94rem; color: var(--muted); margin-top: 8px; }
+.result { border-left: 3px solid #ac9a73; background: #f2f0e9; padding: 10px 14px; margin: 12px 0; }
+.result b { color: var(--ink); }
+.note { border: 1px solid var(--line); background: #f2f3f0; padding: 13px 16px; margin: 18px 0; }
+.danger { border-color: #c8aaa1; background: #f8f1ee; }
+.compare { width: 100%; border-collapse: collapse; margin: 18px 0 24px; font-size: .9rem; }
+.compare th { text-align: left; background: #f0f1ee; }
+.compare td, .compare th { border: 1px solid var(--line); padding: 9px 11px; vertical-align: top; }
+.questions { margin: 16px 0; padding-left: 26px; }
+.questions li { padding: 5px 0; }
+.ticket { border: 1px solid var(--line); background: var(--white); padding: 16px 18px; margin: 20px 0; }
+.ticket h3 { margin: 0 0 8px; }
+.endnote { color: var(--muted); font-size: .9rem; }
+@media (max-width: 680px) {
+  .hero { padding: 30px 18px 24px; }
+  .nav-inner { padding: 10px 18px; gap: 15px; }
+  main { padding: 0 18px 45px; }
+  section { padding: 30px 0; }
+  .split, .roles { grid-template-columns: 1fr; }
+  pre { padding: 13px 12px; font-size: .78rem; }
+}
+@media print {
+  body { background: white; color: black; }
+  header, nav, section { border-color: #aaa; }
+  nav, .copy { display: none; }
+  main { padding: 0; }
+  .hero { padding: 14px 0; }
+  .terminal { background: white; color: black; border: 1px solid #888; }
+  .termbar { border-color: #aaa; color: black; }
+  .instruction { break-inside: avoid; }
+}
+
+/* Optional explanations. Plain browser disclosure controls, closed by default. */
+.explain { margin: 4px 0 12px; border: 1px solid var(--line); background: var(--white); border-radius: 3px; }
+.explain summary { cursor: pointer; padding: 9px 13px; font-size: .91rem; color: #315f58; font-weight: 600; }
+.explain summary:hover, .explain summary:focus-visible { text-decoration: underline; }
+.explain[open] summary { border-bottom: 1px solid var(--line); }
+.explain ul { margin: 0; padding: 10px 19px 12px 35px; }
+.explain li { margin: 4px 0 9px; line-height: 1.58; font-size: .93rem; }
+.explain code { overflow-wrap: anywhere; background: #f0f0ed; border-radius: 2px; padding: 1px 3px; }
+@media print { .explain { break-inside: avoid; } }
+
+.eyebrow { color: #806634; text-transform: uppercase; font-weight: 750; font-size: .74rem; letter-spacing: .12em; margin-bottom: 8px; }
+.route { font-size:.9rem; color:var(--muted); margin-top:4px; }
+.route strong { color:var(--ink); }
+.caption { font-size:.84rem; color:var(--muted); }
+.step-label { color:#796031; text-transform:uppercase; font-size:.74rem; font-weight:750; letter-spacing:.07em; margin-bottom:3px; }
+.roleline { display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; margin-bottom:14px; font-size:.87rem; color:var(--muted); }
+.roleline b { color:var(--ink); }
+.compare tr td:first-child { font-weight:650; }
+.end-box { border-top:2px solid #937137; padding-top:12px; }
+@media print { .explain:not([open]) {display:none;} }
+</style></head><body>
+<header><div class="hero"><div class="eyebrow">Linux Security · Lab 03</div><h1>The sealed message</h1><p class="dek">Alice can publish a lock that everyone can use. But can only Alice unlock what arrives? And what happens when the same secret travels in a different envelope?</p></div></header>
+<nav aria-label="Lab navigation"><div class="nav-inner"><a href="#opening">The idea</a><a href="#preparation">Prepare keys</a><a href="#scene1">A sealed schedule</a><a href="#scene2">A readable-looking secret</a><a href="#scene3">A message for two</a><a href="#finish">What did we learn?</a></div></nav><main>
+<section id="opening"><h2>Anyone may lock it. Not everyone can unlock it.</h2>
+<p>You have already tried signatures in Lab 04. There the message was readable; the signature helped you check who signed the bytes. This time the problem is different. Alice wants someone to <em>receive information privately</em>. A stranger may intercept the file, copy it and even keep it forever. That should not reveal the message.</p>
+<div class="split"><div class="story"><p><strong>Public key:</strong> a lock Alice gives away. Other people use it to encrypt information <em>for Alice</em>.</p></div><div class="story"><p><strong>Private key:</strong> the part Alice keeps. It lets her decrypt information encrypted for her public key.</p></div></div>
+<p>The three assigned identities are <strong>Alice, Bob and Mallory</strong>. Each has a Linux VM. The story keeps moving: the sender in one scene becomes the recipient or the curious bystander in the next. Follow the role you've been assigned in each scene. You have already used HTTP downloads in an earlier lab; you'll use them again here.</p>
+<div class="note"><strong>Tools:</strong> <code>gpg</code> (OpenPGP encryption), <code>python3</code> (a tiny HTTP file server), <code>curl</code>, <code>wget</code>, and the ordinary Linux commands you know. We use disposable, passphrase-free keys for this exercise; do not use these keys for anything real. Only publish <code>*.pub.asc</code> files and ciphertext, never the private keyring.</div>
+<p class="endnote">Command explanations are hidden under “Explain these commands.” Open them when something is unclear, then go back to the experiment. No answer is supposed to depend on memorizing a flag.</p>
+</section>
+<section id="preparation"><div class="eyebrow">Before the story</div><h2>Make the locks and exchange them</h2>
+<p>Imagine a wall of public mailboxes. Each person publishes a padlock, not a key that opens it. We will use a public folder served over HTTP as that wall.</p>
+<div class="instruction"><h3>Give your VM its identity</h3><p>Use <code>alice</code>, <code>bob</code>, or <code>mallory</code> for <code>ROLE</code>. Put the three real VM addresses into the other variables. Keep this terminal open for the exercises; if you reconnect, restore the variables.</p><div class="terminal"><div class="termbar"><span>EVERY STUDENT · own VM</span><button class="copy" type="button">Copy</button></div><pre><code>ROLE=alice
+ALICE_IP=10.0.0.10
+BOB_IP=10.0.0.11
+MALLORY_IP=10.0.0.12
+
+mkdir -p "$HOME/lab03"/{gpg,public,inbox,notes}
+export GNUPGHOME="$HOME/lab03/gpg"
+chmod 700 "$GNUPGHOME"
+command -v gpg python3 curl wget
+hostname -I</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>ROLE</code> is the name assigned to this VM in the story. The three IP variables point to the actual Azure VMs, not the example addresses shown here.</li><li><code>mkdir -p .../{gpg,public,inbox,notes}</code> creates separate spaces for keys, published files, downloads and drafts. Bash expands the braces into four directory names.</li><li><code>GNUPGHOME</code> gives this lab its own GPG keyring rather than using the student’s usual one. <code>chmod 700</code> restricts access to its directory.</li><li><code>command -v</code> checks whether the tools exist. <code>hostname -I</code> shows the VM’s IP addresses; use the appropriate address that worked in your cross-VM lab.</li></ul></details><p class="why"><strong>If <code>gpg</code> is missing:</strong> on Ubuntu, install it with <code>sudo apt update &amp;&amp; sudo apt install -y gnupg</code>.</p></div>
+<div class="instruction"><h3>Create an encryption key and publish its public half</h3><p>The public half is meant to be copied. The secret half stays inside the private <code>gpg</code> directory. Do not publish that directory.</p><div class="terminal"><div class="termbar"><span>EVERY STUDENT · own VM</span><button class="copy" type="button">Copy</button></div><pre><code>gpg --batch --pinentry-mode loopback --passphrase '' --quick-generate-key "$ROLE Lab03 &lt;$ROLE@lab03.invalid&gt;" default default never
+gpg --list-keys "$ROLE@lab03.invalid"
+gpg --list-secret-keys "$ROLE@lab03.invalid"
+gpg --armor --export "$ROLE@lab03.invalid" &gt; "$HOME/lab03/public/$ROLE.pub.asc"
+gpg --fingerprint "$ROLE@lab03.invalid"
+ls -lh "$HOME/lab03/public"</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>--quick-generate-key</code> makes a new OpenPGP key for this lab. <code>--batch</code> and the empty passphrase make the example reproducible without a password prompt. They are for disposable classroom keys, not personal security.</li><li><code>--list-keys</code> displays public keys; <code>--list-secret-keys</code> shows which private keys this VM can use.</li><li><code>--export</code> outputs only the public portion. <code>--armor</code> encodes that public data as printable ASCII text; <code>&gt;</code> saves it to a file.</li><li><code>--fingerprint</code> identifies the cryptographic key. An email label is not proof that the key belongs to that person.</li></ul></details><p class="why"><strong>Repeat-run note:</strong> if you already generated this lab key, do not create another by accident. Use <code>gpg --list-keys</code> and continue with the existing one.</p></div>
+<div class="instruction"><h3>Make the public shelf reachable</h3><p>The HTTP server exposes only the <code>public</code> folder. Everything placed there can be downloaded by classmates. The server runs in the background so the shell remains usable.</p><div class="terminal"><div class="termbar"><span>EVERY STUDENT · own VM</span><button class="copy" type="button">Copy</button></div><pre><code>python3 -m http.server 8000 --bind 0.0.0.0 --directory "$HOME/lab03/public" &gt; "$HOME/lab03/server.log" 2&gt;&amp;1 &amp;
+echo $! &gt; "$HOME/lab03/server.pid"
+curl -fsS "http://127.0.0.1:8000/$ROLE.pub.asc" | head -n 2</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>python3 -m http.server</code> serves files from <code>public</code> over HTTP. <code>--bind 0.0.0.0</code> makes it listen on the VM’s network interfaces, not just localhost.</li><li><code>&gt; server.log 2&gt;&amp;1</code> records normal output and errors in a log file; the final <code>&amp;</code> runs the server in the background.</li><li><code>$!</code> is the process ID of the most recent background process. We save it for cleanup.</li><li><code>curl -fsS ... | head -n 2</code> requests your public key from your own server and displays its first two lines. This verifies a local download, <em>not</em> the cross-VM connection.</li></ul></details><p class="why">If a different service already uses port <code>8000</code>, look at <code>server.log</code>. Cross-VM access also depends on Azure network rules; use the working connectivity arrangement from Lab 00.</p></div>
+<div class="instruction"><h3>Collect the published keys</h3><p>You can use either downloader. Do both here, then inspect what you received. Each student obtains the same three public-key files.</p><div class="terminal"><div class="termbar"><span>EVERY STUDENT · own VM</span><button class="copy" type="button">Copy</button></div><pre><code>curl -fS -o "$HOME/lab03/inbox/alice.pub.asc" "http://$ALICE_IP:8000/alice.pub.asc"
+wget -qO "$HOME/lab03/inbox/bob.pub.asc" "http://$BOB_IP:8000/bob.pub.asc"
+curl -fS -o "$HOME/lab03/inbox/mallory.pub.asc" "http://$MALLORY_IP:8000/mallory.pub.asc"
+
+gpg --show-keys --fingerprint "$HOME/lab03/inbox/"*.pub.asc
+gpg --import "$HOME/lab03/inbox/"*.pub.asc
+gpg --list-keys</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>curl -o FILE URL</code> and <code>wget -O FILE URL</code> both download a resource to a specified filename. <code>-fS</code> makes <code>curl</code> report HTTP failures; <code>-q</code> makes <code>wget</code> quiet.</li><li><code>gpg --show-keys</code> inspects keys from files without requiring you to import them first. <code>--fingerprint</code> displays key fingerprints.</li><li><code>gpg --import</code> adds those public keys to the local keyring. Importing does <em>not</em> establish that Alice really owns a file labelled Alice.</li><li><strong>Check with the actual person:</strong> compare a fingerprint directly with what the supposed owner sees on their VM. Reading a fingerprint from the same untrusted download does not establish identity.</li></ul></details><p class="why"><strong>Try this:</strong> compare the two downloaders using <code>ls -lh</code> and <code>sha256sum</code>. Does the choice of <code>curl</code> or <code>wget</code> change the key?</p></div>
+<div class="result"><b>What matters:</b> every person should now have one private key on their own VM and public keys for all three people. If a download fails, resolve the network connection before starting the messages. A successful download by itself is not proof of key ownership.</div>
+</section>
+<section id="scene1"><div class="eyebrow">Dispatch 01 · The quiet timetable</div><h2>The museum schedule must stay secret</h2>
+<div class="roleline"><span><b>Alice</b> writes and seals the schedule</span><span><b>Bob</b> opens it</span><span><b>Mallory</b> finds a copy</span></div>
+<div class="story"><p>Alice manages a small exhibition. She wants Bob to know when the doors will open and which temporary access phrase to use. The file travels through an ordinary web server. Mallory can see the transfer and download exactly the same ciphertext. That is acceptable—provided the ciphertext does not disclose the secret.</p></div>
+<p><strong>Before running commands:</strong> who should be able to open the message? Who should be able to download the encrypted file? Those are different questions.</p>
+<div class="instruction"><h3>Alice seals a note for Bob</h3><p>Alice writes an ordinary text file, then encrypts it using <em>Bob’s public key</em>. Alice never needs Bob’s private key.</p><div class="terminal"><div class="termbar"><span>ALICE · create and encrypt</span><button class="copy" type="button">Copy</button></div><pre><code>printf 'Museum opening: 16:30
+Temporary access phrase: LANTERN-42
+' &gt; "$HOME/lab03/notes/01-schedule.txt"
+cat "$HOME/lab03/notes/01-schedule.txt"
+gpg --batch --yes --trust-model always --encrypt --recipient bob@lab03.invalid --output "$HOME/lab03/public/01-schedule.gpg" "$HOME/lab03/notes/01-schedule.txt"
+file "$HOME/lab03/public/01-schedule.gpg"
+wc -c "$HOME/lab03/notes/01-schedule.txt" "$HOME/lab03/public/01-schedule.gpg"</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>printf</code> writes a two-line plaintext. It is not secret until encryption happens.</li><li><code>--encrypt --recipient bob@lab03.invalid</code> tells GPG which public key should protect the message. <code>--output</code> names the encrypted file.</li><li><code>--trust-model always</code> bypasses GPG’s usual owner-trust question for this classroom exercise. It does <em>not</em> verify Bob’s identity. You need to compare fingerprints independently.</li><li><code>file</code> guesses the data format, while <code>wc -c</code> counts bytes. The ciphertext does not have to be the same size as the plaintext.</li></ul></details></div>
+<div class="instruction"><h3>Bob retrieves and opens the sealed file</h3><p>Bob downloads the ciphertext like any other HTTP file. Only afterward does his private key come into play.</p><div class="terminal"><div class="termbar"><span>BOB · download and decrypt</span><button class="copy" type="button">Copy</button></div><pre><code>curl -fS -o "$HOME/lab03/inbox/01-schedule.gpg" "http://$ALICE_IP:8000/01-schedule.gpg"
+gpg --batch --yes --output "$HOME/lab03/inbox/01-opened.txt" --decrypt "$HOME/lab03/inbox/01-schedule.gpg"
+cat "$HOME/lab03/inbox/01-opened.txt"</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>curl</code> downloads the ciphertext; the server does not decrypt anything for Bob.</li><li><code>gpg --decrypt</code> finds a matching private key inside Bob’s keyring and uses it to recover the plaintext. <code>--output</code> saves the recovered file.</li><li><code>cat</code> proves the decrypted output is readable. Ask Alice whether it matches the note she wrote.</li></ul></details></div>
+<div class="instruction"><h3>Mallory obtains exactly the same sealed file</h3><p>Mallory does not need to break into anyone’s machine. The file is already public. Try to decrypt it anyway.</p><div class="terminal"><div class="termbar"><span>MALLORY · download and inspect</span><button class="copy" type="button">Copy</button></div><pre><code>wget -qO "$HOME/lab03/inbox/01-schedule.gpg" "http://$ALICE_IP:8000/01-schedule.gpg"
+file "$HOME/lab03/inbox/01-schedule.gpg"
+gpg --batch --yes --output "$HOME/lab03/inbox/01-mallory-opened.txt" --decrypt "$HOME/lab03/inbox/01-schedule.gpg"
+ls -lh "$HOME/lab03/inbox/01-"*</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>wget -qO</code> obtains the same encrypted bytes that Bob downloaded, though the local filename can be whatever you choose.</li><li><code>gpg --decrypt</code> should report that no secret key is available. That failure is the expected observation—not a networking problem.</li><li><code>ls</code> lets you check what files exist after the attempt. A failed decryption is not evidence that a readable output file was created.</li></ul></details></div><div class="result"><b>Explain:</b> Bob and Mallory downloaded the same encrypted bytes. Why is Bob’s outcome different? What is public here, and what must remain private?</div>
+</section>
+<section id="scene2"><div class="eyebrow">Dispatch 02 · The late correction</div><h2>The note looks readable. It still isn't.</h2>
+<div class="roleline"><span><b>Bob</b> reports a correction</span><span><b>Mallory</b> receives it</span><span><b>Alice</b> sees the transmission</span></div>
+<div class="story"><p>After the exhibition opens, Bob notices a mistake in the equipment inventory. Mallory is handling the overnight delivery, so Bob sends the correction to Mallory. This time the encrypted file is printable text that begins with a familiar-looking header. Alice intercepts it and wonders whether that means it is no longer encrypted.</p></div>
+<div class="instruction"><h3>Bob sends the correction in a different envelope</h3><p>This time GPG adds ASCII armor. The file will look like text, but readable characters do not necessarily mean readable information.</p><div class="terminal"><div class="termbar"><span>BOB · ASCII-armored encryption</span><button class="copy" type="button">Copy</button></div><pre><code>printf 'Inventory correction: 8 crates, not 6.
+New arrival time: 07:15.
+' &gt; "$HOME/lab03/notes/02-inventory.txt"
+gpg --batch --yes --trust-model always --armor --encrypt --recipient mallory@lab03.invalid --output "$HOME/lab03/public/02-inventory.asc" "$HOME/lab03/notes/02-inventory.txt"
+head -n 5 "$HOME/lab03/public/02-inventory.asc"
+wc -c "$HOME/lab03/notes/02-inventory.txt" "$HOME/lab03/public/02-inventory.asc"</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>--armor</code> represents encrypted binary data with printable characters. It does not replace encryption; it only changes how encrypted data is packaged.</li><li><code>head -n 5</code> shows the armored header and the beginning of the encoded data.</li><li><code>wc -c</code> makes the overhead of the text representation visible. A printable file may be longer than the binary form.</li></ul></details></div>
+<div class="instruction"><h3>Mallory receives the inventory correction</h3><p>Mallory expects a secret destined for her. She should not need to know which encryption format Bob chose.</p><div class="terminal"><div class="termbar"><span>MALLORY · decrypt the ASCII file</span><button class="copy" type="button">Copy</button></div><pre><code>wget -qO "$HOME/lab03/inbox/02-inventory.asc" "http://$BOB_IP:8000/02-inventory.asc"
+gpg --batch --yes --output "$HOME/lab03/inbox/02-opened.txt" --decrypt "$HOME/lab03/inbox/02-inventory.asc"
+cat "$HOME/lab03/inbox/02-opened.txt"</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>wget -qO</code> downloads the file; this time the file contains printable armor rather than raw binary ciphertext.</li><li><code>gpg --decrypt</code> understands both armored and binary OpenPGP messages. Mallory’s private key opens the encrypted message.</li><li><code>cat</code> reveals the recovered plain text, not the original armor.</li></ul></details></div>
+<div class="instruction"><h3>Alice examines the suspicious-looking text</h3><p>Alice can see an OpenPGP header and inspect some packet information. But can she read the inventory correction?</p><div class="terminal"><div class="termbar"><span>ALICE · inspect without permission to decrypt</span><button class="copy" type="button">Copy</button></div><pre><code>curl -fS -o "$HOME/lab03/inbox/02-inventory.asc" "http://$BOB_IP:8000/02-inventory.asc"
+head -n 5 "$HOME/lab03/inbox/02-inventory.asc"
+gpg --list-packets "$HOME/lab03/inbox/02-inventory.asc"
+gpg --batch --yes --output "$HOME/lab03/inbox/02-alice-opened.txt" --decrypt "$HOME/lab03/inbox/02-inventory.asc"</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>head</code> reveals the armor header. It does not expose the decrypted inventory information.</li><li><code>--list-packets</code> inspects the OpenPGP packaging and may reveal metadata such as recipient key identifiers. Encryption does not necessarily hide all metadata.</li><li><code>--decrypt</code> should fail because Alice lacks Mallory’s private key. A readable-looking encrypted file is not a plaintext file.</li></ul></details></div><div class="result"><b>Explain:</b> in Dispatch 01 Alice produced a binary <code>.gpg</code> file; in Dispatch 02 Bob produced a printable <code>.asc</code> file. What changed? What did <em>not</em> change?</div>
+</section>
+<section id="scene3"><div class="eyebrow">Dispatch 03 · The emergency notice</div><h2>One message, more than one recipient</h2>
+<div class="roleline"><span><b>Mallory</b> reports an urgent change</span><span><b>Alice</b> opens it</span><span><b>Bob</b> discovers the message</span></div>
+<div class="story"><p>The opening schedule changes again. Mallory must tell Alice immediately, but she also wants to keep an encrypted copy that she can open herself later. Bob finds the published file. He has a private key too—just not one of the keys named as a recipient.</p></div>
+<p><strong>Make a prediction:</strong> does naming two recipients produce two plaintext files? Or can one encrypted file be opened by either of two private keys?</p>
+<div class="instruction"><h3>Mallory seals one notice for Alice and herself</h3><p>No need to produce and publish two ciphertext files. GPG can mark multiple recipients in one encryption operation.</p><div class="terminal"><div class="termbar"><span>MALLORY · two recipients</span><button class="copy" type="button">Copy</button></div><pre><code>printf 'Urgent update: the delivery is now at the north entrance.
+Confirmation phrase: BLUE-ORCHID.
+' &gt; "$HOME/lab03/notes/03-urgent.txt"
+gpg --batch --yes --trust-model always --encrypt --recipient alice@lab03.invalid --recipient mallory@lab03.invalid --output "$HOME/lab03/public/03-urgent.gpg" "$HOME/lab03/notes/03-urgent.txt"
+gpg --list-packets "$HOME/lab03/public/03-urgent.gpg"
+gpg --batch --yes --output "$HOME/lab03/notes/03-my-copy.txt" --decrypt "$HOME/lab03/public/03-urgent.gpg"
+cat "$HOME/lab03/notes/03-my-copy.txt"</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>--recipient</code> can be repeated. Each specified public key is authorized to open the same encrypted content with the matching private key.</li><li><code>--list-packets</code> can show multiple public-key-encrypted session-key packets. There is still one message payload.</li><li>Mallory also decrypts the published file. Unlike a single-recipient message sent only to Alice, this copy was deliberately encrypted for Mallory too.</li></ul></details></div>
+<div class="instruction"><h3>Alice opens the urgent notice</h3><p>Alice is one of the recipients and should be able to recover the secret with her own private key.</p><div class="terminal"><div class="termbar"><span>ALICE · decrypt</span><button class="copy" type="button">Copy</button></div><pre><code>curl -fS -o "$HOME/lab03/inbox/03-urgent.gpg" "http://$MALLORY_IP:8000/03-urgent.gpg"
+gpg --batch --yes --output "$HOME/lab03/inbox/03-opened.txt" --decrypt "$HOME/lab03/inbox/03-urgent.gpg"
+cat "$HOME/lab03/inbox/03-opened.txt"</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>curl</code> brings the encrypted file to Alice’s machine. Anyone with network access to the file could have downloaded those bytes.</li><li><code>gpg --decrypt</code> succeeds because Alice was included as a recipient. This does not imply that Alice acquired Mallory’s private key.</li></ul></details></div>
+<div class="instruction"><h3>Bob tries the same file</h3><p>Bob has a legitimate key pair. The presence of <em>a</em> private key is not enough; it must match an intended recipient.</p><div class="terminal"><div class="termbar"><span>BOB · examine and attempt</span><button class="copy" type="button">Copy</button></div><pre><code>wget -qO "$HOME/lab03/inbox/03-urgent.gpg" "http://$MALLORY_IP:8000/03-urgent.gpg"
+gpg --list-packets "$HOME/lab03/inbox/03-urgent.gpg"
+gpg --batch --yes --output "$HOME/lab03/inbox/03-bob-opened.txt" --decrypt "$HOME/lab03/inbox/03-urgent.gpg"
+gpg --list-secret-keys</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>--list-packets</code> can reveal that the package contains more than one recipient entry without revealing the message itself.</li><li><code>--decrypt</code> should fail because Bob’s secret key matches neither recipient.</li><li><code>--list-secret-keys</code> confirms Bob owns a key pair. That fact alone does not grant access to every encrypted message.</li></ul></details></div><div class="result"><b>Explain:</b> both Alice and Mallory can open the notice. Bob cannot. How is that possible with only <em>one</em> encrypted file? Does the encrypted file prove who wrote it?</div>
+<div class="note"><strong>A connection to Lab 04:</strong> encryption protects confidentiality but does not by itself authenticate the sender. Anybody with Alice’s public key could have encrypted a file <em>for</em> Alice. A signature is a separate way to check who signed content, provided the verifying public key is trustworthy.</div>
+</section>
+<section id="finish"><div class="eyebrow">Debrief</div><h2>What have you actually tested?</h2>
+<p>Across the three dispatches every student has published a public key, obtained other keys, encrypted and sent a message, opened a message intended for them, and tried to open one that was not. What changes is the situation, the recipient, the packaging, and finally the number of recipients.</p>
+<table class="compare"><thead><tr><th>Situation</th><th>Sender</th><th>Successful recipient</th><th>Cannot decrypt</th><th>New observation</th></tr></thead><tbody><tr><td>Sealed schedule</td><td>Alice</td><td>Bob</td><td>Mallory</td><td>Binary ciphertext</td></tr><tr><td>Inventory correction</td><td>Bob</td><td>Mallory</td><td>Alice</td><td>ASCII armor</td></tr><tr><td>Emergency notice</td><td>Mallory</td><td>Alice and Mallory</td><td>Bob</td><td>More than one recipient</td></tr></tbody></table>
+<div class="ticket"><h3>Submit evidence, not a command transcript</h3><p>Show that your key existed and your public key was published; that your assigned message was encrypted and downloadable; that you successfully decrypted a message addressed to you; that decryption failed for a message not addressed to you; and that you compared what happened across the three dispatches. Use as many or as few screenshots as needed to demonstrate those outcomes.</p><p>In a short explanation, answer: (1) Why can someone download your ciphertext without being able to read it? (2) What is the difference between <code>.gpg</code> and armored <code>.asc</code>? (3) Why could two recipients decrypt Dispatch 03? (4) Does encryption alone tell you who sent the file? (5) Why must you verify that a public key really belongs to its claimed owner?</p></div>
+<div class="instruction"><h3>Close the temporary file server</h3><p>When your work is finished, stop the server on your own VM. The created files remain for inspection.</p><div class="terminal"><div class="termbar"><span>EVERY STUDENT · cleanup</span><button class="copy" type="button">Copy</button></div><pre><code>kill "$(cat "$HOME/lab03/server.pid")"
+cat "$HOME/lab03/server.log" | tail -n 8</code></pre></div><details class="explain"><summary>Explain these commands</summary><ul><li><code>kill</code> sends a termination signal to the server process whose ID was saved earlier.</li><li><code>tail -n 8</code> shows recent HTTP requests. The log is one more way to see which public resources were requested.</li></ul></details></div>
+<div class="end-box"><p><strong>Where Lab 05 starts:</strong> You have used public-key encryption without caring how GPG makes the large message efficient. In fact, GPG usually uses a fresh symmetric session key for the message and public-key cryptography to protect that session key. Lab 05 can take this mechanism apart: fast symmetric encryption for the data, asymmetric encryption for exchanging its key.</p></div>
+</section></main>
+<script>
+document.querySelectorAll('.terminal').forEach(box => {
+ const button=box.querySelector('.copy');
+ button.addEventListener('click', async () => {
+   const value=box.querySelector('pre code').textContent;
+   try { await navigator.clipboard.writeText(value); button.textContent='Copied'; }
+   catch (error) { const selection=window.getSelection(); const range=document.createRange(); range.selectNodeContents(box.querySelector('pre code')); selection.removeAllRanges(); selection.addRange(range); button.textContent='Select & copy'; }
+   setTimeout(() => button.textContent='Copy', 1800);
+ });
+});
+</script>
+</body></html>
