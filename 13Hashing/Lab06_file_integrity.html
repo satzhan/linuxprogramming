@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 06 — Did the file change?</title>
+<style>
+:root{--paper:#f7f6f1;--ink:#202b2a;--muted:#526361;--line:#d8ddd6;--accent:#23574d;--accent2:#c16f46;--off:#fffefa;--code:#1d2828;--tint:#edf3ef}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:845px;padding:34px 28px 80px;margin:auto}
+h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:500;letter-spacing:-.025em;line-height:1.12}
+h1{font-size:clamp(38px,6vw,61px);margin:0 0 13px}
+h2{font-size:clamp(25px,4vw,35px);margin:0}
+p{margin:0 0 13px}code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+.header{padding:20px 0 31px;border-bottom:1px solid var(--line)}.header p{font-size:19px;max-width:710px;color:#3c4d4a;margin:0}
+.introline{padding:22px 0 7px;max-width:740px}.introline p{margin-bottom:12px}
+.network{display:grid;grid-template-columns:1fr 95px 1fr;align-items:center;gap:8px;margin:22px 0 20px}
+.network>div:not(.arrow){background:var(--off);border:1px solid var(--line);border-radius:9px;padding:18px 14px;text-align:center}
+.network strong{display:block;font-size:18px}.network span{color:var(--muted);font-size:13px}.arrow{font-size:26px;color:var(--accent);text-align:center}
+.groupnote{padding:13px 16px;background:var(--tint);border-left:3px solid var(--accent);font-size:14px;color:#3b514b;margin:18px 0 4px}
+.chapter{padding:42px 0 43px;border-bottom:1px solid var(--line)}.chapter-title{display:flex;align-items:baseline;gap:14px;margin-bottom:16px}
+.chapter-no{color:var(--accent2);font:26px Georgia,serif}.intro{max-width:740px;color:#354641;margin-bottom:23px}
+.steps{display:grid;gap:10px}.step{background:var(--off);border:1px solid var(--line);border-radius:8px;padding:15px 16px 12px}
+.step[hidden],.after[hidden]{display:none!important}
+.instruction{display:flex;align-items:baseline;gap:11px;margin-bottom:11px}.vm{border:1px solid #91a89d;border-radius:4px;padding:0px 7px;color:var(--accent);font-size:12px;font-weight:750;white-space:nowrap}
+.action{font-weight:630;font-size:15px;line-height:1.4}
+.command{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;background:var(--code);border-radius:5px;color:#f3f6f2;min-width:0}
+.command code{min-width:0;flex:1;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13.5px;line-height:1.65}
+.copy{border:1px solid #72847d;background:transparent;border-radius:4px;padding:5px 10px;color:white;cursor:pointer;font:12px system-ui;flex-shrink:0}
+.copy:hover{background:#38514b}.explain{margin-top:9px;color:var(--muted);font-size:13.5px}.explain summary{cursor:pointer;list-style:none;font-weight:600}
+.explain summary:before{content:"+";display:inline-block;color:var(--accent2);font-size:17px;width:19px}.explain[open] summary:before{content:"−"}
+.explain p{margin:7px 0 3px 19px}.explain code,.after code,.intro code,.groupnote code,.finish code,.introline code{background:#e7ebe5;border-radius:3px;padding:1px 4px;font-size:.88em;color:#293b36}
+.step-control{display:flex;align-items:center;gap:14px;margin:17px 0 0}.next{border:0;border-radius:5px;background:var(--accent);padding:10px 17px;color:white;font:600 14px system-ui;cursor:pointer}
+.next:hover{background:#1b423a}.next:disabled{background:#a6b4ac;cursor:default}.progress{font-size:13px;color:var(--muted)}
+.after{margin:22px 0 0;padding:18px 20px;background:var(--tint);border-left:3px solid var(--accent);border-radius:0 6px 6px 0}
+.after p:last-child{margin-bottom:0}.finish{padding:37px 0 0}.finish h2{margin-bottom:15px}.finish ul{padding-left:22px}.finish li{margin:9px 0}.finish p{max-width:740px}
+.trouble{margin-top:26px;border:1px solid var(--line);border-radius:7px;background:var(--off);padding:13px 16px;font-size:14px}.trouble summary{cursor:pointer;font-weight:700}.trouble p{margin-top:11px}
+.trouble code{background:#edf0eb;padding:2px 4px;border-radius:3px}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--accent2);outline-offset:3px}
+@media(max-width:580px){main{padding:22px 16px 55px}.network{grid-template-columns:1fr 35px 1fr}.network>div:not(.arrow){padding:13px 7px}.network strong{font-size:15px}.network span{font-size:11px}.chapter{padding:32px 0}.chapter-title{gap:9px}.chapter-no{font-size:20px}.step{padding:12px 11px}.command code{font-size:12px}}
+@media print{body{background:#fff}.step[hidden],.after[hidden]{display:block!important}.step-control,.copy{display:none}.chapter{break-inside:avoid}.step{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main>
+<header class="header"><h1>Lab 06 · Did the file change?</h1><p>One Linux machine sends a file. Another receives it. How can the receiver tell whether it has the same information the sender originally published?</p></header>
+<div class="introline"><p>Use <strong>two different Azure Linux VMs</strong>, not two windows into the same VM. Work with a teammate: one operates VM A; the other operates VM B. With three people, VM C can repeat the receiver’s checks independently. Change who types as you go.</p>
+<p>You will send a real file with <code>wget</code>, change the file on VM A, and see what Linux can—and cannot—tell you from a checksum.</p></div>
+<div class="network" aria-label="VM A makes an HTTP file available to VM B"><div><strong>VM A</strong><span>holds the file; runs the server</span></div><div class="arrow">→</div><div><strong>VM B</strong><span>downloads; checks the file</span></div></div>
+<div class="groupnote">Keep this page open on each computer. Reveal and run one command at a time. Commands marked <strong>VM A</strong> run only on the sender’s VM; commands marked <strong>VM B</strong> run only on the receiver’s VM.</div>
+<section class="chapter" id="s1" data-chapter>
+<div class="chapter-title"><span class="chapter-no">01</span><h2>1. Put a real file on VM A</h2></div>
+<div class="intro"><p>Linux can send files across a network without a graphical interface. Here VM A will run a small web server. VM B will ask that server for a file, just as a browser asks a website for a page.</p>
+<p>A <strong>hash</strong> is a short result calculated from a file’s contents. SHA-256 gives us a 64-character hexadecimal result. Equal contents give equal SHA-256 hashes, regardless of filename. A different hash means the contents differ.</p></div>
+<div class="steps"><article class="step" data-step="1" >
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Make a folder to hold only the files you intend to share.</span></div>
+  <div class="command"><code>mkdir -p ~/lab06-share</code><button class="copy" type="button" data-command="mkdir -p ~/lab06-share" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>The web server will serve files from the folder where you start it. Keeping the practice files in one folder avoids sharing unrelated files.</p></details>
+</article><article class="step" data-step="2" hidden>
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Enter that folder.</span></div>
+  <div class="command"><code>cd ~/lab06-share</code><button class="copy" type="button" data-command="cd ~/lab06-share" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p><code>cd</code> changes the directory used by the following commands.</p></details>
+</article><article class="step" data-step="3" hidden>
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Write a short note.</span></div>
+  <div class="command"><code>printf &#x27;Meeting: Friday 10:00\n&#x27; &gt; note.txt</code><button class="copy" type="button" data-command="printf &#x27;Meeting: Friday 10:00\n&#x27; &gt; note.txt" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p><code>printf</code> produces the text. <code>\n</code> adds a newline. <code>&gt;</code> saves the output in a file, replacing older contents.</p></details>
+</article><article class="step" data-step="4" hidden>
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Save the SHA-256 hash of the note.</span></div>
+  <div class="command"><code>sha256sum note.txt &gt; note.sha256</code><button class="copy" type="button" data-command="sha256sum note.txt &gt; note.sha256" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p><code>sha256sum</code> reads the bytes of <code>note.txt</code>. The <code>&gt;</code> stores its result in <code>note.sha256</code>. This second file contains the expected hash and the filename to check.</p></details>
+</article><article class="step" data-step="5" hidden>
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Look at the saved hash.</span></div>
+  <div class="command"><code>cat note.sha256</code><button class="copy" type="button" data-command="cat note.sha256" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>The long sequence is the hash; <code>note.txt</code> at the end is the filename the check command will later read. The hash is not the original text and is not encrypted text.</p></details>
+</article><article class="step" data-step="6" hidden>
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Find VM A’s private IP address.</span></div>
+  <div class="command"><code>hostname -I</code><button class="copy" type="button" data-command="hostname -I" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>You may see more than one address. Use the IPv4 address reachable by the other Azure VM, often beginning with <code>10.</code>. It is the address for VM B to contact, not <code>127.0.0.1</code>.</p></details>
+</article><article class="step" data-step="7" hidden>
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Start a server and leave this terminal running.</span></div>
+  <div class="command"><code>python3 -m http.server 8000 --bind 0.0.0.0</code><button class="copy" type="button" data-command="python3 -m http.server 8000 --bind 0.0.0.0" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p><code>8000</code> is the listening port. <code>0.0.0.0</code> tells the server to accept connections on its network interfaces. Other students connect using VM A’s actual IP address, not <code>0.0.0.0</code>. This is an unencrypted practice server; share no secrets.</p></details>
+</article></div>
+<div class="step-control"><button class="next" type="button">Show next command <span aria-hidden="true">→</span></button><span class="progress" aria-live="polite">1 / 7</span></div>
+<div class="after" hidden><p><strong>VM A is now serving a real file.</strong> Do not close the server terminal. When VM B downloads the note, this terminal should print a request such as <code>GET /note.txt</code>.</p>
+<p>Later you will edit the file on VM A. Open a <em>second terminal to the same VM A</em> for those edits; you can use the same account. Keep the server running in the first terminal.</p></div>
+</section><section class="chapter" id="s2" data-chapter>
+<div class="chapter-title"><span class="chapter-no">02</span><h2>2. Download it on VM B</h2></div>
+<div class="intro"><p>Move to <strong>a different Linux VM</strong>. It must not be another terminal on VM A. A local copy would not tell us whether we can really transfer anything between two computers.</p>
+<p><code>wget</code> makes a network request and writes the response to a file. Then Linux can compare the downloaded file with the hash supplied by VM A.</p></div>
+<div class="steps"><article class="step" data-step="1" >
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Make a receiving folder.</span></div>
+  <div class="command"><code>mkdir -p ~/lab06-received</code><button class="copy" type="button" data-command="mkdir -p ~/lab06-received" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>This folder is on VM B, not VM A. Each VM has its own files.</p></details>
+</article><article class="step" data-step="2" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Work inside that folder.</span></div>
+  <div class="command"><code>cd ~/lab06-received</code><button class="copy" type="button" data-command="cd ~/lab06-received" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>Subsequent downloads and checks happen here.</p></details>
+</article><article class="step" data-step="3" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Enter the IPv4 address your teammate found on VM A.</span></div>
+  <div class="command"><code>read -r -p &#x27;VM A IPv4 address: &#x27; SERVER_IP</code><button class="copy" type="button" data-command="read -r -p &#x27;VM A IPv4 address: &#x27; SERVER_IP" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>Type the address and press Enter. The shell stores it in <code>SERVER_IP</code>. Keep using this terminal so the variable remains set.</p></details>
+</article><article class="step" data-step="4" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Download the actual note over the network.</span></div>
+  <div class="command"><code>wget -O note.txt &quot;http://$SERVER_IP:8000/note.txt&quot;</code><button class="copy" type="button" data-command="wget -O note.txt &quot;http://$SERVER_IP:8000/note.txt&quot;" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p><code>wget</code> contacts VM A. <code>-O note.txt</code> chooses the local filename and overwrites it if it exists. Watch the server terminal on VM A: it should log the request.</p></details>
+</article><article class="step" data-step="5" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Download the saved hash as a separate file.</span></div>
+  <div class="command"><code>wget -O note.sha256 &quot;http://$SERVER_IP:8000/note.sha256&quot;</code><button class="copy" type="button" data-command="wget -O note.sha256 &quot;http://$SERVER_IP:8000/note.sha256&quot;" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>Now VM B has both a downloaded file and the hash file supplied by the server. They are two separate network transfers.</p></details>
+</article><article class="step" data-step="6" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Read the received note.</span></div>
+  <div class="command"><code>cat note.txt</code><button class="copy" type="button" data-command="cat note.txt" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>You should see the meeting time. Notice that reading the file and checking its hash answer different questions.</p></details>
+</article><article class="step" data-step="7" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Ask Linux whether the downloaded note matches the downloaded hash.</span></div>
+  <div class="command"><code>sha256sum -c note.sha256</code><button class="copy" type="button" data-command="sha256sum -c note.sha256" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p><code>-c</code> means check. Linux reads the hash stored in <code>note.sha256</code>, recalculates the hash of <code>note.txt</code>, and compares them. Expect <code>note.txt: OK</code>.</p></details>
+</article><article class="step" data-step="8" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Keep the first hash as a record of the original download.</span></div>
+  <div class="command"><code>cp note.sha256 baseline.sha256</code><button class="copy" type="button" data-command="cp note.sha256 baseline.sha256" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>We need a reference that does not change when VM A publishes a new hash. The name is different, but the checksum file still tells Linux to check <code>note.txt</code>.</p></details>
+</article><article class="step" data-step="9" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Keep the first note so you can later see the exact difference.</span></div>
+  <div class="command"><code>cp note.txt original.txt</code><button class="copy" type="button" data-command="cp note.txt original.txt" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>This is an ordinary copy. The filename differs but the contents match for now.</p></details>
+</article></div>
+<div class="step-control"><button class="next" type="button">Show next command <span aria-hidden="true">→</span></button><span class="progress" aria-live="polite">1 / 9</span></div>
+<div class="after" hidden><p>What does <code>OK</code> mean? It means <em>these particular file bytes match this particular saved hash</em>. Both came from VM A. The check does not yet tell us whether VM A is trustworthy, whether the note is true, or whether it was changed before you downloaded it.</p></div>
+</section><section class="chapter" id="s3" data-chapter>
+<div class="chapter-title"><span class="chapter-no">03</span><h2>3. Change the file; test the check again</h2></div>
+<div class="intro"><p>Imagine the meeting time changes. The person on VM A edits the note, but forgets to update the published checksum. VM B downloads the new version. Can Linux spot that it no longer agrees with the old record?</p></div>
+<div class="steps"><article class="step" data-step="1" >
+  <div class="instruction"><span class="vm">VM A</span><span class="action">In a second VM A terminal, return to the shared folder.</span></div>
+  <div class="command"><code>cd ~/lab06-share</code><button class="copy" type="button" data-command="cd ~/lab06-share" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>Leave the first terminal running the server. This terminal is only for editing the shared file.</p></details>
+</article><article class="step" data-step="2" hidden>
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Change the meeting time.</span></div>
+  <div class="command"><code>printf &#x27;Meeting: Friday 11:00\n&#x27; &gt; note.txt</code><button class="copy" type="button" data-command="printf &#x27;Meeting: Friday 11:00\n&#x27; &gt; note.txt" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>This changes the actual file being served. We have not edited <code>note.sha256</code>, so it still describes the 10:00 version.</p></details>
+</article><article class="step" data-step="3" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Download the note again from VM A.</span></div>
+  <div class="command"><code>wget -O note.txt &quot;http://$SERVER_IP:8000/note.txt&quot;</code><button class="copy" type="button" data-command="wget -O note.txt &quot;http://$SERVER_IP:8000/note.txt&quot;" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>Because <code>-O</code> overwrites <code>note.txt</code>, VM B now has the 11:00 version. <code>original.txt</code> still contains the 10:00 version.</p></details>
+</article><article class="step" data-step="4" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Check against the original saved hash.</span></div>
+  <div class="command"><code>sha256sum -c baseline.sha256</code><button class="copy" type="button" data-command="sha256sum -c baseline.sha256" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>Expect <code>FAILED</code>. The same name now refers to bytes that differ from the version you first saved. The command’s nonzero exit status is normal here.</p></details>
+</article><article class="step" data-step="5" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">See what changed, instead of only knowing that something changed.</span></div>
+  <div class="command"><code>diff -u original.txt note.txt</code><button class="copy" type="button" data-command="diff -u original.txt note.txt" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>The line beginning with <code>-</code> came from the original file; the line beginning with <code>+</code> came from the new one. A difference is expected.</p></details>
+</article><article class="step" data-step="6" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Compare the same two files byte by byte.</span></div>
+  <div class="command"><code>cmp original.txt note.txt</code><button class="copy" type="button" data-command="cmp original.txt note.txt" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p><code>cmp</code> usually reports the location of the first differing byte. It prints nothing if two files are identical.</p></details>
+</article><article class="step" data-step="7" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Try MD5 hashes for the same files.</span></div>
+  <div class="command"><code>md5sum original.txt note.txt</code><button class="copy" type="button" data-command="md5sum original.txt note.txt" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>MD5 also notices this ordinary edit. But MD5 has known collision attacks: someone can deliberately construct different inputs with the same MD5 hash. Use SHA-256 for integrity checks against deliberate manipulation.</p></details>
+</article><article class="step" data-step="8" hidden>
+  <div class="instruction"><span class="vm">VM A</span><span class="action">Now update the published checksum to match the changed note.</span></div>
+  <div class="command"><code>sha256sum note.txt &gt; note.sha256</code><button class="copy" type="button" data-command="sha256sum note.txt &gt; note.sha256" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>The note is still the 11:00 version. The checksum file on VM A now describes the new version.</p></details>
+</article><article class="step" data-step="9" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Download the new checksum.</span></div>
+  <div class="command"><code>wget -O note.sha256 &quot;http://$SERVER_IP:8000/note.sha256&quot;</code><button class="copy" type="button" data-command="wget -O note.sha256 &quot;http://$SERVER_IP:8000/note.sha256&quot;" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>This replaces VM B’s current checksum with the one VM A just published. Your older <code>baseline.sha256</code> is still unchanged.</p></details>
+</article><article class="step" data-step="10" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Check with the new checksum.</span></div>
+  <div class="command"><code>sha256sum -c note.sha256</code><button class="copy" type="button" data-command="sha256sum -c note.sha256" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>Expect <code>OK</code>. The updated note matches the updated checksum.</p></details>
+</article><article class="step" data-step="11" hidden>
+  <div class="instruction"><span class="vm">VM B</span><span class="action">Check the very same note against the first checksum.</span></div>
+  <div class="command"><code>sha256sum -c baseline.sha256</code><button class="copy" type="button" data-command="sha256sum -c baseline.sha256" aria-label="Copy command">Copy</button></div>
+  <details class="explain"><summary>Why this command?</summary><p>Expect <code>FAILED</code>. Both results are correct: the new checksum describes the new note, while the old checksum describes the old note.</p></details>
+</article></div>
+<div class="step-control"><button class="next" type="button">Show next command <span aria-hidden="true">→</span></button><span class="progress" aria-live="polite">1 / 11</span></div>
+<div class="after" hidden><p><strong>The important distinction:</strong> A hash checks agreement with a reference. It does not tell you <em>why</em> a file changed. A new meeting time could be a legitimate edit or a dishonest replacement.</p>
+<p>If someone can replace both a file and the published checksum, a fresh download of both may still produce <code>OK</code>. To know who authorized the file, you need a reference you trust—for example, an authenticated digital signature, as in the earlier security lab.</p></div>
+</section>
+<section class="finish"><h2>What did your group find?</h2><p>Submit one short record for the group. Show enough terminal output or screenshots to establish all three results:</p>
+<ul><li>VM B really downloaded a file from VM A, and the first hash check said <code>OK</code>.</li><li>VM A changed the file; the old checksum reported <code>FAILED</code>, and <code>diff</code> showed what changed.</li><li>VM A published a new checksum; the new check said <code>OK</code>, although the original checksum still failed.</li></ul>
+<p>Write a few sentences: <strong>What does an <code>OK</code> result prove? What does it not prove?</strong> Include who tried which commands. Choose your own number of screenshots.</p>
+<details class="trouble"><summary>If VM B cannot download the file</summary>
+<p>First confirm both students are on different VMs. On VM A, is the Python server still running? Does <code>hostname -I</code> show the address entered on VM B? Is the server started from <code>~/lab06-share</code>?</p>
+<p>If the connection is refused or times out, check on VM A with <code>ss -ltn | grep :8000</code>. If it is listening but VM B still cannot reach it, Azure networking or a VM firewall may block the connection. Ask the instructor to check the allowed VM-to-VM route/port; do not replace the transfer with a local <code>cp</code>. A <code>404</code> response usually means the requested file is not in the server’s folder.</p>
+<p>This is ordinary, unencrypted HTTP on the lab network: do not serve passwords or private documents. When finished, return to VM A’s server terminal and press <code>Ctrl+C</code> to stop sharing.</p>
+</details></section>
+</main>
+<noscript><style>.step[hidden],.after[hidden]{display:block!important}</style></noscript>
+<script>
+(function(){
+  document.querySelectorAll('[data-chapter]').forEach(function(chapter){
+    const steps=Array.from(chapter.querySelectorAll('.step'));
+    const button=chapter.querySelector('.next');
+    const progress=chapter.querySelector('.progress');
+    const after=chapter.querySelector('.after');
+    let count=1;
+    button.addEventListener('click',function(){
+      if(count<steps.length){ steps[count].hidden=false; count++; progress.textContent=count+' / '+steps.length; }
+      if(count===steps.length){button.disabled=true;button.textContent='All commands shown';after.hidden=false;}
+    });
+  });
+  document.querySelectorAll('.copy').forEach(function(button){
+    button.addEventListener('click',async function(){
+      const value=button.getAttribute('data-command'); let success=false;
+      try {if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value);success=true;}else{const t=document.createElement('textarea');t.value=value;t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();success=document.execCommand('copy');t.remove();}}catch(e){}
+      const old=button.textContent;button.textContent=success?'Copied':'Select text';setTimeout(function(){button.textContent=old},1500);
+    });
+  });
+})();
+</script>
+</body>
+</html>
