@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 08 · Cookies, sessions, and a Linux server</title>
+<style>
+:root{--ink:#142636;--muted:#536a77;--paper:#f3f5f5;--line:#dce5e8;--code:#12222c;--blue:#2b6582;--content:1000px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:77px}body{margin:0;background:var(--paper);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}p{line-height:1.6}button,input{font:inherit}a{color:inherit}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}code{font-size:.92em}kbd{font-size:.86em;padding:1px 5px;border:1px solid #bfced6;border-bottom-width:2px;border-radius:4px;background:white}
+.topnav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:17px;background:#132d3b;color:#eef6f7;min-height:59px;padding:9px clamp(16px,4vw,48px);border-bottom:1px solid #2d4c5a}
+.topnav .wordmark{font-size:.8rem;letter-spacing:.09em;font-weight:800;white-space:nowrap}.navlinks{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;flex:1}.navlinks a{font-size:.77rem;color:#cee0e7;text-decoration:none;white-space:nowrap;padding:8px 9px;border-radius:5px}.navlinks a:hover,.navlinks a:focus-visible{background:#315061;color:white}
+.shell{width:min(var(--content),calc(100% - 36px));margin:0 auto}.hero{padding:56px 0 39px}.hero .eyebrow{color:#34758c;margin-bottom:18px}.hero h1{max-width:720px;letter-spacing:-.04em;font-weight:750;line-height:1.06;font-size:clamp(2.6rem,5vw,4.35rem);margin:0 0 20px}.hero .lead{max-width:720px;color:#3b5664;font-size:1.1rem;line-height:1.58}
+.rulebox{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;margin-top:30px;border:1px solid #d0dee4;background:white;padding:22px 25px;border-radius:10px}.rulebox strong{display:block;margin-bottom:9px}.rulebox p{margin:0;color:#466171;font-size:.95rem}.lanes{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.lanes span{background:#e7f0f3;border-radius:5px;padding:8px 11px;font-size:.8rem;font-weight:650}
+.chapter{margin-bottom:56px;--accent:#2a6881;--tint:#e4eef3;--strong:#17445f}.tone-blue{--accent:#2f7394;--tint:#e3f0f5;--strong:#183b53}.tone-gold{--accent:#a77723;--tint:#faf1dd;--strong:#6b4e1b}.tone-violet{--accent:#7667a9;--tint:#f0edfa;--strong:#53457d}.tone-green{--accent:#287e73;--tint:#e3f3ed;--strong:#1f554d}.tone-orange{--accent:#bd6843;--tint:#faece3;--strong:#713b23}.tone-slate{--accent:#546c80;--tint:#e7eef2;--strong:#344a5e}
+.chapter-heading{background:var(--tint);border-top:6px solid var(--accent);padding:28px clamp(20px,5vw,48px) 31px;border-radius:7px 7px 0 0}
+.eyebrow{font-size:.72rem;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:var(--accent)}.headgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:25px;align-items:end}
+.chapter h2{font-size:clamp(1.7rem,3.6vw,2.55rem);line-height:1.12;letter-spacing:-.035em;margin:8px 0 0;color:var(--strong)}.headgrid p{font-size:.95rem;margin:0;color:#3b525e}
+.chapter-content{border:1px solid #d6e1e4;border-top:0;border-radius:0 0 8px 8px;background:#fff;padding:20px clamp(12px,3vw,35px) 28px}
+.task{padding:23px 11px 25px;border-bottom:1px solid #e3eaeb}.task:last-of-type{border-bottom:0}.task-top{display:flex;gap:15px;align-items:center}.task-n{font-size:.76rem;font-weight:800;letter-spacing:.06em;color:var(--accent)}.where{font-size:.76rem;color:#64808f}.task h3{font-size:1.25rem;letter-spacing:-.018em;margin:9px 0 9px}.task p{margin:0 0 12px;max-width:860px;color:#3b4f5a;font-size:.96rem}.task p.micro{font-size:.86rem;color:#5b7380;margin:13px 0 0}
+.code-head{display:flex;align-items:center;justify-content:space-between;background:#233b48;color:#d9eaf0;padding:7px 12px 7px 16px;border-radius:7px 7px 0 0;margin-top:13px;min-height:35px;font-size:.74rem}.code-head button{border:1px solid #65808d;border-radius:4px;padding:4px 11px;background:#375666;color:#eaf7fc;cursor:pointer;font-size:.72rem}.code-head button:hover{background:#4b6c7d}
+.terminal{background:#12242f;color:#e5f1ee;margin:0 0 14px;padding:15px 18px;overflow-x:auto;border-radius:0 0 7px 7px;font-size:.83rem;line-height:1.7;tab-size:4}.terminal code{font-size:inherit;white-space:pre}
+.source-fold{margin-top:17px;border:1px solid #cfdee4;border-radius:7px;padding:12px 14px;background:#f5f9fb}.source-fold>summary{font-size:.88rem;font-weight:700;cursor:pointer;color:#23546b}.source-fold .terminal{max-height:430px;overflow:auto}.why{border-left:3px solid var(--accent);background:#f5f8f9;margin-top:13px;padding:10px 13px;border-radius:0 5px 5px 0}.why summary{cursor:pointer;color:#2a4b5d;font-size:.86rem;font-weight:700}.why p{margin:11px 0 0;font-size:.86rem;color:#4c6573}
+.browser-address{margin-top:15px;background:#e7f0f5;border:1px solid #c4d9e4;border-radius:8px;padding:15px}.browser-address span{display:block;font-size:.84rem;color:#496576}.browser-address strong{font-family:ui-monospace,monospace;display:block;overflow-wrap:anywhere;font-size:1.07rem;color:#174965;margin-top:6px}
+.account-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.account-grid div{background:#f0f5f6;border:1px solid #dbe5e8;border-radius:7px;padding:13px}.account-grid b{display:block;margin-bottom:8px;font-size:.83rem}.account-grid code{display:block;margin:3px 0;color:#294f67}
+.flow-strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:19px 0 12px}.flow-strip span{flex:1;min-width:120px;background:#ecf2f5;border-radius:6px;padding:12px}.flow-strip b{display:block;font-size:.88rem}.flow-strip small{font-size:.78rem;color:#576f7c}.flow-strip em{color:#795e2d;font-size:.8rem;font-weight:700}
+.checkpoint{display:flex;gap:20px;justify-content:space-between;align-items:center;background:var(--tint);border:1px solid #dde8eb;border-left:5px solid var(--accent);border-radius:5px;padding:17px 19px;margin:18px 9px 0}.cp-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--strong)}.checkpoint p{font-size:.88rem;margin:5px 0 0;color:#3b5462}.checkpoint label{display:flex;gap:10px;align-items:center;min-width:215px;font-size:.82rem;font-weight:700;line-height:1.35;color:var(--strong);cursor:pointer}.checkpoint input{height:20px;width:20px;accent-color:var(--accent);flex:none}
+.outro{background:#162f3d;color:#edf5f7;padding:36px;max-width:var(--content);margin:0 auto 38px;border-radius:9px}.outro h2{font-size:1.8rem;margin:0 0 16px;letter-spacing:-.025em}.outro p{font-size:.93rem;color:#cce0e8;margin-bottom:13px}.outro ul{padding-left:20px;line-height:1.8;color:#e1ebee}.outro li{margin:6px 0}.outro code{color:#cdeff2}.source-links{display:flex;flex-wrap:wrap;gap:20px;font-size:.8rem}.source-links a{color:#9dd9e9}footer{padding:5px 0 35px;color:#68808d;font-size:.8rem}
+@media(max-width:720px){.rulebox,.headgrid{grid-template-columns:1fr}.checkpoint{flex-direction:column;align-items:stretch}.checkpoint label{min-width:0}.account-grid{grid-template-columns:1fr}.topnav{padding-left:14px;padding-right:14px}.hero{padding-top:35px}.chapter{margin-bottom:40px}}
+@media print{.topnav{display:none}.shell{width:100%}.hero{padding:10px 0}.chapter{break-inside:auto;margin:0 0 20px}.chapter-heading{padding:15px;border-top-width:3px}.chapter-content{padding:4px 12px}.task{break-inside:avoid;padding:14px 5px}.copy{display:none}.terminal{white-space:pre-wrap;overflow-wrap:anywhere;max-height:none;font-size:8pt}.why{break-inside:avoid}.checkpoint input{display:none}}
+</style></head>
+<body>
+<nav class="topnav"><span class="wordmark">LINUX / LAB 08</span><div class="navlinks" aria-label="Sections"><a href="#connection">01 / Connection</a><a href="#login">02 / Login</a><a href="#cookies">03 / Cookie store</a><a href="#curl">04 / curl</a><a href="#revocation">05 / Logout</a><a href="#linux">06 / Linux process</a></div></nav>
+<main class="shell"><header class="hero"><div class="eyebrow">WEB SECURITY · AZURE LINUX</div>
+<h1>Cookies, sessions, and a Linux server</h1>
+<p class="lead">A website checks your password once. What happens on the next request? You will run one Flask server on Azure VM A and open it in <strong>three different laptop browsers</strong>. Then you will see what makes a login persist, what invalidates it, and what disappears when Linux stops the process.</p>
+<div class="rulebox"><div><strong>Use the same Azure setup as Lab 07</strong><p>Student A owns VM A, which runs Flask on port <code>8000</code>. Students B and C own VMs B and C. Each student tunnels through their <em>own VM</em> and opens <code>127.0.0.1:8765</code> on their <em>own laptop</em>. Do not share SSH credentials.</p></div><div><strong>You should have</strong><p>Three Azure Linux VMs in one working lab network, three laptops with a browser and SSH, Python 3, and a terminal. This page itself works without internet access. Installing Flask with pip may need network access.</p><div class="lanes"><span>VM A: server</span><span>VM B: client</span><span>VM C: client</span></div></div></div>
+<p class="lead" style="font-size:.91rem;margin-top:18px"><strong>Use invented passwords only.</strong> This is a teaching application, not a secure service for real accounts. Because B/C forward through their own VM to VM A over plain HTTP, the hop between Azure VMs is <em>not</em> protected by their SSH tunnel. Do not submit real secrets or share complete session cookies.</p>
+</header>
+<section class="chapter tone-blue" id="connection"><div class="chapter-heading"><div class="eyebrow">PART 01</div><div class="headgrid"><h2>One website, three browsers</h2><p>Only VM A runs Flask. Everyone views it in a real browser, through their own Azure VM.</p></div></div><div class="chapter-content"><article class="task "><div class="task-top"><span class="task-n">1.1</span><span class="where">Student A · Azure VM A</span></div><h3>Start one server</h3><p>Create a fresh lab folder on VM A. Keep this SSH terminal open. If you already have a virtual environment from Lab 07, you can reuse it, but the commands below make this lab independent.</p><div class="code-head"><span>VM A · terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>mkdir -p ~/lab08
+cd ~/lab08
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install flask</code></pre><details class="why"><summary>Why a virtual environment?</summary><p><code>.venv</code> keeps Flask and its dependencies in this folder instead of changing the system Python. <code>source</code> activates it in the current terminal. An initial Flask installation needs access to the Python package repository.</p></details></article><article class="task source-fold"><div class="task-top"><span class="task-n">1.2</span><span class="where">Student A · VM A</span></div><h3>Put the website on VM A</h3><p>Create <code>app.py</code> with the full source below. Use the Copy control, paste it into the VM A terminal, and press Enter. The final <code>PY</code> line must be by itself. Students do not need to type all the Python by hand: this lab studies how the running program behaves.</p><details class="source-fold"><summary>Show and copy the complete app.py source</summary><div class="code-head"><span>VM A · full Python application (expand to inspect)</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>cat &gt; app.py &lt;&lt;&#x27;PY&#x27;
+&quot;&quot;&quot;Lab 08: sessions and cookies. Classroom demo, not a production login service.&quot;&quot;&quot;
+from datetime import datetime
+from hashlib import sha256
+import secrets
+
+from flask import Flask, jsonify, make_response, redirect, render_template_string, request
+from werkzeug.security import check_password_hash, generate_password_hash
+
+app = Flask(__name__)
+COOKIE = &quot;lab08_session&quot;
+
+# Only invented classroom passwords. Hashes are generated on server startup.
+PASSWORDS = {
+    name: generate_password_hash(password)
+    for name, password in {
+        &quot;alice&quot;: &quot;apple7&quot;,
+        &quot;bob&quot;: &quot;river9&quot;,
+        &quot;charlie&quot;: &quot;cloud5&quot;,
+    }.items()
+}
+
+# This dictionary is held in one Linux process&#x27;s memory, not in a database.
+SESSIONS = {}
+
+PAGE = &quot;&quot;&quot;&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;Lab 08 | Session Window&lt;/title&gt;
+&lt;style&gt;
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#182334;background:#eef3f7}
+*{box-sizing:border-box}body{margin:0}.page{max-width:900px;margin:0 auto;padding:34px 19px 65px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:30px}
+.brand{font-weight:800;letter-spacing:.1em;font-size:.75rem;color:#36546d}
+.pill{font-size:.75rem;border:1px solid #bfd3de;border-radius:20px;padding:7px 12px;background:white}
+.pill.on{background:#def5e8;color:#14593e;border-color:#b2dec4}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.08;letter-spacing:-.04em;margin:0 0 15px}
+p{line-height:1.6;color:#47586a}.intro{max-width:690px;margin-bottom:28px}
+.path{border-left:4px solid #4d8ba0;background:#e3eef3;padding:14px 16px;border-radius:5px;font-size:.88rem;margin:20px 0 29px}
+.panel{background:white;border:1px solid #d4e0e8;border-radius:15px;padding:clamp(21px,4vw,34px);box-shadow:0 12px 35px #183b5810}
+h2{margin:0 0 10px;font-size:1.6rem;letter-spacing:-.02em}.small{font-size:.88rem}
+form{margin-top:14px}.field{margin:14px 0}label{display:block;font-size:.83rem;font-weight:650;margin-bottom:7px}
+input{width:100%;padding:12px 14px;border:1px solid #a9bdc9;border-radius:8px;font:inherit;background:#f9fbfd}
+button,.link{display:inline-block;border:0;background:#185d7a;color:white;padding:12px 18px;border-radius:8px;font:inherit;font-weight:650;cursor:pointer}
+button.secondary{background:white;color:#28485d;border:1px solid #9bb8c9}.actions{display:flex;flex-wrap:wrap;gap:11px}
+.note{border:1px solid #e6c6a0;background:#fff7ed;border-radius:9px;color:#674520;padding:12px 15px;font-size:.88rem;margin:17px 0}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:26px 0}
+.metric{background:#edf5f9;padding:16px;border-radius:10px}.metric b{display:block;font-size:1.4rem;margin-bottom:4px}.metric span{font-size:.8rem;color:#4c6273}
+.info{border-top:1px solid #dbe5eb;margin-top:25px;padding-top:18px;font-size:.9rem}
+code{font-size:.92em;color:#0e5475}.footer{font-size:.82rem;margin-top:24px;color:#657789}
+@media(max-width:550px){.metrics{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
+&lt;/style&gt;&lt;/head&gt;
+&lt;body&gt;&lt;main class=&quot;page&quot;&gt;&lt;div class=&quot;top&quot;&gt;&lt;div class=&quot;brand&quot;&gt;LAB 08 / LINUX WEB SERVICE&lt;/div&gt;
+&lt;div class=&quot;pill {{ &#x27;on&#x27; if user else &#x27;&#x27; }}&quot;&gt;{{ &#x27;Signed in as &#x27; + user if user else &#x27;Guest / no session&#x27; }}&lt;/div&gt;&lt;/div&gt;
+&lt;h1&gt;Who is making this request?&lt;/h1&gt;&lt;p class=&quot;intro&quot;&gt;The page lives on Azure VM A. Your browser sends a request each time you visit. The Linux server decides whether that request belongs to a signed-in visitor.&lt;/p&gt;
+&lt;div class=&quot;path&quot;&gt;Your browser &amp;rarr; SSH tunnel &amp;rarr; Azure VM &amp;rarr; Flask on VM A&lt;/div&gt;
+&lt;section class=&quot;panel&quot;&gt;
+{% if user %}
+&lt;h2&gt;Welcome, {{ user }}.&lt;/h2&gt;&lt;p&gt;This browser has a working session. Refresh this page. Try another tab, then a private window.&lt;/p&gt;
+&lt;div class=&quot;metrics&quot;&gt;&lt;div class=&quot;metric&quot;&gt;&lt;b&gt;{{ visits }}&lt;/b&gt;&lt;span&gt;Dashboard visits in this session&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;metric&quot;&gt;&lt;b&gt;{{ label }}&lt;/b&gt;&lt;span&gt;Session label (not your cookie value)&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;metric&quot;&gt;&lt;b&gt;{{ active }}&lt;/b&gt;&lt;span&gt;Sessions in VM A memory&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;div class=&quot;actions&quot;&gt;&lt;form method=&quot;post&quot; action=&quot;/logout&quot;&gt;&lt;button&gt;Log out this session&lt;/button&gt;&lt;/form&gt;
+&lt;form method=&quot;post&quot; action=&quot;/logout-all&quot;&gt;&lt;button class=&quot;secondary&quot;&gt;Log out all my sessions&lt;/button&gt;&lt;/form&gt;&lt;/div&gt;
+&lt;div class=&quot;info&quot;&gt;Session started: &lt;strong&gt;{{ created }}&lt;/strong&gt;. Last dashboard visit: &lt;strong&gt;{{ last }}&lt;/strong&gt;.&lt;/div&gt;
+{% else %}
+&lt;h2&gt;Sign in&lt;/h2&gt;&lt;p&gt;Use one of the invented lab accounts. Real passwords do not belong in this experiment.&lt;/p&gt;
+{% if error %}&lt;div class=&quot;note&quot;&gt;{{ error }}&lt;/div&gt;{% endif %}
+&lt;form action=&quot;/login&quot; method=&quot;post&quot;&gt;&lt;div class=&quot;field&quot;&gt;&lt;label for=&quot;username&quot;&gt;Username&lt;/label&gt;&lt;input id=&quot;username&quot; name=&quot;username&quot; autocomplete=&quot;off&quot; required&gt;&lt;/div&gt;
+&lt;div class=&quot;field&quot;&gt;&lt;label for=&quot;password&quot;&gt;Password&lt;/label&gt;&lt;input id=&quot;password&quot; type=&quot;password&quot; name=&quot;password&quot; autocomplete=&quot;off&quot; required&gt;&lt;/div&gt;
+&lt;button type=&quot;submit&quot;&gt;Log in&lt;/button&gt;&lt;/form&gt;
+&lt;div class=&quot;info&quot;&gt;Sample accounts: &lt;code&gt;alice / apple7&lt;/code&gt; &amp;nbsp; &lt;code&gt;bob / river9&lt;/code&gt; &amp;nbsp; &lt;code&gt;charlie / cloud5&lt;/code&gt;&lt;/div&gt;
+{% endif %}
+&lt;/section&gt;&lt;p class=&quot;footer&quot;&gt;Classroom model: session records are stored in RAM and disappear when this Python server stops. No real user data. No HTTPS or CSRF protection is configured here.&lt;/p&gt;
+&lt;/main&gt;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;
+
+
+def current_session():
+    token = request.cookies.get(COOKIE)
+    return token, SESSIONS.get(token) if token else None
+
+
+def show_page(record=None, token=None, error=None, status=200):
+    label = sha256(token.encode()).hexdigest()[:8] if record and token else &quot;&quot;
+    return render_template_string(
+        PAGE,
+        user=record[&quot;user&quot;] if record else None,
+        visits=record[&quot;visits&quot;] if record else 0,
+        label=label,
+        created=record[&quot;created&quot;] if record else &quot;&quot;,
+        last=record[&quot;last&quot;] if record else &quot;&quot;,
+        active=len(SESSIONS),
+        error=error,
+    ), status
+
+
+def redirect_home(clear_cookie=False):
+    response = make_response(redirect(&quot;/&quot;, code=303))
+    if clear_cookie:
+        response.delete_cookie(COOKIE, path=&quot;/&quot;)
+    return response
+
+
+@app.after_request
+def prevent_caching(response):
+    response.headers[&quot;Cache-Control&quot;] = &quot;no-store&quot;
+    return response
+
+
+@app.get(&quot;/&quot;)
+def index():
+    token, record = current_session()
+    if record:
+        return redirect(&quot;/dashboard&quot;, code=303)
+    return show_page()
+
+
+@app.post(&quot;/login&quot;)
+def login():
+    username = request.form.get(&quot;username&quot;, &quot;&quot;).strip().lower()
+    password = request.form.get(&quot;password&quot;, &quot;&quot;)
+    stored = PASSWORDS.get(username)
+    if stored is None or not check_password_hash(stored, password):
+        return show_page(error=&quot;Those credentials do not match.&quot;, status=401)
+    token = secrets.token_urlsafe(24)
+    now = datetime.now().strftime(&quot;%H:%M:%S&quot;)
+    SESSIONS[token] = {&quot;user&quot;: username, &quot;visits&quot;: 0, &quot;created&quot;: now, &quot;last&quot;: &quot;—&quot;}
+    response = make_response(redirect(&quot;/dashboard&quot;, code=303))
+    response.set_cookie(COOKIE, token, httponly=True, samesite=&quot;Lax&quot;, path=&quot;/&quot;)
+    return response
+
+
+@app.get(&quot;/dashboard&quot;)
+def dashboard():
+    token, record = current_session()
+    if not record:
+        return redirect_home(clear_cookie=bool(token))
+    record[&quot;visits&quot;] += 1
+    record[&quot;last&quot;] = datetime.now().strftime(&quot;%H:%M:%S&quot;)
+    return show_page(record, token)
+
+
+@app.post(&quot;/logout&quot;)
+def logout():
+    token, _ = current_session()
+    if token:
+        SESSIONS.pop(token, None)
+    return redirect_home(clear_cookie=True)
+
+
+@app.post(&quot;/logout-all&quot;)
+def logout_all():
+    token, record = current_session()
+    if record:
+        for other_token, other_record in list(SESSIONS.items()):
+            if other_record[&quot;user&quot;] == record[&quot;user&quot;]:
+                del SESSIONS[other_token]
+    return redirect_home(clear_cookie=True)
+
+
+@app.get(&quot;/status&quot;)
+def status():
+    _, record = current_session()
+    return jsonify({
+        &quot;logged_in&quot;: record is not None,
+        &quot;user&quot;: record[&quot;user&quot;] if record else None,
+        &quot;your_dashboard_visits&quot;: record[&quot;visits&quot;] if record else 0,
+        &quot;active_sessions_on_server&quot;: len(SESSIONS),
+    })
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run(host=&quot;0.0.0.0&quot;, port=8000, debug=False, use_reloader=False)
+PY</code></pre></details><p class="micro">This is one complete command. It creates a file using a <code>here-document</code>; the embedded website has no external images, scripts, or CSS.</p><details class="why"><summary>Why is the session dictionary in Python?</summary><p>The server uses <code>SESSIONS</code>, a dictionary held in one Python process. The browser gets a random session ID cookie, not a username/password. Each request looks up that ID in the dictionary. Flask also has a different, signed-cookie session system; this lab deliberately uses a server-side store so that logout and restart can be observed.</p></details></article><article class="task "><div class="task-top"><span class="task-n">1.3</span><span class="where">Student A · VM A</span></div><h3>Run Flask and find VM A’s address</h3><p>Open a second SSH terminal into VM A. Use it to find the private IPv4 address that the other Azure VMs can reach. Then return to the first terminal and run Flask. Do not close it: it is your server.</p><div class="code-head"><span>VM A · two SSH terminals</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code># VM A, terminal 2: inspect addresses
+hostname -I
+ip -4 -br addr
+
+# VM A, terminal 1 (in ~/lab08 with .venv active):
+python3 app.py</code></pre><details class="why"><summary>Which address do we use?</summary><p><code>0.0.0.0</code> in the Flask source means “listen on the VM’s IPv4 interfaces.” It is <em>not</em> an address the clients should type. Select VM A’s private IPv4 address, as you did in Lab 07; write it down as <code>VM_A_IP</code>.</p></details></article><article class="task "><div class="task-top"><span class="task-n">1.4</span><span class="where">Every student · laptop terminal and browser</span></div><h3>Connect three laptops to the same server</h3><p>Use the <strong>Connect via SSH</strong> command supplied by Azure for your own VM. Keep your own username, SSH port, and Azure hostname. Student A uses the first command; Students B and C use the second. Run these on your <strong>laptop</strong>, not inside Azure Linux.</p><div class="code-head"><span>Laptop · separate terminal for each student</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code># Student A: laptop -&gt; VM A -&gt; Flask on VM A
+ssh -N -p SSH_PORT -L 127.0.0.1:8765:127.0.0.1:8000 USER@AZURE_HOST
+
+# Students B and C: laptop -&gt; own VM -&gt; Flask on VM A
+ssh -N -p SSH_PORT -L 127.0.0.1:8765:VM_A_IP:8000 USER@AZURE_HOST</code></pre><div class="browser-address"><span>Now each student opens this in their own laptop browser:</span><strong>http://127.0.0.1:8765/</strong></div><p class="micro">All three should see the same <strong>Session Window</strong> login page. On a laptop, <code>127.0.0.1</code> means that laptop; SSH carries the connection onward. You do not put VM A’s IP into the browser address.</p><details class="why"><summary>Why does Student B replace only the destination IP?</summary><p>An SSH <code>-L</code> forwarding address has three important pieces: the laptop listening address and port (<code>127.0.0.1:8765</code>), then the destination as seen from the SSH server (<code>VM_A_IP:8000</code>). B and C first connect to their <em>own</em> Azure VM. That VM then reaches VM A. Student A can use <code>127.0.0.1:8000</code> as the destination because Student A’s SSH server and Flask run on the same VM.</p></details></article><div class="checkpoint"><div><span class="cp-tag">Before moving on</span><p>Have Students A, B and C point at the login page on their own laptops. If someone only has <code>curl</code> working, do not continue yet.</p></div><label><input type="checkbox" data-check="connection"><span>All three browsers display the login page.</span></label></div></div></section><section class="chapter tone-gold" id="login"><div class="chapter-heading"><div class="eyebrow">PART 02</div><div class="headgrid"><h2>The login lasts one request</h2><p>The password is checked once. Later requests are authorized differently.</p></div></div><div class="chapter-content"><article class="task "><div class="task-top"><span class="task-n">2.1</span><span class="where">Each student · browser</span></div><h3>Look before you log in</h3><p>Open <code>/dashboard</code> directly, without signing in. The server should send you back to the login page. Now open <code>/status</code>. It shows a small JSON response describing what this request can prove about you.</p><div class="code-head"><span>Browser addresses · type each into the address bar</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>http://127.0.0.1:8765/dashboard
+http://127.0.0.1:8765/status</code></pre><details class="why"><summary>How is this different from a hidden webpage?</summary><p>The server checks each <code>/dashboard</code> request. Merely hiding a link would not protect a page. The browser must present a recognized session cookie for the server to return the dashboard.</p></details></article><article class="task "><div class="task-top"><span class="task-n">2.2</span><span class="where">Each student · own browser</span></div><h3>Three people sign in</h3><p>Use the form on the homepage. Student A signs in as Alice, B as Bob, and C as Charlie. Each student should see a personalized dashboard, its session label, visit count, and the server’s number of active sessions. Refresh two or three times and watch the counter change.</p><div class="account-grid"><div><b>Student A</b><code>alice</code><code>apple7</code></div><div><b>Student B</b><code>bob</code><code>river9</code></div><div><b>Student C</b><code>charlie</code><code>cloud5</code></div></div><p class="micro">These are invented classroom passwords. Do not reuse a real password.</p><details class="why"><summary>What did the server remember?</summary><p>After a successful password check, VM A creates a random session ID, stores a record in <code>SESSIONS</code>, and sends a <code>Set-Cookie</code> header. Refreshing the page does not send the password again. It sends the cookie.</p></details></article><article class="task "><div class="task-top"><span class="task-n">2.3</span><span class="where">Each student · private browser window</span></div><h3>Try a password that fails</h3><p>Open a new private/incognito window and visit the website. Submit an invented wrong password, then the correct one. The incorrect request should produce an HTTP <code>401</code> response and no authenticated session. The correct one logs in.</p><p class="micro">You can see response codes more easily in the next experiment. Private browsing starts with a separate cookie store from the normal window.</p><details class="why"><summary>Why use a private window?</summary><p>Opening a second ordinary tab of the same browser profile usually shares the same cookies. A private window is separate from your normal profile, so you can test a new visitor without deleting your existing session.</p></details></article><article class="task "><div class="task-top"><span class="task-n">2.4</span><span class="where">Each student · browser Developer Tools</span></div><h3>Watch the login request</h3><p>Open Developer Tools (<kbd>F12</kbd> or the browser menu), choose <strong>Network</strong>, and enable <strong>Preserve log</strong> if available. Log out from this window, then log in again. Click the <code>login</code> request, followed by <code>dashboard</code>. Compare the status codes and headers.</p><div class="flow-strip"><span><b>POST /login</b><small>password checked</small></span><em>303</em><span><b>GET /dashboard</b><small>cookie supplied</small></span><em>200</em><span><b>Dashboard</b><small>page visible</small></span></div><details class="why"><summary>Why do you see both a POST and a GET?</summary><p>The login form posts credentials to <code>/login</code>. On success, the server returns <code>303 See Other</code> with a <code>Location: /dashboard</code> header and a <code>Set-Cookie</code> header. The browser follows with a new <code>GET</code>. The dashboard request uses <code>Cookie</code>, not the password.</p></details></article><div class="checkpoint"><div><span class="cp-tag">Before moving on</span><p>Compare a failed <code>401</code> login with a successful <code>303</code> followed by a <code>200</code>.</p></div><label><input type="checkbox" data-check="login"><span>Every student has successfully signed in and seen a request in Network.</span></label></div></div></section><section class="chapter tone-violet" id="cookies"><div class="chapter-heading"><div class="eyebrow">PART 03</div><div class="headgrid"><h2>Who keeps the memory?</h2><p>Not the tab. Not the Azure IP address. The browser stores a cookie; the Linux process stores a record.</p></div></div><div class="chapter-content"><article class="task "><div class="task-top"><span class="task-n">3.1</span><span class="where">Each student · browser</span></div><h3>Refresh, then open a second tab</h3><p>In your signed-in browser, reload <code>/dashboard</code>, then open the same address in a second ordinary tab. Both tabs should recognize your account, and the visit count should keep increasing. Close only one tab and reopen it.</p><div class="code-head"><span>Browser address</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>http://127.0.0.1:8765/dashboard</code></pre><details class="why"><summary>Are tabs separate sessions?</summary><p>Ordinary tabs in one browser profile generally share cookies for the same site. The cookie belongs to the browser’s cookie store, not to the tab itself. The server therefore finds the same record.</p></details></article><article class="task "><div class="task-top"><span class="task-n">3.2</span><span class="where">Each student · normal and private windows</span></div><h3>Use a private window</h3><p>Keep a normal window signed in. In a private window, open <code>/dashboard</code> before login: it returns to the sign-in page. Now sign in as the <em>same</em> username in the private window. Compare the two session labels. They should differ.</p><div class="code-head"><span>Browser address</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>http://127.0.0.1:8765/dashboard</code></pre><details class="why"><summary>Same username, different sessions</summary><p>A user account is not the same thing as a login session. You can be Alice in two separate browser sessions. They point to two different entries in the server’s <code>SESSIONS</code> dictionary, each with its own random token and visit counter.</p></details></article><article class="task "><div class="task-top"><span class="task-n">3.3</span><span class="where">Each student · browser</span></div><h3>Find the cookie in Developer Tools</h3><p>Use <strong>Application → Cookies</strong> (Chrome/Edge) or <strong>Storage → Cookies</strong> (Firefox). Select <code>http://127.0.0.1:8765</code> and find <code>lab08_session</code>. Notice its <code>HttpOnly</code> and <code>SameSite=Lax</code> properties. Then type this into the JavaScript Console.</p><div class="code-head"><span>Browser Console · not Linux terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>document.cookie</code></pre><details class="why"><summary>Why is the cookie missing from document.cookie?</summary><p><code>HttpOnly</code> tells the browser not to expose that cookie to ordinary page JavaScript. The browser still sends the cookie with matching HTTP requests. It does not stop a stolen cookie from being replayed. Never show or share the full cookie value.</p></details></article><article class="task "><div class="task-top"><span class="task-n">3.4</span><span class="where">Students B and C · their Azure VMs</span></div><h3>Ask the same server without your browser cookie</h3><p>From VM B or C, ask VM A for <code>/status</code> using <code>curl</code>. Now compare the JSON with the response shown at <code>/status</code> in your signed-in laptop browser. These requests reach the same Flask server, but <code>curl</code> has not been given your browser cookie.</p><div class="code-head"><span>VM B or VM C · terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>curl -i http://VM_A_IP:8000/status
+curl -s http://VM_A_IP:8000/status | python3 -m json.tool</code></pre><details class="why"><summary>Why does curl say guest?</summary><p>The server does not recognize a person simply because a request came from a particular VM or IP. It recognizes this classroom session by the presence of a known <code>lab08_session</code> cookie. Without that cookie, the request is unauthenticated.</p></details></article><div class="checkpoint"><div><span class="cp-tag">Before moving on</span><p>Keep the normal browser and the private window open for later experiments.</p></div><label><input type="checkbox" data-check="cookies"><span>You can show two different session labels for the same user.</span></label></div></div></section><section class="chapter tone-green" id="curl"><div class="chapter-heading"><div class="eyebrow">PART 04</div><div class="headgrid"><h2>A terminal can be a browser</h2><p><code>curl</code> does not need a graphical interface, but it can send the same requests and cookies.</p></div></div><div class="chapter-content"><article class="task "><div class="task-top"><span class="task-n">4.1</span><span class="where">Each student · own Azure VM</span></div><h3>Log in with curl instead of a browser</h3><p>A terminal client can log in too. On VM B/C, replace <code>VM_A_IP</code>; on VM A you may use <code>127.0.0.1</code>. This command sends form fields, prints response headers, and saves the returned cookie into <code>alice.cookies</code>. Work in a clean folder on your own VM.</p><div class="code-head"><span>Azure VM · terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>mkdir -p ~/lab08-client
+cd ~/lab08-client
+
+curl -i -c alice.cookies   -d &#x27;username=alice&#x27; -d &#x27;password=apple7&#x27;   http://VM_A_IP:8000/login</code></pre><details class="why"><summary>What do -i, -c and -d mean?</summary><p><code>-i</code> includes response headers; <code>-c alice.cookies</code> saves cookies received from the server; each <code>-d</code> supplies a form field, making this a POST request. You should see <code>303 See Other</code>, <code>Location: /dashboard</code>, and <code>Set-Cookie</code>. The cookie file is sensitive within this demo—do not publish it.</p></details></article><article class="task "><div class="task-top"><span class="task-n">4.2</span><span class="where">Each student · Azure VM</span></div><h3>Try the same URL with and without a cookie</h3><p>Run both requests. The first has no saved cookie and redirects to login. The second sends the cookie saved earlier and receives the dashboard. Compare the HTTP status and returned page.</p><div class="code-head"><span>Azure VM · terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>curl -i http://VM_A_IP:8000/dashboard
+curl -i -b alice.cookies http://VM_A_IP:8000/dashboard</code></pre><details class="why"><summary>What does -b do?</summary><p><code>-b alice.cookies</code> loads cookies from that file and sends any matching ones. The two requests can come from exactly the same VM and have the same IP. Their different result is due to the cookie.</p></details></article><article class="task "><div class="task-top"><span class="task-n">4.3</span><span class="where">Each student · Azure VM</span></div><h3>Follow the redirect automatically</h3><p>The previous login used <code>-i</code> and stopped at the redirect. Try a fresh login with <code>-L</code> so curl follows the redirect to the dashboard. Keep both <code>-b</code> and <code>-c</code>: one reads existing cookies and the other saves updated ones.</p><div class="code-head"><span>Azure VM · terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>touch bob.cookies
+curl -i -L -b bob.cookies -c bob.cookies   -d &#x27;username=bob&#x27; -d &#x27;password=river9&#x27;   http://VM_A_IP:8000/login</code></pre><details class="why"><summary>Why does -L matter?</summary><p><code>-L</code> follows the server’s <code>Location</code> redirect. After the <code>303</code>, curl requests the dashboard using GET. With both <code>-b</code> and <code>-c</code>, cookies received during the chain can be used and saved. Without <code>-L</code>, curl shows the redirect but does not load the destination page.</p></details></article><article class="task "><div class="task-top"><span class="task-n">4.4</span><span class="where">Each student · Azure VM</span></div><h3>Make a second copy of the same ticket</h3><p>Copy Alice’s cookie jar to another file. Both now hold the same session token. Use both to visit the dashboard, then inspect only the <em>cookie name</em> in the jar, not its value.</p><div class="code-head"><span>Azure VM · terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>cp alice.cookies alice-copy.cookies
+curl -s -b alice.cookies http://VM_A_IP:8000/status
+curl -s -b alice-copy.cookies http://VM_A_IP:8000/status
+
+grep &#x27;lab08_session&#x27; alice.cookies | cut -f6</code></pre><details class="why"><summary>Are these two login sessions?</summary><p>No. The files contain copies of the <em>same</em> session token, so both act as the same already-authenticated session. That is why a session cookie must be treated like a password while it is valid. You should not send the full token to another student.</p></details></article><div class="checkpoint"><div><span class="cp-tag">Before moving on</span><p>Keep the <code>alice.cookies</code> and <code>alice-copy.cookies</code> files: the next section will invalidate them.</p></div><label><input type="checkbox" data-check="curl"><span>You have one curl session that works and a request without a cookie that does not.</span></label></div></div></section><section class="chapter tone-orange" id="revocation"><div class="chapter-heading"><div class="eyebrow">PART 05</div><div class="headgrid"><h2>A cookie is a bearer ticket</h2><p>Anyone holding a valid session token may be recognized as that session. Logout must invalidate it.</p></div></div><div class="chapter-content"><article class="task "><div class="task-top"><span class="task-n">5.1</span><span class="where">Each student · browser</span></div><h3>Log out only one browser</h3><p>Sign into the same account in an ordinary window and a private window. The two session labels should differ. In the private window, click <strong>Log out this session</strong>. Refresh the ordinary window. It should still work.</p><details class="why"><summary>What did logout delete?</summary><p>The server deletes only the current token from the <code>SESSIONS</code> dictionary, and the response instructs this browser to delete its cookie. Other sessions belonging to the same username keep working.</p></details></article><article class="task "><div class="task-top"><span class="task-n">5.2</span><span class="where">Each student · Azure VM</span></div><h3>Invalidate the copied curl session</h3><p>Use the original cookie jar to log out, then try the copied jar. The copied file still contains the old token, but the server no longer recognizes it. The server’s decision, not just deleting the browser’s cookie, is what makes logout effective.</p><div class="code-head"><span>Azure VM · terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>curl -i -b alice.cookies -c alice.cookies   -X POST http://VM_A_IP:8000/logout
+
+curl -i -b alice-copy.cookies http://VM_A_IP:8000/dashboard</code></pre><details class="why"><summary>Why does the copy stop working?</summary><p><code>SESSIONS.pop(token)</code> removes the server-side record. Both jars carried the same token. Once that record is gone, neither can authenticate. The second command should redirect to <code>/</code>, even though the file still exists.</p></details></article><article class="task "><div class="task-top"><span class="task-n">5.3</span><span class="where">Whole group · own browsers</span></div><h3>Log out all sessions for one user</h3><p>Have all three students sign in as <strong>Alice</strong>, each on their own laptop browser. Notice that their session labels differ. Student A clicks <strong>Log out all my sessions</strong>. Students B and C refresh: both should return to the sign-in page. Then Student B signs in as Bob, and Student C repeats the Alice logout-all action from a new session. Bob should remain logged in.</p><details class="why"><summary>What did the all-sessions button do?</summary><p>The application removes every in-memory token whose <code>user</code> is <code>alice</code>. It does not remove Bob’s session. Each browser still makes an ordinary HTTP request; the invalidation is a decision made by the server.</p></details></article><article class="task "><div class="task-top"><span class="task-n">5.4</span><span class="where">Student A edits; everyone investigates</span></div><h3>Change one small security setting, then restore it</h3><p>Find the line that sets the cookie in <code>app.py</code>. It has <code>httponly=True</code>. Stop the server with Ctrl+C, change that argument to <code>httponly=False</code>, restart, and log in again. Repeat <code>document.cookie</code> in the browser Console. Then restore <code>httponly=True</code> and restart once more.</p><div class="code-head"><span>VM A · edit while server stopped</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>grep -n &#x27;set_cookie&#x27; app.py
+nano app.py
+python3 app.py</code></pre><details class="why"><summary>What changed, and what did not?</summary><p>With <code>HttpOnly=False</code>, page JavaScript can read the cookie. With <code>HttpOnly=True</code>, it cannot. In both cases a browser can still send the cookie in HTTP requests. Changing this setting and restarting will also erase the lab’s in-memory sessions because the process was restarted.</p></details></article><div class="checkpoint"><div><span class="cp-tag">Before moving on</span><p>Confirm the server source has <code>httponly=True</code> again before moving on.</p></div><label><input type="checkbox" data-check="revocation"><span>All three browsers have observed logout or invalidation, not merely a hidden page.</span></label></div></div></section><section class="chapter tone-slate" id="linux"><div class="chapter-heading"><div class="eyebrow">PART 06</div><div class="headgrid"><h2>The Linux process is part of the story</h2><p>The service can be reachable, unreachable, or reachable again with an empty memory. These are not the same condition.</p></div></div><div class="chapter-content"><article class="task "><div class="task-top"><span class="task-n">6.1</span><span class="where">Student A · VM A; everyone observes</span></div><h3>Find the Linux process and listening port</h3><p>With Flask running, inspect the process and the port. These commands are about Linux, not web design. A browser request works only while the server process is listening.</p><div class="code-head"><span>VM A · second terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>ps -ef | grep &#x27;[p]ython3 app.py&#x27;
+ss -ltnp | grep &#x27;:8000&#x27;
+
+# Another terminal on VM A:
+curl -I http://127.0.0.1:8000/status</code></pre><details class="why"><summary>Why can HEAD work here?</summary><p><code>curl -I</code> requests only headers using HEAD. Flask automatically handles HEAD for GET routes. <code>ss -ltnp</code> shows listening TCP sockets and the owning process when permitted. <code>ps</code> shows the process itself.</p></details></article><article class="task "><div class="task-top"><span class="task-n">6.2</span><span class="where">Student A · VM A; everyone · browsers</span></div><h3>Stop the server, not the SSH tunnels</h3><p>Before stopping, all students should sign in. Then Student A presses <kbd>Ctrl+C</kbd> in the Flask terminal. Everyone refreshes the browser. It should fail to load, even though the SSH tunnel terminals remain open. Check the port again.</p><div class="code-head"><span>Azure terminals</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code># On VM A, after stopping Flask:
+ss -ltnp | grep &#x27;:8000&#x27; || echo &#x27;No Flask listener on 8000&#x27;
+
+# On VM B or C:
+curl -i --max-time 5 http://VM_A_IP:8000/status</code></pre><details class="why"><summary>Is a stopped server a logged-out user?</summary><p>No. While the server is down there is no program to answer requests at all. A missing service and an invalid session are different failures. When Flask runs again, it can return a response—but its old in-memory records will be gone.</p></details></article><article class="task "><div class="task-top"><span class="task-n">6.3</span><span class="where">Student A · VM A; everyone · browsers</span></div><h3>Restart the process</h3><p>Restart Flask from the same folder with the virtual environment active. Do not replace the SSH tunnels. Everyone refreshes the website: the connection works again, but the old sessions are no longer recognized. Sign in again and notice the new session labels and a new visit count.</p><div class="code-head"><span>VM A · Flask terminal</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>cd ~/lab08
+source .venv/bin/activate
+python3 app.py</code></pre><details class="why"><summary>Why did the login disappear?</summary><p>Our <code>SESSIONS</code> dictionary lived in the old Python process’s RAM. Stopping that process destroyed the data. A new process starts with an empty dictionary. A production service might use a database or shared session store, so a restart need not log everybody out.</p></details></article><article class="task "><div class="task-top"><span class="task-n">6.4</span><span class="where">Every student · browser and terminal</span></div><h3>Compare what the browser knows with what Linux knows</h3><p>Keep a browser dashboard open and run both terminal commands. One returns the status of the <em>curl client</em>, which has no cookie unless supplied. The other reads the cookie jar from Part 4; its session may be invalid after the server restart. Log in from curl again, then compare it with the browser.</p><div class="code-head"><span>Each student · Azure VM</span><button class="copy" type="button">Copy</button></div><pre class="terminal"><code>curl -s http://VM_A_IP:8000/status | python3 -m json.tool
+curl -s -b bob.cookies http://VM_A_IP:8000/status | python3 -m json.tool
+
+# To create a new curl session after restart:
+curl -i -c fresh.cookies   -d &#x27;username=charlie&#x27; -d &#x27;password=cloud5&#x27;   http://VM_A_IP:8000/login
+curl -s -b fresh.cookies http://VM_A_IP:8000/status</code></pre><details class="why"><summary>The three kinds of state</summary><p>The laptop browser remembers cookies. The Linux server remembers its <code>SESSIONS</code> dictionary. The SSH tunnel carries bytes between machines. Losing or replacing one does not automatically erase or repair the others.</p></details></article><div class="checkpoint"><div><span class="cp-tag">Before moving on</span><p>Student A can stop Flask after all demonstrations. Everyone can close their SSH tunnels with Ctrl+C.</p></div><label><input type="checkbox" data-check="linux"><span>You have seen a stopped service and a restarted service with lost sessions.</span></label></div></div></section>
+<section class="outro" id="finish"><h2>What to show at the end</h2><p>Use as many screenshots as you need, but make sure the evidence shows the behavior, not just commands typed.</p>
+<ul><li>Each group member opened the actual website on their own laptop and signed in.</li>
+<li>Browser and <code>curl</code> requests behaved differently depending on whether a valid session cookie was sent.</li>
+<li>Logout invalidated a session, including a copied cookie jar; logout-all affected one username’s sessions.</li>
+<li>Stopping Flask broke the connection; restarting restored the website but not the in-memory sessions.</li></ul>
+<p>Do not include full session cookie values or real credentials in your screenshots. In your final comparison, distinguish the <strong>browser’s cookie</strong>, the <strong>server’s memory</strong>, and the <strong>SSH forwarding connection</strong>. Those are three different things.</p>
+<details class="why" style="background:#244353;border-left-color:#82b9cc;margin-bottom:22px"><summary style="color:white">References and one important limitation</summary><p style="color:#d8e9ef">This lab implements a simple <em>server-side session dictionary</em> on purpose. Flask’s built-in <code>session</code> uses signed cookies instead, so restart behavior differs. Also, this demonstration omits HTTPS, CSRF defenses, persistent session storage, and production deployment controls. The lessons about cookies still apply, but do not deploy this code as a real login system.</p></details>
+<div class="source-links"><a href="https://flask.palletsprojects.com/en/stable/quickstart/">Flask: sessions and cookies</a><a href="https://flask.palletsprojects.com/en/stable/web-security/">Flask: security considerations</a><a href="https://learn.microsoft.com/en-us/azure/lab-services/connect-virtual-machine">Azure: connect via SSH</a></div></section>
+<footer>Lab 08 · Standalone student handout. The application source is embedded above, so the handout does not require a separate download.</footer></main>
+<script>
+(() => {
+  document.querySelectorAll('.copy').forEach(button => {
+    button.addEventListener('click', async () => {
+      const text = button.parentElement.nextElementSibling.innerText;
+      let done = false;
+      try { if (navigator.clipboard && window.isSecureContext) {await navigator.clipboard.writeText(text); done = true;} } catch (_) {}
+      if (!done) {
+        const node = document.createElement('textarea');
+        node.value = text; node.style.position = 'fixed'; node.style.opacity = '0';
+        document.body.appendChild(node); node.select();
+        try { done = document.execCommand('copy'); } catch (_) {}
+        node.remove();
+      }
+      button.textContent = done ? 'Copied' : 'Select the code';
+      setTimeout(() => button.textContent='Copy', 1800);
+    });
+  });
+  document.querySelectorAll('[data-check]').forEach(cb => {
+    const key = 'lab08-' + cb.dataset.check;
+    try { cb.checked = localStorage.getItem(key) === 'yes'; } catch (_) {}
+    cb.addEventListener('change', () => {
+      try { localStorage.setItem(key, cb.checked ? 'yes':'no'); } catch (_) {}
+    });
+  });
+})();
+</script></body></html>
