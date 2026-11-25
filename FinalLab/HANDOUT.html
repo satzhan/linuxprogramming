@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Secret Box</title>
+<style>
+  :root {
+    --paper: #fbfaf7;
+    --ink: #1f2328;
+    --muted: #5d6470;
+    --rule: #e4e1da;
+    --panel: #f3f1ec;
+    --code-bg: #1d1f24;
+    --code-ink: #e8e6e3;
+    --accent: #0f6e6e;
+    --hint: #a15c00;
+    --hint-bg: #fff6e8;
+    --show: #0f6e6e;
+    --show-bg: #eaf5f4;
+    --explain: #5b3fa0;
+    --explain-bg: #f3effb;
+    --note-bg: #f1f4f8;
+    --note-rule: #8a9bb3;
+    --bad: #b3261e;
+    --bad-bg: #fdecea;
+    --ok-bg: #e6f4ea;
+    --ok: #1e7b3a;
+    --rule-strong: #c9c4b8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #17181b;
+      --ink: #e6e4df;
+      --muted: #a3a8b0;
+      --rule: #2d2f34;
+      --panel: #202226;
+      --code-bg: #0e0f11;
+      --code-ink: #e8e6e3;
+      --accent: #5cc4c0;
+      --hint: #f0b35a;
+      --hint-bg: #2a2318;
+      --show: #5cc4c0;
+      --show-bg: #172726;
+      --explain: #b79cf0;
+      --explain-bg: #231f2e;
+      --note-bg: #1e232b;
+      --note-rule: #5d6f8a;
+      --bad: #f28b82;
+      --bad-bg: #2e1c1b;
+      --ok-bg: #18291d;
+      --ok: #81c995;
+      --rule-strong: #3d4047;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* ---------- layout ---------- */
+  .layout { display: flex; max-width: 1180px; margin: 0 auto; }
+  nav.toc {
+    position: sticky; top: 0; align-self: flex-start;
+    width: 250px; flex-shrink: 0; height: 100vh; overflow-y: auto;
+    padding: 2rem 1rem 2rem 1.5rem;
+    border-right: 1px solid var(--rule);
+    font-size: 0.9rem;
+  }
+  nav.toc .toc-title {
+    font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.75rem; font-weight: 600;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 0.1rem 0; }
+  nav.toc a {
+    display: block; padding: 0.3rem 0.6rem; border-radius: 6px;
+    color: var(--muted); text-decoration: none; line-height: 1.35;
+  }
+  nav.toc a:hover { background: var(--panel); color: var(--ink); }
+  nav.toc a.active { background: var(--show-bg); color: var(--accent); font-weight: 600; }
+
+  main { flex: 1; min-width: 0; padding: 2.5rem 3rem 6rem; max-width: 860px; }
+
+  /* ---------- header ---------- */
+  header.doc-head { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--ink); }
+  header.doc-head .eyebrow {
+    font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700;
+  }
+  header.doc-head h1 { font-size: 2.4rem; line-height: 1.15; margin: 0.3rem 0 0; }
+
+  /* ---------- text ---------- */
+  h2 {
+    font-size: 1.55rem; margin: 3.2rem 0 1rem; padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+  }
+  h3 { font-size: 1.15rem; margin: 2.2rem 0 0.6rem; display: flex; align-items: baseline; gap: 0.6rem; }
+  h3 .num {
+    flex-shrink: 0;
+    font: 600 0.8rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--accent); background: var(--show-bg);
+    padding: 0.3rem 0.5rem; border-radius: 6px;
+  }
+  p, ul, ol { margin: 0.7rem 0; }
+  li { margin: 0.25rem 0; }
+  a { color: var(--accent); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
+  strong { font-weight: 650; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88em; background: var(--panel); padding: 0.12em 0.35em; border-radius: 4px;
+  }
+
+  /* ---------- code blocks ---------- */
+  .code-wrap { position: relative; margin: 0.8rem 0; }
+  pre {
+    margin: 0; padding: 1rem 1.1rem; overflow-x: auto;
+    background: var(--code-bg); color: var(--code-ink); border-radius: 8px;
+    font-size: 0.88rem; line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .copy-btn {
+    position: absolute; top: 0.45rem; right: 0.45rem;
+    font: 600 0.72rem/1 -apple-system, "Segoe UI", sans-serif;
+    color: #c9c7c3; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18); border-radius: 5px;
+    padding: 0.35rem 0.55rem; cursor: pointer; opacity: 0; transition: opacity .15s;
+  }
+  .code-wrap:hover .copy-btn, .copy-btn:focus { opacity: 1; }
+  .copy-btn.done { color: #7fe0b0; border-color: #7fe0b0; opacity: 1; }
+
+  /* ---------- hint boxes ---------- */
+  details {
+    margin: 0.7rem 0; border-radius: 8px; border: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  details > summary {
+    cursor: pointer; list-style: none; user-select: none;
+    padding: 0.55rem 0.9rem; font-weight: 600; font-size: 0.92rem;
+    display: flex; align-items: center; gap: 0.5rem; border-radius: 8px;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before {
+    content: "▸"; display: inline-block; transition: transform .15s; font-size: 0.85em;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  details[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .details-body { padding: 0.3rem 1rem 0.8rem; }
+
+  details.hint { border-color: color-mix(in srgb, var(--hint) 35%, transparent); }
+  details.hint > summary { color: var(--hint); background: var(--hint-bg); }
+  details.show { border-color: color-mix(in srgb, var(--show) 35%, transparent); }
+  details.show > summary { color: var(--show); background: var(--show-bg); }
+  details.example > summary, details.other > summary { color: var(--muted); background: var(--panel); }
+
+  /* ---------- callouts ---------- */
+  .explain {
+    margin: 1rem 0; padding: 0.8rem 1rem 0.8rem 1.1rem;
+    background: var(--explain-bg); border-left: 4px solid var(--explain); border-radius: 0 8px 8px 0;
+  }
+  .explain-label {
+    font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 700; color: var(--explain);
+  }
+  .explain p { margin: 0.3rem 0 0; }
+
+  blockquote.note {
+    margin: 1rem 0; padding: 0.7rem 1rem;
+    background: var(--note-bg); border-left: 4px solid var(--note-rule); border-radius: 0 8px 8px 0;
+  }
+  blockquote.note p { margin: 0.2rem 0; }
+
+  /* ---------- checklist ---------- */
+  ul.contains-task-list { list-style: none; padding-left: 0.2rem; }
+  li.task-list-item { position: relative; padding: 0.15rem 0 0.15rem 1.9rem; }
+  li.task-list-item input { position: absolute; left: 0.2rem; top: 0.45rem; margin: 0; width: 1.05rem; height: 1.05rem; accent-color: var(--accent); cursor: pointer; }
+  li.task-list-item.checked { color: var(--muted); text-decoration: line-through; }
+
+  /* ---------- tables ---------- */
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--rule); padding: 0.45rem 0.7rem; text-align: left; }
+  th { background: var(--panel); }
+  td:empty::after { content: "\00a0"; }
+
+
+  /* ---------- log badge ---------- */
+  .log-badge {
+    flex-shrink: 0; align-self: center;
+    font: 700 0.68rem/1 -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.08em;
+    color: var(--explain); border: 1.5px solid var(--explain); background: var(--explain-bg);
+    padding: 0.25rem 0.45rem; border-radius: 999px;
+  }
+
+  /* ---------- asides ---------- */
+  blockquote.aside { margin: 1.2rem 0; padding: 0.75rem 1rem 0.75rem 1.1rem; border-radius: 0 8px 8px 0; }
+  blockquote.aside p { margin: 0.2rem 0; }
+  blockquote.aside strong:first-child {
+    display: block; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem;
+  }
+  blockquote.why { background: var(--note-bg); border-left: 4px solid var(--note-rule); }
+  blockquote.why strong:first-child { color: var(--note-rule); }
+  blockquote.ponder { background: var(--explain-bg); border-left: 4px solid var(--explain); }
+  blockquote.ponder strong:first-child { color: var(--explain); }
+
+  /* ---------- figures ---------- */
+  figure.fig { margin: 1.6rem 0; }
+  .fig-scroll { overflow-x: auto; }
+  figure.fig svg { display: block; width: 100%; min-width: 560px; height: auto; }
+  figure.fig figcaption { font-size: 0.86rem; color: var(--muted); margin-top: 0.5rem; text-align: center; }
+  figure.fig text { fill: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  figure.fig text.d-muted { fill: var(--muted); }
+  figure.fig text.d-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  figure.fig text.d-bad-text { fill: var(--bad); }
+  .d-box { fill: var(--panel); stroke: var(--rule-strong); stroke-width: 1.2; }
+  .d-accent { fill: var(--show-bg); stroke: var(--accent); stroke-width: 1.4; }
+  .d-warn { fill: var(--hint-bg); stroke: var(--hint); stroke-width: 1.4; }
+  .d-bad { fill: var(--bad-bg); stroke: var(--bad); stroke-width: 1.4; }
+  .d-ok { fill: var(--ok-bg); stroke: var(--ok); stroke-width: 1.4; }
+  .d-line { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+  .d-line-bad { stroke: var(--bad); stroke-width: 1.6; fill: none; }
+  .d-arrowhead { fill: var(--muted); }
+  .d-dot { fill: var(--accent); }
+  .d-eye { fill: var(--paper); stroke: var(--ink); stroke-width: 1.6; }
+  .d-axis { stroke: var(--rule-strong); stroke-width: 1.2; }
+  .d-bar { fill: var(--accent); }
+  .d-bar-g:hover .d-bar { opacity: 0.8; }
+
+  /* ---------- small screens ---------- */
+  @media (max-width: 900px) {
+    .layout { display: block; }
+    nav.toc {
+      position: static; width: auto; height: auto; border-right: none;
+      border-bottom: 1px solid var(--rule); padding: 1.2rem 1.2rem 0.8rem;
+    }
+    nav.toc ol { columns: 2; }
+    main { padding: 1.5rem 1.2rem 4rem; }
+    header.doc-head h1 { font-size: 1.9rem; }
+  }
+
+  /* ---------- print ---------- */
+  @media print {
+    nav.toc, .copy-btn { display: none; }
+    figure.fig svg { min-width: 0; }
+    figure.fig { break-inside: avoid; }
+    main { padding: 0; max-width: none; }
+    body { font-size: 11pt; background: #fff; color: #000; }
+    pre { background: #f2f2f2; color: #000; border: 1px solid #ccc; white-space: pre-wrap; }
+    details { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <div class="toc-title">Contents</div>
+    <ol>
+<li><a href="#the-finish-line">The finish line</a></li>
+<li><a href="#how-this-works">How this works</a></li>
+<li><a href="#part-0-what-is-a-container-really">Part 0: What is a container, really?</a></li>
+<li><a href="#part-1-set-up-your-workbench">Part 1: Set up your workbench</a></li>
+<li><a href="#part-2-inherit-jordan-s-project">Part 2: Inherit Jordan&#x27;s project</a></li>
+<li><a href="#part-3-make-it-build">Part 3: Make it build</a></li>
+<li><a href="#part-4-break-jordan-s-lock">Part 4: Break Jordan&#x27;s lock</a></li>
+<li><a href="#part-5-where-did-the-secret-go">Part 5: Where did the secret go?</a></li>
+<li><a href="#part-6-build-your-own-box-the-safe-way">Part 6: Build your own box, the safe way</a></li>
+<li><a href="#part-7-ship-it">Part 7: Ship it</a></li>
+<li><a href="#part-8-trade-boxes-break-locks-prove-it">Part 8: Trade boxes, break locks, prove it</a></li>
+<li><a href="#part-9-clean-up">Part 9: Clean up</a></li>
+<li><a href="#what-to-submit">What to submit</a></li>
+    </ol>
+  </nav>
+  <main>
+    <header class="doc-head">
+      <div class="eyebrow">Linux Final Project</div>
+      <h1>The Secret Box</h1>
+    </header>
+<p>It is your first week on a small team that ships its tools as Docker containers. On your first morning, your lead sends you a link to a GitHub repository and a short message:</p>
+<p><em>&quot;This is Jordan's project. Jordan was our junior developer, and he left last week. He built a little 'secret box' that prints a locked message, and he told everyone nobody could ever read it. The build is broken now, and I don't believe the 'nobody can read it' part either. Can you take it over? Fix it, find out how safe it really is, and then build one that actually is safe. When you're done, trade boxes with the rest of the team and see whose lock holds.&quot;</em></p>
+<p>That is this project. You will repair someone else's code by reading its history, break his lock, and find three different places where his &quot;deleted&quot; secret is still sitting in plain sight. Then you will build your own box properly, publish it on GitHub so anyone can run it with one command, and trade it with classmates. They try to break your lock and you try to break theirs, and every successful break is proven in public without giving the answer away.</p>
+<p>Everything happens on your own Azure Lab VM (Ubuntu 20.04) and on GitHub.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 340" role="img" aria-label="Map of the project: GitHub in the middle, your VM on the left, classmates on the right" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-journey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><text x="110" y="22" text-anchor="middle" font-size="11" font-weight="700" class="d-muted">YOUR AZURE VM</text><text x="380" y="22" text-anchor="middle" font-size="11" font-weight="700" class="d-muted">GITHUB</text><text x="650" y="22" text-anchor="middle" font-size="11" font-weight="700" class="d-muted">CLASSMATES&#x27; VMs</text><rect x="20" y="36" width="180" height="284" rx="8" class="d-accent"/><text x="110" y="64" text-anchor="middle" font-size="15" font-weight="700" class="">Your VM</text><text x="110" y="98" text-anchor="middle" font-size="12" class="d-mono">~/secret-box</text><text x="110" y="115" text-anchor="middle" font-size="12" class="d-mono">your project</text><rect x="40" y="148" width="140" height="64" rx="6" class="d-warn"/><text x="110" y="172" text-anchor="middle" font-size="12" class="">~/vault</text><text x="110" y="189" text-anchor="middle" font-size="12" class="">never leaves here</text><text x="110" y="252" text-anchor="middle" font-size="12" class="d-mono">~/loot</text><text x="110" y="269" text-anchor="middle" font-size="12" class="d-mono">boxes you open</text><rect x="290" y="36" width="180" height="68" rx="8" class="d-box"/><text x="380" y="64" text-anchor="middle" font-size="13" class="">Jordan&#x27;s starter</text><text x="380" y="81" text-anchor="middle" font-size="13" class="">secret-box-starter</text><rect x="290" y="136" width="180" height="68" rx="8" class="d-accent"/><text x="380" y="164" text-anchor="middle" font-size="13" font-weight="600" class="">Your repository</text><text x="380" y="181" text-anchor="middle" font-size="13" font-weight="600" class="">secret-box</text><rect x="290" y="236" width="180" height="68" rx="8" class="d-box"/><text x="380" y="264" text-anchor="middle" font-size="13" class="">Classmates&#x27;</text><text x="380" y="281" text-anchor="middle" font-size="13" class="">repositories</text><rect x="560" y="120" width="180" height="100" rx="8" class="d-box"/><text x="650" y="160" text-anchor="middle" font-size="13" class="">Classmates&#x27; VMs</text><text x="650" y="177" text-anchor="middle" font-size="13" class="">(at least 2)</text><line x1="288" y1="70" x2="204" y2="70" class="d-line" marker-end="url(#ah-journey)"/><text x="246" y="62" text-anchor="middle" font-size="11" class="d-muted">1 clone</text><line x1="204" y1="160" x2="288" y2="160" class="d-line" marker-end="url(#ah-journey)"/><text x="246" y="152" text-anchor="middle" font-size="11" class="d-muted">2 push</text><line x1="288" y1="262" x2="204" y2="262" class="d-line" marker-end="url(#ah-journey)"/><text x="246" y="254" text-anchor="middle" font-size="11" class="d-muted">4 build theirs</text><line x1="204" y1="290" x2="288" y2="290" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-journey)"/><text x="246" y="308" text-anchor="middle" font-size="11" class="d-muted">5 your proof</text><line x1="472" y1="160" x2="556" y2="160" class="d-line" marker-end="url(#ah-journey)"/><text x="514" y="152" text-anchor="middle" font-size="11" class="d-muted">3 they build</text><line x1="556" y1="192" x2="472" y2="192" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-journey)"/><text x="514" y="210" text-anchor="middle" font-size="11" class="d-muted">their proof</text></svg></div><figcaption>The whole project on one page. Solid arrows move code; dashed arrows are proofs posted as GitHub Issues.</figcaption></figure>
+<h2 id="the-finish-line">The finish line</h2>
+<p>You are done when all of these are true:</p>
+<ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Docker runs on your VM without <code>sudo</code></li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> You fixed Jordan's box and pushed the fixes to your own GitHub repository</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> You broke Jordan's lock and found the three places his secret leaked</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Your own box, with <strong>two locks</strong>, is on GitHub, and anyone can build it with one command</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> <strong>At least 2 classmates</strong> have built and run your box</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> <strong>You</strong> have built the boxes of <strong>at least 2 classmates</strong>, broken both locks of each, and posted proof on their repositories</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> You answered every proof posted on your own repository</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Your log has an entry for every step marked <strong>LOG</strong></li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> You cleaned up your VM</li>
+</ul>
+<p>No teams are needed. Ask the people around you to trade.</p>
+<h2 id="how-this-works">How this works</h2>
+<h3>The steps</h3>
+<p>Each step tells you what you are trying to do and why it matters, but not the exact command. Try it on your own first. When you get stuck, open <strong>Hint</strong> for a nudge. When you are still stuck, open <strong>Show me</strong> for the command. Using Show me is completely fine. What counts is that you can say what the command did and why.</p>
+<p>Some boxes are labeled <strong>Why this way?</strong>. They explain why the project does something the way it does, and what else people do in the real world. Boxes labeled <strong>Think about it</strong> are questions worth a minute of your time. Neither one needs an answer handed in.</p>
+<h3>The log</h3>
+<p>Every step marked <strong>LOG</strong> gets an entry in your log, in the same format you used for the midterm. Each entry has four parts:</p>
+<ol>
+<li><strong>Plan.</strong> Before you type anything: what are you about to do, and why? One or two sentences in your own words.</li>
+<li><strong>Command.</strong> The exact command or commands you ran.</li>
+<li><strong>What I see.</strong> What came back, and what it means. Did it match your plan? If it surprised you, say what surprised you.</li>
+<li><strong>Screenshot.</strong> The command and its output on your screen.</li>
+</ol>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 150" role="img" aria-label="The four parts of a log entry: plan, command, what I see, screenshot" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-logentry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="10" y="14" width="170" height="122" rx="8" class="d-accent"/><text x="24" y="40" text-anchor="start" font-size="13" font-weight="700" class="">1  Plan</text><text x="24" y="66" text-anchor="start" font-size="12" class="d-muted">I&#x27;ll check who owns</text><text x="24" y="83" text-anchor="start" font-size="12" class="d-muted">docker.sock, because</text><text x="24" y="100" text-anchor="start" font-size="12" class="d-muted">the error names it.</text><line x1="182" y1="75" x2="198" y2="75" class="d-line" marker-end="url(#ah-logentry)"/><rect x="200" y="14" width="170" height="122" rx="8" class="d-box"/><text x="214" y="40" text-anchor="start" font-size="13" font-weight="700" class="">2  Command</text><text x="214" y="66" text-anchor="start" font-size="12" class="d-mono">ls -l</text><text x="214" y="83" text-anchor="start" font-size="12" class="d-mono">/var/run/docker.sock</text><line x1="372" y1="75" x2="388" y2="75" class="d-line" marker-end="url(#ah-logentry)"/><rect x="390" y="14" width="170" height="122" rx="8" class="d-box"/><text x="404" y="40" text-anchor="start" font-size="13" font-weight="700" class="">3  What I see</text><text x="404" y="66" text-anchor="start" font-size="12" class="d-muted">Owner root, group</text><text x="404" y="83" text-anchor="start" font-size="12" class="d-muted">docker, rw for both.</text><text x="404" y="100" text-anchor="start" font-size="12" class="d-muted">So I need that group.</text><line x1="562" y1="75" x2="578" y2="75" class="d-line" marker-end="url(#ah-logentry)"/><rect x="580" y="14" width="170" height="122" rx="8" class="d-box"/><text x="594" y="40" text-anchor="start" font-size="13" font-weight="700" class="">4  Screenshot</text><text x="594" y="66" text-anchor="start" font-size="12" class="d-muted">the terminal showing</text><text x="594" y="83" text-anchor="start" font-size="12" class="d-muted">the command and</text><text x="594" y="100" text-anchor="start" font-size="12" class="d-muted">its output</text></svg></div><figcaption>One log entry. The plan is written before you type; the rest after you look.</figcaption></figure>
+<p>Steps without the LOG mark are setup. Do them, but they need no entry.</p>
+<p>Text like <code>&lt;your-username&gt;</code> means &quot;put your own value here, without the angle brackets&quot;.</p>
+<h2 id="part-0-what-is-a-container-really">Part 0: What is a container, really?</h2>
+<p>You probably have had this experience: a program works perfectly on your machine, you send it to a friend, and it does not run. Their Python is a different version, a file is in a different folder, a permission is different. The program was never really just the <code>.py</code> file. It was the file <strong>plus everything around it</strong>.</p>
+<p>A <strong>container</strong> packs the program together with everything around it, so whoever runs it gets exactly what you got. Three words carry the whole idea:</p>
+<ul>
+<li><strong>Dockerfile</strong>: a recipe, one instruction per line. &quot;Start from a machine that has Python. Copy this file in. Run this command.&quot;</li>
+<li><strong>Image</strong>: what you get by following the recipe. A sealed, ready-to-run package. You build it once.</li>
+<li><strong>Container</strong>: a running copy of an image. You can start as many as you want from the same image, and every one of them starts fresh.</li>
+</ul>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 200" role="img" aria-label="Dockerfile is built into an image, which is run as containers" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-recipe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="20" y="30" width="170" height="140" rx="8" class="d-box"/><text x="105" y="54" text-anchor="middle" font-size="14" font-weight="700" class="">Dockerfile</text><text x="34" y="82" text-anchor="start" font-size="10.5" class="d-mono">FROM python:3.12-slim</text><text x="34" y="101" text-anchor="start" font-size="10.5" class="d-mono">COPY box.py ./</text><text x="34" y="120" text-anchor="start" font-size="10.5" class="d-mono">COPY locks/ ./locks/</text><text x="34" y="139" text-anchor="start" font-size="10.5" class="d-mono">CMD [&quot;python3&quot;, ...]</text><line x1="194" y1="100" x2="284" y2="100" class="d-line" marker-end="url(#ah-recipe)"/><text x="239" y="90" text-anchor="middle" font-size="12" class="d-mono">docker build</text><rect x="290" y="40" width="170" height="26" rx="5" class="d-accent"/><text x="375" y="58" text-anchor="middle" font-size="11.5" class="d-mono">CMD</text><rect x="290" y="70" width="170" height="26" rx="5" class="d-accent"/><text x="375" y="88" text-anchor="middle" font-size="11.5" class="d-mono">COPY locks/</text><rect x="290" y="100" width="170" height="26" rx="5" class="d-accent"/><text x="375" y="118" text-anchor="middle" font-size="11.5" class="d-mono">COPY box.py</text><rect x="290" y="130" width="170" height="26" rx="5" class="d-box"/><text x="375" y="148" text-anchor="middle" font-size="11.5" class="d-mono">python:3.12-slim</text><text x="375" y="176" text-anchor="middle" font-size="12" class="d-muted">image = stacked layers</text><line x1="464" y1="100" x2="554" y2="100" class="d-line" marker-end="url(#ah-recipe)"/><text x="509" y="90" text-anchor="middle" font-size="12" class="d-mono">docker run</text><rect x="560" y="50" width="170" height="46" rx="8" class="d-box"/><rect x="574" y="72" width="170" height="46" rx="8" class="d-box"/><rect x="588" y="94" width="170" height="46" rx="8" class="d-box"/><text x="673" y="125" text-anchor="middle" font-size="13" font-weight="600" class="">container</text><text x="660" y="176" text-anchor="middle" font-size="12" class="d-muted">as many as you like</text></svg></div><figcaption>Recipe, package, running copy. You build the image once and can run it many times.</figcaption></figure>
+<p>Keep one more idea in your pocket, because Part 5 depends on it: an image is built in <strong>layers</strong>. Every line of the Dockerfile adds one layer on top of the ones before it.</p>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> You could ship the whole computer instead: a full virtual machine, like your Azure Lab VM. That works, but a VM carries an entire operating system and takes minutes to start. A container shares the kernel of the machine it runs on and only carries what is different, so it starts in well under a second and is often tens of megabytes. Most modern cloud software runs in containers for exactly this reason.</p>
+</blockquote>
+<h2 id="part-1-set-up-your-workbench">Part 1: Set up your workbench</h2>
+<p>Nothing here needs a log entry. It is setup, and it only has to work.</p>
+<h3 id="step-1-1"><span class="num">1.1</span> <span class="h3-title">Install Docker and say hello</span></h3>
+<p>Your VM does not have Docker yet. Install the Docker package that Ubuntu provides (its name is <code>docker.io</code>), then run the official test image <code>hello-world</code>. You will need <code>sudo</code> for now. Read the message it prints. It describes, in four short steps, what just happened, including the moment it downloaded something.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>sudo apt update
+sudo apt install -y docker.io
+docker --version
+sudo docker run hello-world
+</code></pre>
+</div></details>
+<h3 id="step-1-2"><span class="num">1.2</span> <span class="h3-title">Make Docker work without sudo</span></h3>
+<p>Now try <code>docker run hello-world</code> <strong>without</strong> <code>sudo</code>. It fails, and the error mentions a file called <code>docker.sock</code>. That file is the doorway between the <code>docker</code> command you type and the Docker service that does the real work. Look at who owns it and what its permissions are, the same way you would look at any file.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 170" role="img" aria-label="The docker command talks to the Docker service through docker.sock, which only root and group docker may use" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-socket" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="10" y="50" width="130" height="64" rx="8" class="d-box"/><text x="75" y="76" text-anchor="middle" font-size="13" class="">you</text><text x="75" y="93" text-anchor="middle" font-size="13" class="">(user student)</text><line x1="142" y1="82" x2="192" y2="82" class="d-line" marker-end="url(#ah-socket)"/><rect x="196" y="50" width="140" height="64" rx="8" class="d-box"/><text x="266" y="76" text-anchor="middle" font-size="13" class="d-mono">docker</text><text x="266" y="93" text-anchor="middle" font-size="13" class="d-mono">command</text><line x1="338" y1="82" x2="388" y2="82" class="d-line" marker-end="url(#ah-socket)"/><rect x="392" y="36" width="190" height="92" rx="8" class="d-warn"/><text x="487" y="62" text-anchor="middle" font-size="12" font-weight="700" class="d-mono">/var/run/docker.sock</text><text x="487" y="86" text-anchor="middle" font-size="11.5" class="d-mono">srw-rw----  root  docker</text><text x="487" y="110" text-anchor="middle" font-size="11.5" class="d-muted">root or group docker only</text><line x1="584" y1="82" x2="624" y2="82" class="d-line" marker-end="url(#ah-socket)"/><rect x="628" y="50" width="122" height="64" rx="8" class="d-accent"/><text x="689" y="76" text-anchor="middle" font-size="12.5" class="">Docker service</text><text x="689" y="93" text-anchor="middle" font-size="12.5" class="">(runs as root)</text><text x="487" y="156" text-anchor="middle" font-size="12.5" class="d-muted">Not in group docker?  →  &quot;permission denied&quot;</text></svg></div><figcaption>The socket is a doorway with a permission check, just like a file.</figcaption></figure>
+<p>You will see that the doorway belongs to the group <code>docker</code>. So join that group. Group changes only count for new logins, so log out and back in (or start a new shell that has the group). Then <code>docker run hello-world</code> should work without <code>sudo</code>.</p>
+<details class="hint"><summary>Hint</summary><div class="details-body">
+<p><code>usermod</code> changes a user's settings. You want to <strong>a</strong>ppend one more <strong>G</strong>roup to your own user. Be careful: without the &quot;append&quot; part, you would be removed from every other group, including the one that lets you use <code>sudo</code>.</p>
+</div></details>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker run hello-world
+ls -l /var/run/docker.sock
+sudo usermod -aG docker $USER
+exit
+</code></pre>
+<p>Reconnect to your VM, then:</p>
+<pre><code>groups
+docker run hello-world
+</code></pre>
+<p>If you would rather not reconnect, <code>newgrp docker</code> opens a new shell that already has the group.</p>
+</div></details>
+<p>Do not skip this step. If you keep using <code>sudo docker</code> for the rest of the project, files that Docker creates for you will belong to root, and later steps will fail with <code>Permission denied</code>.</p>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Anyone in the <code>docker</code> group can start a container that reads or changes any file on the machine. So being in that group is almost the same as being root. That is fine on your own lab VM. Would you add a coworker to it on a shared company server?</p>
+</blockquote>
+<h3 id="step-1-3"><span class="num">1.3</span> <span class="h3-title">Introduce yourself to git and GitHub</span></h3>
+<p>Tell git your name and email, so every commit you make says who made it. If you do not have a GitHub account yet, create one at github.com. Write your GitHub username somewhere handy. You will type it a lot.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>git config --global user.name &quot;Your Name&quot;
+git config --global user.email &quot;you@example.com&quot;
+git config --global --list
+</code></pre>
+<p>Use the same email as your GitHub account.</p>
+</div></details>
+<h3 id="step-1-4"><span class="num">1.4</span> <span class="h3-title">Give GitHub a key instead of a password</span></h3>
+<p>GitHub will not accept your password from the command line. Instead, your VM proves who it is with a <strong>key pair</strong>, the same idea as the RSA lab. You keep the private key on the VM and never show it to anyone. You give GitHub the public key. When you connect, GitHub sends a challenge that only the matching private key can answer.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 210" role="img" aria-label="Private key stays on the VM, public key goes to GitHub, GitHub challenges and the VM answers" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-sshkeys" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="10" y="20" width="300" height="170" rx="8" class="d-accent"/><text x="160" y="46" text-anchor="middle" font-size="15" font-weight="700" class="">Your VM</text><rect x="30" y="64" width="260" height="46" rx="6" class="d-warn"/><text x="160" y="84" text-anchor="middle" font-size="12" class="">id_ed25519  (private)</text><text x="160" y="101" text-anchor="middle" font-size="12" class="">never leaves the VM</text><rect x="30" y="124" width="260" height="46" rx="6" class="d-box"/><text x="160" y="144" text-anchor="middle" font-size="12" class="">id_ed25519.pub  (public)</text><text x="160" y="161" text-anchor="middle" font-size="12" class="">safe to give away</text><rect x="450" y="20" width="300" height="170" rx="8" class="d-box"/><text x="600" y="46" text-anchor="middle" font-size="15" font-weight="700" class="">GitHub</text><rect x="470" y="124" width="260" height="46" rx="6" class="d-box"/><text x="600" y="144" text-anchor="middle" font-size="12" class="">your public key</text><text x="600" y="161" text-anchor="middle" font-size="12" class="">Settings → SSH keys</text><line x1="292" y1="147" x2="466" y2="147" class="d-line" marker-end="url(#ah-sshkeys)"/><text x="380" y="140" text-anchor="middle" font-size="11" class="d-muted">paste once</text><line x1="448" y1="74" x2="294" y2="74" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-sshkeys)"/><text x="371" y="66" text-anchor="middle" font-size="11" class="d-muted">&quot;prove it: sign this&quot;</text><line x1="294" y1="98" x2="448" y2="98" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-sshkeys)"/><text x="371" y="116" text-anchor="middle" font-size="11" class="d-muted">signed answer</text></svg></div><figcaption>The private key answers GitHub&#x27;s challenge without ever being sent.</figcaption></figure>
+<p>Create an <code>ed25519</code> key pair, find the two files it made, and paste the <strong>public</strong> one into GitHub under Settings → SSH and GPG keys → New SSH key. Then test the connection.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>ssh-keygen -t ed25519 -C &quot;you@example.com&quot;
+ls -l ~/.ssh
+cat ~/.ssh/id_ed25519.pub
+</code></pre>
+<p>Press Enter at every question to accept the defaults. Copy the whole line that <code>cat</code> prints into GitHub. Then:</p>
+<pre><code>ssh -T git@github.com
+</code></pre>
+<p>Type <code>yes</code> if it asks about a fingerprint. Success looks like <code>Hi &lt;your-username&gt;! You've successfully authenticated</code>.</p>
+</div></details>
+<details class="other"><summary>It says Permission denied, or it hangs</summary><div class="details-body">
+<p><code>Permission denied (publickey)</code> means GitHub does not have your public key yet, or you pasted the wrong file. Paste the content of <code>id_ed25519.pub</code>, the one ending in <code>.pub</code>.</p>
+<p>If it hangs instead, the normal SSH port may be blocked. GitHub also listens on port 443. Create <code>~/.ssh/config</code> with this content and try again:</p>
+<pre><code>Host github.com
+    Hostname ssh.github.com
+    Port 443
+    User git
+</code></pre>
+</div></details>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> The other common option is HTTPS with a <strong>personal access token</strong>, a long random string you paste instead of a password. It works too. Keys win on a machine you use every day, because nothing secret ever travels over the network: the private key only answers a challenge, it never leaves your VM.</p>
+</blockquote>
+<h2 id="part-2-inherit-jordan-s-project">Part 2: Inherit Jordan's project</h2>
+<h3 id="step-2-1"><span class="num">2.1</span> <span class="h3-title">Clone it and look around</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Clone Jordan's repository into your home folder, into a folder called <code>secret-box</code>. Then explore it. List everything, <strong>including hidden files</strong>, and read <code>README.md</code>, <code>Dockerfile</code>, <code>.dockerignore</code>, <code>hints.txt</code> and <code>box.py</code>. You do not need to understand every line. Try to answer one question for your log: what is this box supposed to do when someone runs it?</p>
+<p>Starter repository: <code>https://github.com/satzhan/secret-box-starter.git</code></p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>cd ~
+git clone https://github.com/satzhan/secret-box-starter.git secret-box
+cd secret-box
+ls -la
+cat README.md Dockerfile .dockerignore hints.txt
+cat box.py
+</code></pre>
+</div></details>
+<h3 id="step-2-2"><span class="num">2.2</span> <span class="h3-title">Read the history</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>A git repository remembers every change anyone ever made to it, with a message from the person who made it. Jordan's history is short, and it tells a story. Show the list of commits, then show which files each commit touched. In your log, tell that story in one sentence per commit. What did Jordan do last, and why?</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 190" role="img" aria-label="A file deleted in commit 4 still exists in commits 1 to 3" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-gittimeline" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><line x1="60" y1="70" x2="700" y2="70" class="d-line"/><circle cx="100" cy="70" r="13" class="d-dot"/><text x="100" y="75" text-anchor="middle" font-size="12" font-weight="700" class="">1</text><text x="100" y="40" text-anchor="middle" font-size="12" class="d-muted">commit 1</text><circle cx="280" cy="70" r="13" class="d-dot"/><text x="280" y="75" text-anchor="middle" font-size="12" font-weight="700" class="">2</text><text x="280" y="40" text-anchor="middle" font-size="12" class="d-muted">commit 2</text><circle cx="460" cy="70" r="13" class="d-dot"/><text x="460" y="75" text-anchor="middle" font-size="12" font-weight="700" class="">3</text><text x="460" y="40" text-anchor="middle" font-size="12" class="d-muted">commit 3</text><circle cx="640" cy="70" r="13" class="d-dot"/><text x="640" y="75" text-anchor="middle" font-size="12" font-weight="700" class="">4</text><text x="640" y="40" text-anchor="middle" font-size="12" class="d-muted">commit 4</text><rect x="88" y="100" width="382" height="28" rx="6" class="d-accent"/><text x="279" y="119" text-anchor="middle" font-size="12" class="">notes.txt exists in these snapshots</text><rect x="586" y="100" width="108" height="28" rx="6" class="d-bad"/><text x="640" y="119" text-anchor="middle" font-size="12" class="">deleted here</text><path d="M 640 140 C 640 175, 470 175, 465 140" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-gittimeline)"/><text x="552" y="182" text-anchor="middle" font-size="11.5" class="d-mono">&lt;commit4&gt;^  =  the commit right before it</text></svg></div><figcaption>Every commit is a full snapshot. Deleting a file only affects the snapshots that come after.</figcaption></figure>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>git log --oneline
+git log --stat
+</code></pre>
+</div></details>
+<h3 id="step-2-3"><span class="num">2.3</span> <span class="h3-title">Make it yours</span></h3>
+<p>Right now your copy still points at Jordan's repository. On github.com, create a <strong>new, public, completely empty</strong> repository named <code>secret-box</code>: no README, no license, no .gitignore. Then point your copy at your new repository, using its SSH address (the one starting with <code>git@github.com:</code>), and push. Refresh the page on GitHub: Jordan's whole history is now in your repository.</p>
+<details class="hint"><summary>Hint</summary><div class="details-body">
+<p><code>git remote -v</code> shows where your copy points. <code>git remote set-url</code> changes it. <code>git push -u</code> pushes and remembers the destination for next time.</p>
+</div></details>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>git remote -v
+git remote set-url origin git@github.com:&lt;your-username&gt;/secret-box.git
+git push -u origin main
+</code></pre>
+<p>If the push is rejected with &quot;fetch first&quot;, your GitHub repository was not empty. Delete it on GitHub, create it again without any files, and push again.</p>
+</div></details>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> GitHub has two shortcuts for copying a repository. A <strong>fork</strong> keeps the history, but GitHub turns Issues off on forks, and you will need Issues in Part 8. A <strong>template</strong> gives you a fresh repository, but it throws the history away, and Jordan's history is the first clue in Part 3. Clone plus a new empty repository keeps both.</p>
+</blockquote>
+<h2 id="part-3-make-it-build">Part 3: Make it build</h2>
+<p>First make it work. Then make it right.</p>
+<h3 id="step-3-1"><span class="num">3.1</span> <span class="h3-title">Problem A: a file that is not there</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Follow Jordan's README and build the image with the name <code>junior-box</code>. It fails. Read the <strong>whole</strong> error, not only the last line. There are two different problems hiding here, and Docker may tell you about only one of them at a time. Start with the simplest check: compare the files the Dockerfile wants to <code>COPY</code> with what <code>ls</code> shows in the folder. One of them simply is not there.</p>
+<p>When did it disappear, and why? The history knows. Find the commit that deleted it, then bring the file back exactly as it was <strong>just before</strong> that commit. Do not retype it.</p>
+<details class="hint"><summary>Hint</summary><div class="details-body">
+<p><code>git log</code> can show only the commits where a file was <strong>D</strong>eleted. If <code>abc1234</code> is a commit, <code>abc1234^</code> means &quot;the commit right before it&quot;. <code>git checkout &lt;commit&gt; -- &lt;file&gt;</code> restores one file from any moment in history.</p>
+</div></details>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker build -t junior-box .
+ls
+git log --diff-filter=D --oneline --name-only
+git checkout &lt;deleting-commit&gt;^ -- message.txt
+cat message.txt
+</code></pre>
+<p>Replace <code>&lt;deleting-commit&gt;</code> with the short hash from the second command.</p>
+</div></details>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Jordan deleted <code>message.txt</code> because &quot;it was public on GitHub&quot;. You just got it back from GitHub's own copy of the history. Was it ever really gone?</p>
+</blockquote>
+<h3 id="step-3-2"><span class="num">3.2</span> <span class="h3-title">Problem B: files that are there, but invisible</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Build again. Even with <code>message.txt</code> back, Docker says <code>box.py</code> (or <code>caesar.py</code>) is not found, or is excluded. But the files are right there when you run <code>ls</code>. Something is telling Docker to <strong>ignore</strong> them before the build even starts. Find that file, compare what Jordan <strong>meant</strong> (read his comment) with what he actually <strong>wrote</strong>, and fix it so it hides only the file he meant to hide. Then build until it succeeds.</p>
+<details class="hint"><summary>Hint</summary><div class="details-body">
+<p>The file is <code>.dockerignore</code>. The pattern <code>*.py</code> matches every file that ends in <code>.py</code>.</p>
+</div></details>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<p>Open the file with <code>nano .dockerignore</code> and change the line <code>*.py</code> to <code>crack.py</code>. Then:</p>
+<pre><code>docker build -t junior-box .
+docker images
+</code></pre>
+</div></details>
+<h3 id="step-3-3"><span class="num">3.3</span> <span class="h3-title">Problem C: it builds, then it crashes</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Run a container from <code>junior-box</code>, and have Docker remove it when it exits. It crashes with a long Python error. Read the <strong>last line</strong> first, because that is where Python puts the actual reason.</p>
+<p>Then investigate from inside. If you put a command after the image name, the container runs that command instead of its normal program. Use that to find out <strong>who</strong> the container runs as, and the <strong>owner and permissions</strong> of the file it is trying to read.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 180" role="img" aria-label="How to read -rw-r----- : owner, group, others" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-permissions" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><text x="380" y="40" text-anchor="middle" font-size="17" font-weight="700" class="d-mono">-rw-r-----  1  alice  staff  report.txt</text><rect x="120" y="66" width="160" height="78" rx="8" class="d-accent"/><text x="200" y="96" text-anchor="middle" font-size="13" class="">owner: alice</text><text x="200" y="113" text-anchor="middle" font-size="13" class="">rw-</text><text x="200" y="130" text-anchor="middle" font-size="13" class="">read + write</text><rect x="300" y="66" width="160" height="78" rx="8" class="d-box"/><text x="380" y="96" text-anchor="middle" font-size="13" class="">group: staff</text><text x="380" y="113" text-anchor="middle" font-size="13" class="">r--</text><text x="380" y="130" text-anchor="middle" font-size="13" class="">read only</text><rect x="480" y="66" width="160" height="78" rx="8" class="d-bad"/><text x="560" y="96" text-anchor="middle" font-size="13" class="">others: everyone else</text><text x="560" y="113" text-anchor="middle" font-size="13" class="">---</text><text x="560" y="130" text-anchor="middle" font-size="13" class="">nothing at all</text><text x="380" y="170" text-anchor="middle" font-size="12" class="d-muted">Which box does a user fall into? Check owner first, then group, then others.</text></svg></div><figcaption>Three sets of three letters: what the owner, the group and everyone else may do.</figcaption></figure>
+<p>Jordan's comment calls the <code>chmod</code> line &quot;extra security&quot;. But this file is already encrypted, and it exists to be printed. Change the <code>chmod</code> so everyone can read the file and only the owner can write it. Keep <code>USER nobody</code>, because Jordan got that part right. Rebuild and run. You should see a block of scrambled text.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker run --rm junior-box
+docker run --rm junior-box whoami
+docker run --rm junior-box ls -l locks
+</code></pre>
+<p>In the Dockerfile, change <code>chmod 600</code> to <code>chmod 644</code>. Then:</p>
+<pre><code>docker build -t junior-box .
+docker run --rm junior-box
+</code></pre>
+</div></details>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> By default a container runs as root. If someone finds a bug in the program, they are root inside the container, and that is a much better starting point for an attack than an unprivileged user. <code>USER nobody</code> costs nothing. Larger projects usually create a dedicated user with <code>useradd</code> in the Dockerfile instead of borrowing <code>nobody</code>.</p>
+</blockquote>
+<h3 id="step-3-4"><span class="num">3.4</span> <span class="h3-title">Save your fixes</span></h3>
+<p>Look at <code>git status</code> before you commit. One of your three changes is already listed under &quot;Changes to be committed&quot;, without any <code>git add</code>. Which one, and why? Commit that one first, on its own. Then commit each of the other two fixes separately, with a message that says what you fixed and why. Push.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>git status
+git commit -m &quot;Restore message.txt so the build works again&quot;
+git add .dockerignore
+git commit -m &quot;Fix .dockerignore: hide only crack.py, not every .py file&quot;
+git add Dockerfile
+git commit -m &quot;Fix permissions: secret1.txt must be readable by user nobody&quot;
+git log --oneline
+git push
+</code></pre>
+<p><code>git checkout &lt;commit&gt; -- &lt;file&gt;</code> restores the file <strong>and</strong> stages it, which is why the first commit needs no <code>git add</code>.</p>
+</div></details>
+<h2 id="part-4-break-jordan-s-lock">Part 4: Break Jordan's lock</h2>
+<p>Now switch sides. Pretend you are an outsider who has only Jordan's <strong>image</strong>, not his folder.</p>
+<h3 id="step-4-1"><span class="num">4.1</span> <span class="h3-title">Take the lock out of the box</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>You do not have to run a container to get files out of it. Docker can <strong>create</strong> a container without starting it, <strong>copy</strong> files out of it, and <strong>remove</strong> it. Use that to copy the <code>/box/locks</code> folder of <code>junior-box</code> into <code>~/loot/jordan</code>.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>mkdir -p ~/loot
+docker create --name jordan-c junior-box
+docker cp jordan-c:/box/locks ~/loot/jordan
+docker rm jordan-c
+cat ~/loot/jordan/secret1.txt
+</code></pre>
+</div></details>
+<h3 id="step-4-2"><span class="num">4.2</span> <span class="h3-title">Break the Caesar lock</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Look at the locked text before you do anything. Some characters did not change at all. And the last line has the shape <code>XXXX{.....-......-.....-......}</code>. What do you think it said before it was locked?</p>
+<p>A Caesar lock slides every letter forward by the same amount. With only 26 letters, there are only 26 possible slides, so you can simply try them all. <code>caesar.py</code> has a <code>crack</code> command that does exactly that. The output is long, so filter it down to the line that mentions <code>FLAG</code>. Then use the shift you found to unlock the whole message, and check that it matches <code>message.txt</code> exactly.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 150" role="img" aria-label="Caesar shift of 3: each letter moves three places, wrapping around at the end" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-caesar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="21" y="22" width="22" height="26" rx="4" class="d-box"/><text x="32" y="40" text-anchor="middle" font-size="13" class="d-mono">A</text><rect x="21" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="32" y="110" text-anchor="middle" font-size="13" class="d-mono">D</text><rect x="48" y="22" width="22" height="26" rx="4" class="d-box"/><text x="59" y="40" text-anchor="middle" font-size="13" class="d-mono">B</text><rect x="48" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="59" y="110" text-anchor="middle" font-size="13" class="d-mono">E</text><rect x="75" y="22" width="22" height="26" rx="4" class="d-box"/><text x="86" y="40" text-anchor="middle" font-size="13" class="d-mono">C</text><rect x="75" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="86" y="110" text-anchor="middle" font-size="13" class="d-mono">F</text><rect x="102" y="22" width="22" height="26" rx="4" class="d-box"/><text x="113" y="40" text-anchor="middle" font-size="13" class="d-mono">D</text><rect x="102" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="113" y="110" text-anchor="middle" font-size="13" class="d-mono">G</text><rect x="129" y="22" width="22" height="26" rx="4" class="d-box"/><text x="140" y="40" text-anchor="middle" font-size="13" class="d-mono">E</text><rect x="129" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="140" y="110" text-anchor="middle" font-size="13" class="d-mono">H</text><rect x="156" y="22" width="22" height="26" rx="4" class="d-box"/><text x="167" y="40" text-anchor="middle" font-size="13" class="d-mono">F</text><rect x="156" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="167" y="110" text-anchor="middle" font-size="13" class="d-mono">I</text><rect x="183" y="22" width="22" height="26" rx="4" class="d-box"/><text x="194" y="40" text-anchor="middle" font-size="13" class="d-mono">G</text><rect x="183" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="194" y="110" text-anchor="middle" font-size="13" class="d-mono">J</text><rect x="210" y="22" width="22" height="26" rx="4" class="d-box"/><text x="221" y="40" text-anchor="middle" font-size="13" class="d-mono">H</text><rect x="210" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="221" y="110" text-anchor="middle" font-size="13" class="d-mono">K</text><rect x="237" y="22" width="22" height="26" rx="4" class="d-box"/><text x="248" y="40" text-anchor="middle" font-size="13" class="d-mono">I</text><rect x="237" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="248" y="110" text-anchor="middle" font-size="13" class="d-mono">L</text><rect x="264" y="22" width="22" height="26" rx="4" class="d-box"/><text x="275" y="40" text-anchor="middle" font-size="13" class="d-mono">J</text><rect x="264" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="275" y="110" text-anchor="middle" font-size="13" class="d-mono">M</text><rect x="291" y="22" width="22" height="26" rx="4" class="d-box"/><text x="302" y="40" text-anchor="middle" font-size="13" class="d-mono">K</text><rect x="291" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="302" y="110" text-anchor="middle" font-size="13" class="d-mono">N</text><rect x="318" y="22" width="22" height="26" rx="4" class="d-box"/><text x="329" y="40" text-anchor="middle" font-size="13" class="d-mono">L</text><rect x="318" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="329" y="110" text-anchor="middle" font-size="13" class="d-mono">O</text><rect x="345" y="22" width="22" height="26" rx="4" class="d-box"/><text x="356" y="40" text-anchor="middle" font-size="13" class="d-mono">M</text><rect x="345" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="356" y="110" text-anchor="middle" font-size="13" class="d-mono">P</text><rect x="372" y="22" width="22" height="26" rx="4" class="d-box"/><text x="383" y="40" text-anchor="middle" font-size="13" class="d-mono">N</text><rect x="372" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="383" y="110" text-anchor="middle" font-size="13" class="d-mono">Q</text><rect x="399" y="22" width="22" height="26" rx="4" class="d-box"/><text x="410" y="40" text-anchor="middle" font-size="13" class="d-mono">O</text><rect x="399" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="410" y="110" text-anchor="middle" font-size="13" class="d-mono">R</text><rect x="426" y="22" width="22" height="26" rx="4" class="d-box"/><text x="437" y="40" text-anchor="middle" font-size="13" class="d-mono">P</text><rect x="426" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="437" y="110" text-anchor="middle" font-size="13" class="d-mono">S</text><rect x="453" y="22" width="22" height="26" rx="4" class="d-box"/><text x="464" y="40" text-anchor="middle" font-size="13" class="d-mono">Q</text><rect x="453" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="464" y="110" text-anchor="middle" font-size="13" class="d-mono">T</text><rect x="480" y="22" width="22" height="26" rx="4" class="d-box"/><text x="491" y="40" text-anchor="middle" font-size="13" class="d-mono">R</text><rect x="480" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="491" y="110" text-anchor="middle" font-size="13" class="d-mono">U</text><rect x="507" y="22" width="22" height="26" rx="4" class="d-box"/><text x="518" y="40" text-anchor="middle" font-size="13" class="d-mono">S</text><rect x="507" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="518" y="110" text-anchor="middle" font-size="13" class="d-mono">V</text><rect x="534" y="22" width="22" height="26" rx="4" class="d-box"/><text x="545" y="40" text-anchor="middle" font-size="13" class="d-mono">T</text><rect x="534" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="545" y="110" text-anchor="middle" font-size="13" class="d-mono">W</text><rect x="561" y="22" width="22" height="26" rx="4" class="d-box"/><text x="572" y="40" text-anchor="middle" font-size="13" class="d-mono">U</text><rect x="561" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="572" y="110" text-anchor="middle" font-size="13" class="d-mono">X</text><rect x="588" y="22" width="22" height="26" rx="4" class="d-box"/><text x="599" y="40" text-anchor="middle" font-size="13" class="d-mono">V</text><rect x="588" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="599" y="110" text-anchor="middle" font-size="13" class="d-mono">Y</text><rect x="615" y="22" width="22" height="26" rx="4" class="d-box"/><text x="626" y="40" text-anchor="middle" font-size="13" class="d-mono">W</text><rect x="615" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="626" y="110" text-anchor="middle" font-size="13" class="d-mono">Z</text><rect x="642" y="22" width="22" height="26" rx="4" class="d-box"/><text x="653" y="40" text-anchor="middle" font-size="13" class="d-mono">X</text><rect x="642" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="653" y="110" text-anchor="middle" font-size="13" class="d-mono">A</text><rect x="669" y="22" width="22" height="26" rx="4" class="d-box"/><text x="680" y="40" text-anchor="middle" font-size="13" class="d-mono">Y</text><rect x="669" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="680" y="110" text-anchor="middle" font-size="13" class="d-mono">B</text><rect x="696" y="22" width="22" height="26" rx="4" class="d-box"/><text x="707" y="40" text-anchor="middle" font-size="13" class="d-mono">Z</text><rect x="696" y="92" width="22" height="26" rx="4" class="d-accent"/><text x="707" y="110" text-anchor="middle" font-size="13" class="d-mono">C</text><line x1="32" y1="51" x2="32" y2="88" class="d-line" marker-end="url(#ah-caesar)"/><line x1="59" y1="51" x2="59" y2="88" class="d-line" marker-end="url(#ah-caesar)"/><line x1="653" y1="51" x2="653" y2="88" class="d-line" marker-end="url(#ah-caesar)"/><line x1="707" y1="51" x2="707" y2="88" class="d-line" marker-end="url(#ah-caesar)"/><text x="380" y="142" text-anchor="middle" font-size="12" class="d-muted">shift 3:  A→D, B→E ... X→A, Z→C.  Only 26 possible shifts, so you can try them all.</text></svg></div><figcaption>Top: plain letters. Bottom: what each one becomes with a shift of 3.</figcaption></figure>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>cd ~/secret-box
+python3 caesar.py crack ~/loot/jordan/secret1.txt | grep FLAG
+python3 caesar.py decrypt &lt;shift&gt; ~/loot/jordan/secret1.txt &gt; ~/loot/jordan/opened.txt
+diff -s ~/loot/jordan/opened.txt message.txt
+</code></pre>
+</div></details>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> You knew the answer started with <code>FLAG{</code>. A guess about part of the message is called a <strong>crib</strong>, and cribs are how real codebreakers attacked much stronger ciphers than this one. What would have been harder if every flag looked different?</p>
+</blockquote>
+<h2 id="part-5-where-did-the-secret-go">Part 5: Where did the secret go?</h2>
+<p>Jordan's Dockerfile locks the message and then <strong>deletes</strong> <code>message.txt</code>. Run <code>ls -la /box</code> inside the image and you will see it is not there. So it is gone, right? You are going to find it three times.</p>
+<h3 id="step-5-1"><span class="num">5.1</span> <span class="h3-title">Leak 1: the image remembers its recipe</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Every image keeps a record of the commands that built it. Show the full history of <code>junior-box</code>, without cutting long lines short, and find the line that locked the message. What does that line give away? Would you even have needed Part 4?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker run --rm junior-box ls -la /box
+docker history --no-trunc junior-box
+</code></pre>
+<p>Look for <code>caesar.py encrypt</code> and the number right after it.</p>
+</div></details>
+<h3 id="step-5-2"><span class="num">5.2</span> <span class="h3-title">Leak 2: the layers</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Think of an image as a stack of transparent sheets, one per line of the Dockerfile. Each sheet only records what <strong>changed</strong>. When a later line deletes a file, Docker cannot erase it from the sheet below. It lays a small note on the new sheet that says &quot;pretend this file is gone&quot;. Looking down through the whole stack, you do not see the file. But the sheet underneath still has it, and anyone who has the image has every sheet.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 330" role="img" aria-label="Image layers as stacked transparent sheets; a later layer hides a file with a whiteout but the lower layer still has it" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-layers" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><polygon points="200,56 470,56 440,86 170,86" class="d-box"/><text x="320" y="76" text-anchor="middle" font-size="11.5" class="d-mono">CMD / USER nobody</text><text x="490" y="76" text-anchor="start" font-size="12" class="d-muted">settings only</text><polygon points="200,96 470,96 440,126 170,126" class="d-box"/><text x="320" y="116" text-anchor="middle" font-size="11.5" class="d-mono">RUN chmod ...</text><text x="490" y="116" text-anchor="start" font-size="12" class="d-muted">changes permissions</text><polygon points="200,136 470,136 440,166 170,166" class="d-warn"/><text x="320" y="156" text-anchor="middle" font-size="11.5" class="d-mono">RUN encrypt ... &amp;&amp; rm message.txt</text><text x="490" y="156" text-anchor="start" font-size="12" class="d-muted">adds locks/secret1.txt + .wh.message.txt</text><polygon points="200,176 470,176 440,206 170,206" class="d-bad"/><text x="320" y="196" text-anchor="middle" font-size="11.5" class="d-mono">COPY message.txt</text><text x="490" y="196" text-anchor="start" font-size="12" class="d-muted">message.txt  ← still here</text><polygon points="200,216 470,216 440,246 170,246" class="d-box"/><text x="320" y="236" text-anchor="middle" font-size="11.5" class="d-mono">COPY box.py caesar.py hints.txt</text><text x="490" y="236" text-anchor="start" font-size="12" class="d-muted">the programs</text><polygon points="200,256 470,256 440,286 170,286" class="d-box"/><text x="320" y="276" text-anchor="middle" font-size="11.5" class="d-mono">FROM python:3.12-slim</text><text x="490" y="276" text-anchor="start" font-size="12" class="d-muted">Linux + Python</text><ellipse cx="90" cy="40" rx="22" ry="12" class="d-eye"/><circle cx="90" cy="40" r="5" class="d-dot"/><line x1="90" y1="56" x2="90" y2="290" class="d-line" marker-end="url(#ah-layers)"/><text x="90" y="306" text-anchor="middle" font-size="11.5" class="d-muted">looking down:</text><text x="90" y="323" text-anchor="middle" font-size="11.5" class="d-muted">no message.txt</text><text x="320" y="30" text-anchor="middle" font-size="12" class="d-muted">one sheet per Dockerfile line</text></svg></div><figcaption>Looking down through the stack, the whiteout hides the file. Unstack the sheets, and it is right there.</figcaption></figure>
+<p>Prove it. Save <code>junior-box</code> as one <code>.tar</code> file in your home folder, unpack it into a new folder <code>~/leak</code>, and look inside. Every layer is a tar archive of its own, so <code>tar</code> can list what each one holds. Loop over every file, list its contents, and print the name of any layer that mentions <code>message.txt</code>. You should find <strong>two</strong> layers. One holds the real file: print it straight out of the layer. The other holds a strangely named file that starts with <code>.wh.</code>. That is the &quot;pretend it's gone&quot; note, called a <strong>whiteout</strong>.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker save junior-box -o ~/junior-box.tar
+mkdir -p ~/leak
+tar -xf ~/junior-box.tar -C ~/leak
+cd ~/leak
+for f in $(find . -type f); do
+    if tar -tf &quot;$f&quot; 2&gt;/dev/null | grep -q 'box/.*message.txt'; then
+        echo &quot;== $f&quot;
+        tar -tf &quot;$f&quot; | grep 'box/.*message.txt'
+    fi
+done
+</code></pre>
+<p>Then print the file from the layer that has <code>box/message.txt</code> (<code>-x</code> extracts, <code>-O</code> sends it to the screen instead of to a file):</p>
+<pre><code>tar -xOf &lt;that-layer&gt; box/message.txt
+cd ~/secret-box
+</code></pre>
+<p>If <code>tar</code> says <code>Permission denied</code>, you ran <code>docker save</code> with <code>sudo</code>, so the file belongs to root. Finish step 1.2, delete the old file with <code>sudo rm ~/junior-box.tar</code>, and save it again.</p>
+</div></details>
+<h3 id="step-5-3"><span class="num">5.3</span> <span class="h3-title">Leak 3, and the one rule behind all three</span></h3>
+<p>You already used the third leak in step 3.1: git history. Deleting a file in a new commit does not remove it from the earlier commits, and everyone who clones the repository gets all of them.</p>
+<p>Three leaks, one lesson: <strong>anything that ever goes into a commit or an image layer stays there.</strong> The only safe secret is one that never goes in at all. So the rule for your own box is simple. Lock your messages on your own VM. Keep the plain text in a folder that is never part of the repository or the image. Ship only the locked files.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 256" role="img" aria-label="Plain text stays in the vault; only locked files go into the repository and the image" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-boundary" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="10" y="30" width="200" height="170" rx="8" class="d-warn"/><text x="110" y="56" text-anchor="middle" font-size="13" font-weight="700" class="">~/vault (your VM only)</text><text x="110" y="86" text-anchor="middle" font-size="12" class="d-mono">level1.txt</text><text x="110" y="106" text-anchor="middle" font-size="12" class="d-mono">level2.txt</text><text x="110" y="126" text-anchor="middle" font-size="12" class="d-mono">your shift</text><text x="110" y="146" text-anchor="middle" font-size="12" class="d-mono">your password</text><rect x="270" y="80" width="120" height="70" rx="8" class="d-accent"/><text x="330" y="108" text-anchor="middle" font-size="12" class="">lock it</text><text x="330" y="125" text-anchor="middle" font-size="12" class="">caesar.py / openssl</text><line x1="212" y1="115" x2="266" y2="115" class="d-line" marker-end="url(#ah-boundary)"/><rect x="450" y="30" width="140" height="170" rx="8" class="d-box"/><text x="520" y="56" text-anchor="middle" font-size="13" font-weight="700" class="">GitHub repo</text><text x="520" y="86" text-anchor="middle" font-size="11.5" class="d-mono">box.py</text><text x="520" y="106" text-anchor="middle" font-size="11.5" class="d-mono">hints.txt</text><text x="520" y="126" text-anchor="middle" font-size="11.5" class="d-mono">locks/secret1.txt</text><text x="520" y="146" text-anchor="middle" font-size="11.5" class="d-mono">locks/secret2.txt</text><rect x="620" y="30" width="130" height="170" rx="8" class="d-box"/><text x="685" y="56" text-anchor="middle" font-size="13" font-weight="700" class="">Image</text><text x="685" y="86" text-anchor="middle" font-size="11.5" class="d-mono">box.py</text><text x="685" y="106" text-anchor="middle" font-size="11.5" class="d-mono">hints.txt</text><text x="685" y="126" text-anchor="middle" font-size="11.5" class="d-mono">locks/</text><line x1="392" y1="115" x2="446" y2="115" class="d-line" marker-end="url(#ah-boundary)"/><line x1="592" y1="115" x2="616" y2="115" class="d-line" marker-end="url(#ah-boundary)"/><path d="M 110 202 L 110 222 L 685 222 L 685 202" class="d-line-bad" stroke-dasharray="5 4"/><path d="M 389 214 L 405 230 M 405 214 L 389 230" class="d-line-bad"/><text x="397" y="248" text-anchor="middle" font-size="11.5" class="d-bad-text">never: plain text straight into git or into a layer</text></svg></div><figcaption>Only one gate leads out of the vault, and everything that passes through it is already locked.</figcaption></figure>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> Real teams have more tools for this. <strong>Multi-stage builds</strong> do messy work in a first image and copy only the finished result into a second, clean one. Newer Docker builders can mount a <strong>build secret</strong> that is available during one step and never written into a layer (your VM's Docker uses the older builder, which does not have this). And scanners such as GitHub's secret scanning, gitleaks or trufflehog search repositories for passwords and keys that slipped in. All of them exist because Jordan's mistake is extremely common.</p>
+</blockquote>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Suppose a real password once got pushed to GitHub. You delete it in a new commit, or even rewrite the history so it is gone. Is that enough? What else has to happen? (Hint: who might have cloned it in the meantime?)</p>
+</blockquote>
+<h2 id="part-6-build-your-own-box-the-safe-way">Part 6: Build your own box, the safe way</h2>
+<p>Your box will have two locks:</p>
+<ul>
+<li><strong>Level 1</strong> is a Caesar lock. Easy on purpose. Everyone should get through it.</li>
+<li><strong>Level 2</strong> is AES-256 with a password chosen from <code>wordlist.txt</code>. Harder, but fair: your hint will say the password is in that list.</li>
+</ul>
+<p>Each level hides its own <strong>flag</strong>, like <code>FLAG{maria-orange-tuba}</code>. Whoever breaks a lock uses the flag to prove it.</p>
+<h3 id="step-6-1"><span class="num">6.1</span> <span class="h3-title">Make a vault and write your messages</span></h3>
+<p>Create a folder <code>~/vault</code>, <strong>next to</strong> <code>~/secret-box</code>, not inside it. This is where your plain messages and passwords live, and it never goes to GitHub or into an image.</p>
+<p>In the vault, write <code>level1.txt</code> and <code>level2.txt</code>. Each one holds a short note to whoever breaks it, and ends with a flag on its own line. Flag rules:</p>
+<ul>
+<li><code>FLAG</code> in capitals, then lowercase inside the braces, no spaces: <code>FLAG{...}</code></li>
+<li>start with your GitHub username, then two or three words joined with dashes</li>
+<li>the two flags must be different</li>
+</ul>
+<p>Then remove Jordan's <code>message.txt</code> from your project with one command that deletes it from the folder <strong>and</strong> from git, and commit. Finally, create an empty <code>locks</code> folder inside <code>~/secret-box</code>. Only locked files will ever go in there.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>mkdir -p ~/vault
+nano ~/vault/level1.txt
+nano ~/vault/level2.txt
+cd ~/secret-box
+git rm message.txt
+git commit -m &quot;Remove Jordan's message: the new box ships only locked files&quot;
+mkdir locks
+</code></pre>
+<p>Example <code>level1.txt</code>:</p>
+<pre><code>You got through the first door. The second one is harder.
+FLAG{maria-orange-tuba}
+</code></pre>
+</div></details>
+<h3 id="step-6-2"><span class="num">6.2</span> <span class="h3-title">Lock Level 1, then test it</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Pick a shift between 1 and 25 and note it in your vault, for example in <code>~/vault/notes.txt</code>. Use <code>caesar.py</code> to lock <code>~/vault/level1.txt</code> into <code>locks/secret1.txt</code>. Before you trust it, unlock your own file with your shift and compare it with the original. They must be identical. A lock that even you cannot open is useless.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>python3 caesar.py encrypt &lt;shift&gt; ~/vault/level1.txt &gt; locks/secret1.txt
+cat locks/secret1.txt
+python3 caesar.py decrypt &lt;shift&gt; locks/secret1.txt | diff -s - ~/vault/level1.txt
+</code></pre>
+<p>The <code>-</code> tells <code>diff</code> to read one side from the pipe.</p>
+</div></details>
+<h3 id="step-6-3"><span class="num">6.3</span> <span class="h3-title">Lock Level 2, then attack it yourself</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Open <code>wordlist.txt</code> and pick <strong>one</strong> word as your password. It has to be in the list, because that is the deal with whoever tries to break it. Note it in your vault. Lock <code>~/vault/level2.txt</code> with <code>openssl</code>, the same way as in the AES lab: AES-256-CBC, with a salt, with PBKDF2, and this time with <strong>base64 output</strong> (<code>-a</code>) so the result is plain text that can be printed. Save it as <code>locks/secret2.txt</code>.</p>
+<p>Then test it twice. First unlock it with the right password and compare with the original. Then attack it the way your classmates will, with <code>crack.py</code> and the wordlist. How many tries did it take?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>openssl enc -aes-256-cbc -salt -pbkdf2 -a -in ~/vault/level2.txt -out locks/secret2.txt -pass pass:&lt;your-word&gt;
+cat locks/secret2.txt
+openssl enc -d -aes-256-cbc -pbkdf2 -a -in locks/secret2.txt -pass pass:&lt;your-word&gt; | diff -s - ~/vault/level2.txt
+python3 crack.py locks/secret2.txt wordlist.txt
+</code></pre>
+</div></details>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Everyone's <code>secret2.txt</code> starts with <code>U2FsdGVkX1</code>. Decode the start of yours with <code>head -c 12 locks/secret2.txt | base64 -d | head -c 8</code> and see what word appears. Why is it safe for that part to be the same for everyone? (Look up what <code>-salt</code> adds right after it.)</p>
+</blockquote>
+<h3 id="step-6-4"><span class="num">6.4</span> <span class="h3-title">Write fair hints and sign your box</span></h3>
+<p>Replace the content of <code>hints.txt</code> with hints for whoever opens your box: what kind of lock each level is, and where the password comes from. Never the shift, never the password. Then open <code>box.py</code> and change <code>OWNER</code> from <code>&quot;jordan-junior&quot;</code> to your GitHub username.</p>
+<details class="example"><summary>Example hints.txt</summary><div class="details-body">
+<pre><code>Level 1 (secret1.txt): Caesar shift.
+Level 2 (secret2.txt): AES-256-CBC with PBKDF2, base64. The password is one word from wordlist.txt.
+Prove a break by opening an Issue on my repository with the sha256 of the flag. Never post the flag itself.
+</code></pre>
+</div></details>
+<h3 id="step-6-5"><span class="num">6.5</span> <span class="h3-title">Write a Dockerfile that only ships locked files</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Jordan's Dockerfile brought the plain message in and locked it during the build. That is how it leaked. Rewrite the Dockerfile so it:</p>
+<ol>
+<li>starts from <code>python:3.12-slim</code></li>
+<li>works in the folder <code>/box</code></li>
+<li>copies in <strong>only</strong> <code>box.py</code>, <code>hints.txt</code> and the <code>locks/</code> folder</li>
+<li>runs as user <code>nobody</code></li>
+<li>runs <code>python3 box.py</code> when a container starts</li>
+</ol>
+<p>No <code>message.txt</code>, no <code>caesar.py</code>, no <code>RUN</code> line that touches a secret. Also update <code>.dockerignore</code> so the image never receives the tools, the wordlist, the git folder or the markdown files.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<p><code>Dockerfile</code>:</p>
+<pre><code>FROM python:3.12-slim
+
+WORKDIR /box
+
+# only the program, the hints and files that are already locked
+COPY box.py hints.txt ./
+COPY locks/ ./locks/
+
+# do not run as root
+USER nobody
+
+CMD [&quot;python3&quot;, &quot;box.py&quot;]
+</code></pre>
+<p><code>.dockerignore</code>:</p>
+<pre><code>.git
+*.md
+crack.py
+caesar.py
+wordlist.txt
+</code></pre>
+</div></details>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Jordan needed a <code>chmod</code> line and you do not. Run <code>ls -l locks</code> on your VM and look at the permissions your files already have. Why can <code>nobody</code> read them?</p>
+</blockquote>
+<h3 id="step-6-6"><span class="num">6.6</span> <span class="h3-title">Build it, then attack your own image</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Build your image with the name <code>mybox</code> and run it. You should see your name, your hints and both locked blocks.</p>
+<p>Now do Part 5 to yourself before anyone else does. Check the full build history: no shift, no password, no plain text. Then save <code>mybox</code> to <code>~/mybox.tar</code>, unpack it into <code>~/leak-mine</code>, and search the <strong>contents</strong> of every layer for <code>FLAG{</code>. A clean image produces no hits. Run the same search in <code>~/leak</code> and watch it find Jordan's flag, so you know the search works.</p>
+<details class="hint"><summary>Hint</summary><div class="details-body">
+<p>In 5.2 you listed the file <strong>names</strong> inside each layer with <code>tar -tf</code>. To search the file <strong>contents</strong>, use <code>tar -xOf</code>, which prints the contents of every file in a layer, and pipe that into <code>grep -a</code> (search binary data as if it were text).</p>
+</div></details>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker build -t mybox .
+docker run --rm mybox
+docker history --no-trunc mybox
+
+docker save mybox -o ~/mybox.tar
+mkdir -p ~/leak-mine
+tar -xf ~/mybox.tar -C ~/leak-mine
+cd ~/leak-mine
+for f in $(find . -type f); do
+    if tar -xOf &quot;$f&quot; 2&gt;/dev/null | grep -a -q &quot;FLAG{&quot;; then
+        echo &quot;LEAK in $f&quot;
+    fi
+done
+echo &quot;search finished&quot;
+cd ~/secret-box
+</code></pre>
+<p>If you see only <code>search finished</code>, your image is clean.</p>
+</div></details>
+<h3 id="step-6-7"><span class="num">6.7</span> <span class="h3-title">Add a safety net, then look before you commit</span></h3>
+<p>Create a <code>.gitignore</code> that keeps plain text and keys out of git forever, even if one ends up in this folder by accident: ignore <code>level*.txt</code>, <code>*.key</code> and <code>private_key.pem</code>. Then run <code>git status</code>. You should see your changed <code>Dockerfile</code>, <code>.dockerignore</code>, <code>box.py</code> and <code>hints.txt</code>, plus the new <code>.gitignore</code> and <code>locks/</code>. Nothing from the vault. If anything unexpected shows up, stop and find out why before going on.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>printf 'level*.txt\n*.key\nprivate_key.pem\n' &gt; .gitignore
+git status
+</code></pre>
+</div></details>
+<h2 id="part-7-ship-it">Part 7: Ship it</h2>
+<h3 id="step-7-1"><span class="num">7.1</span> <span class="h3-title">Write your README and push</span></h3>
+<p>Replace Jordan's <code>README.md</code> with your own: what your box is, how to build and run it straight from GitHub (the command from 7.2), and how to prove a break (an Issue with the sha256 of the flag). Then add everything, commit with a clear message, and push.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>git add Dockerfile .dockerignore box.py hints.txt .gitignore README.md locks/
+git status
+git commit -m &quot;My own secret box: two locks, only locked files in the image&quot;
+git push
+</code></pre>
+</div></details>
+<h3 id="step-7-2"><span class="num">7.2</span> <span class="h3-title">Test it like a stranger</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Docker can build straight from a GitHub address: it downloads the repository and follows its Dockerfile. Build your box from <strong>your own GitHub URL</strong> with the name <code>test-mine</code> and run it. If that works, anyone in the class can do the same.</p>
+<p>One catch: the Docker on your VM uses an older builder that assumes the main branch is called <code>master</code>. GitHub calls it <code>main</code>. Add <code>#main</code> to the end of the URL.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker build -t test-mine https://github.com/&lt;your-username&gt;/secret-box.git#main
+docker run --rm test-mine
+</code></pre>
+<p>Image names must be all lowercase. <code>couldn't find remote ref master</code> means the <code>#main</code> is missing. If Docker cannot find your repository at all, check that it is <strong>public</strong> and that your push went through.</p>
+</div></details>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> The usual way to share an image is a <strong>registry</strong> such as Docker Hub or the GitHub Container Registry: you build once, push the finished image, and everyone else pulls it ready-made. That needs accounts, tokens and an extra push step. Building from the Git URL needs none of that, and everyone builds from the same recipe you can read. The cost is that every person builds it themselves.</p>
+</blockquote>
+<h3 id="step-7-3"><span class="num">7.3</span> <span class="h3-title">Check GitHub with your own eyes, then post your box</span></h3>
+<p>Open your repository on github.com and click through every file. Make sure no plain message, shift or password appears anywhere. Check that <strong>Issues</strong> are turned on (Settings → General → Features). Then post your repository link in the Brightspace discussion <strong>Box Exchange</strong>, with one line about your box and no hints beyond <code>hints.txt</code>.</p>
+<h2 id="part-8-trade-boxes-break-locks-prove-it">Part 8: Trade boxes, break locks, prove it</h2>
+<p>Now the class becomes a market of boxes. Your box goes out, other boxes come in, and every break gets proven in public without spoiling the answer for anyone else.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 190" role="img" aria-label="You trade boxes with at least two classmates; every break is proven with an Issue" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-trade" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="300" y="20" width="160" height="60" rx="8" class="d-accent"/><text x="380" y="56" text-anchor="middle" font-size="15" font-weight="700" class="">You</text><rect x="40" y="110" width="170" height="60" rx="8" class="d-box"/><text x="125" y="145" text-anchor="middle" font-size="14" class="">Classmate A</text><rect x="550" y="110" width="170" height="60" rx="8" class="d-box"/><text x="635" y="145" text-anchor="middle" font-size="14" class="">Classmate B</text><path d="M 300 60 C 240 60, 200 80, 180 106" class="d-line" marker-end="url(#ah-trade)"/><path d="M 150 108 C 170 50, 250 36, 296 40" class="d-line" marker-end="url(#ah-trade)"/><path d="M 460 60 C 520 60, 560 80, 580 106" class="d-line" marker-end="url(#ah-trade)"/><path d="M 610 108 C 590 50, 510 36, 464 40" class="d-line" marker-end="url(#ah-trade)"/><text x="170" y="40" text-anchor="middle" font-size="11.5" class="d-muted">boxes both ways</text><text x="590" y="40" text-anchor="middle" font-size="11.5" class="d-muted">boxes both ways</text><text x="380" y="140" text-anchor="middle" font-size="12.5" class="d-muted">each break  →  Issue with a hash</text><text x="380" y="160" text-anchor="middle" font-size="12.5" class="d-muted">owner checks  →  Confirmed</text></svg></div><figcaption>No teams: just at least two trades, in both directions.</figcaption></figure>
+<h3 id="step-8-1"><span class="num">8.1</span> <span class="h3-title">Bring in at least two boxes</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Find at least two classmates to trade with, in class or from the Box Exchange thread. Trade fairly: everyone whose box you take gets your link. Build each of their boxes straight from their GitHub URL, as <code>box-&lt;their-username&gt;</code> in lowercase. Run each one and save what it prints into <code>~/loot/&lt;their-username&gt;.out</code>.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker build -t box-&lt;their-username&gt; https://github.com/&lt;their-username&gt;/secret-box.git#main
+docker run --rm box-&lt;their-username&gt; &gt; ~/loot/&lt;their-username&gt;.out
+cat ~/loot/&lt;their-username&gt;.out
+docker images
+</code></pre>
+</div></details>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Your second classmate's box probably built much faster than Jordan's first build did. What did your VM not have to download again? Think in layers.</p>
+</blockquote>
+<h3 id="step-8-2"><span class="num">8.2</span> <span class="h3-title">Take their locks out, and check for leaks first</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>For each box, copy its <code>/box/locks</code> folder into <code>~/loot/&lt;their-username&gt;/</code>, the same way you did in 4.1. Before you break anything the honest way, try Part 5 on their image: the full build history, and the layer search for <code>FLAG{</code>. If a classmate's box leaks, that counts as a break. Tell them, so they can fix it and push again.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker create --name c-&lt;their-username&gt; box-&lt;their-username&gt;
+docker cp c-&lt;their-username&gt;:/box/locks ~/loot/&lt;their-username&gt;
+docker rm c-&lt;their-username&gt;
+docker history --no-trunc box-&lt;their-username&gt;
+</code></pre>
+<p>For the layer search, repeat 6.6 with their image name and a new folder.</p>
+</div></details>
+<h3 id="step-8-3"><span class="num">8.3</span> <span class="h3-title">Break both locks</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Break Level 1 with <code>caesar.py</code>, as you did for Jordan. Break Level 2 with <code>crack.py</code> and <code>wordlist.txt</code>.</p>
+<p>Before you run <code>crack.py</code>, read it. It tries every word in the list, but it checks <strong>two</strong> things before it believes a word is the password. The first check is &quot;did openssl succeed?&quot;. Why is that not enough on its own? The comment at the top of the file explains it.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 210" role="img" aria-label="crack.py: for each word, openssl must succeed and the result must contain FLAG" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-crackflow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="10" y="70" width="120" height="56" rx="8" class="d-box"/><text x="70" y="94" text-anchor="middle" font-size="12" class="">next word</text><text x="70" y="111" text-anchor="middle" font-size="12" class="">from the list</text><line x1="132" y1="98" x2="168" y2="98" class="d-line" marker-end="url(#ah-crackflow)"/><rect x="172" y="70" width="140" height="56" rx="8" class="d-box"/><text x="242" y="94" text-anchor="middle" font-size="12" class="">openssl tries</text><text x="242" y="111" text-anchor="middle" font-size="12" class="">to unlock</text><line x1="314" y1="98" x2="344" y2="98" class="d-line" marker-end="url(#ah-crackflow)"/><polygon points="410,52 476,98 410,144 344,98" class="d-warn"/><text x="410" y="94" text-anchor="middle" font-size="12" class="">exit</text><text x="410" y="111" text-anchor="middle" font-size="12" class="">code 0?</text><line x1="476" y1="98" x2="506" y2="98" class="d-line" marker-end="url(#ah-crackflow)"/><text x="491" y="90" text-anchor="middle" font-size="11" class="d-muted">yes</text><polygon points="572,52 638,98 572,144 506,98" class="d-warn"/><text x="572" y="94" text-anchor="middle" font-size="12" class="">has</text><text x="572" y="111" text-anchor="middle" font-size="12" class="">FLAG{ ?</text><line x1="638" y1="98" x2="664" y2="98" class="d-line" marker-end="url(#ah-crackflow)"/><text x="651" y="90" text-anchor="middle" font-size="11" class="d-muted">yes</text><rect x="668" y="74" width="84" height="48" rx="8" class="d-accent"/><text x="710" y="103" text-anchor="middle" font-size="13" font-weight="700" class="">FOUND</text><path d="M 410 146 L 410 180 L 70 180 L 70 130" class="d-line" marker-end="url(#ah-crackflow)"/><text x="70" y="198" text-anchor="start" font-size="11" class="d-muted">no: wrong password (almost always)</text><path d="M 572 146 L 572 180 L 410 180" class="d-line"/><text x="752" y="198" text-anchor="end" font-size="11" class="d-muted">no: lucky garbage (about 1 wrong word in 256)</text></svg></div><figcaption>Two checks per word. The second one catches wrong passwords that happen to &quot;succeed&quot;.</figcaption></figure>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>cd ~/secret-box
+python3 caesar.py crack ~/loot/&lt;their-username&gt;/secret1.txt | grep FLAG
+python3 crack.py ~/loot/&lt;their-username&gt;/secret2.txt wordlist.txt
+</code></pre>
+</div></details>
+<p>How big is the pile of guesses for each kind of lock? Here is a way to see it: write down how many possible keys there are, and count the <strong>digits</strong> in that number.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 240" role="img" aria-label="Number of digits in the count of possible keys: Caesar 2, wordlist 3, 8 random lowercase letters 12, random 32-byte key 78" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-keyspace" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><text x="218" y="49" text-anchor="end" font-size="12.5" class="">Caesar shift</text><g class="d-bar-g"><title>Caesar shift: 25 possible keys (2 digits)</title><rect x="230" y="31" width="8.46154" height="26" rx="4" class="d-bar"/></g><text x="246.462" y="49" text-anchor="start" font-size="12" class="d-muted">2 digits  (25)</text><text x="218" y="95" text-anchor="end" font-size="12.5" class="">word from the 256-word list</text><g class="d-bar-g"><title>word from the 256-word list: 256 possible keys (3 digits)</title><rect x="230" y="77" width="12.6923" height="26" rx="4" class="d-bar"/></g><text x="250.692" y="95" text-anchor="start" font-size="12" class="d-muted">3 digits  (256)</text><text x="218" y="141" text-anchor="end" font-size="12.5" class="">8 random lowercase letters</text><g class="d-bar-g"><title>8 random lowercase letters: 208,827,064,576 possible keys (12 digits)</title><rect x="230" y="123" width="50.7692" height="26" rx="4" class="d-bar"/></g><text x="288.769" y="141" text-anchor="start" font-size="12" class="d-muted">12 digits  (208,827,064,576)</text><text x="218" y="187" text-anchor="end" font-size="12.5" class="">random 32-byte key</text><g class="d-bar-g"><title>random 32-byte key: ≈ 1.2 × 10^77 possible keys (78 digits)</title><rect x="230" y="169" width="330" height="26" rx="4" class="d-bar"/></g><text x="568" y="187" text-anchor="start" font-size="12" class="d-muted">78 digits  (≈ 1.2 × 10^77)</text><line x1="230" y1="22" x2="230" y2="212" class="d-axis"/><text x="440" y="232" text-anchor="middle" font-size="11.5" class="d-muted">bar length = number of digits in the count of possible keys</text></svg></div><figcaption>Each extra digit means ten times more guesses. Hover a bar for the exact count.</figcaption></figure>
+<p>A Caesar lock and a 256-word list both fall in a few seconds at most. An 8-letter password made of random lowercase letters is already out of reach for <code>crack.py</code>, but a dedicated cracking machine could still get through it. A truly random key has a number of possibilities with 78 digits. Trying a billion keys per second, from the start of the universe until now, would not get through a meaningful fraction of it. That is the difference between a lock that is <strong>hidden</strong> and a lock that is <strong>hard</strong>.</p>
+<h3 id="step-8-4"><span class="num">8.4</span> <span class="h3-title">Prove it without giving it away</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>You want to show the owner you have their flag without posting it, because then anyone could copy it. A <strong>hash</strong> is a fingerprint of a piece of text: the same text always gives the same fingerprint, but you cannot rebuild the text from the fingerprint.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 178" role="img" aria-label="Breaker and owner each hash the flag; matching hashes prove the break without revealing the flag" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-hashproof" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><text x="16" y="34" text-anchor="start" font-size="13" font-weight="700" class="">Breaker</text><rect x="90" y="14" width="210" height="32" rx="6" class="d-box"/><text x="195" y="35" text-anchor="middle" font-size="11.5" class="d-mono">FLAG{maria-orange-tuba}</text><line x1="302" y1="30" x2="342" y2="30" class="d-line" marker-end="url(#ah-hashproof)"/><text x="322" y="22" text-anchor="middle" font-size="10.5" class="d-muted">sha256</text><rect x="346" y="14" width="160" height="32" rx="6" class="d-accent"/><text x="426" y="35" text-anchor="middle" font-size="11.5" class="d-mono">056a486b…cd082536</text><line x1="508" y1="30" x2="548" y2="30" class="d-line" marker-end="url(#ah-hashproof)"/><rect x="552" y="14" width="200" height="32" rx="6" class="d-box"/><text x="652" y="35" text-anchor="middle" font-size="12" class="">Issue on owner&#x27;s repo</text><text x="16" y="154" text-anchor="start" font-size="13" font-weight="700" class="">Owner</text><rect x="90" y="134" width="210" height="32" rx="6" class="d-warn"/><text x="195" y="155" text-anchor="middle" font-size="12" class="">flag from ~/vault</text><line x1="302" y1="150" x2="342" y2="150" class="d-line" marker-end="url(#ah-hashproof)"/><text x="322" y="142" text-anchor="middle" font-size="10.5" class="d-muted">sha256</text><rect x="346" y="134" width="160" height="32" rx="6" class="d-accent"/><text x="426" y="155" text-anchor="middle" font-size="11.5" class="d-mono">056a486b…cd082536</text><path d="M 652 48 L 652 92 L 510 92" class="d-line" marker-end="url(#ah-hashproof)"/><path d="M 426 132 L 426 108" class="d-line" marker-end="url(#ah-hashproof)"/><rect x="380" y="78" width="128" height="28" rx="14" class="d-ok"/><text x="444" y="97" text-anchor="middle" font-size="11.5" font-weight="600" class="">same? Confirmed</text></svg></div><figcaption>The flag itself never appears in public. Only its fingerprint does.</figcaption></figure>
+<p>Compute the SHA-256 hash of the flag <strong>with no newline at the end</strong>, using <code>echo -n</code>. Then do it once without the <code>-n</code>, and compare the two results. One invisible character changes everything, so everyone uses <code>echo -n</code>.</p>
+<p>On the owner's GitHub repository, open one new <strong>Issue</strong> per level you broke:</p>
+<ul>
+<li>Title: <code>Level 1 broken by &lt;your-username&gt;</code> (or Level 2)</li>
+<li>Body: only the hash</li>
+</ul>
+<p>Never post the flag, the shift or the password. Issues are public.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>echo -n 'FLAG{their-flag-here}' | sha256sum
+echo 'FLAG{their-flag-here}' | sha256sum
+</code></pre>
+</div></details>
+<h3 id="step-8-5"><span class="num">8.5</span> <span class="h3-title">Answer the proofs on your own repository</span></h3>
+<p>When Issues appear on your repository, check each one. Hash <strong>your own</strong> flag for that level the same way, copying it from your vault so a typo cannot ruin the comparison. If the hashes match, comment <code>Confirmed</code> and close the Issue. If they do not, comment <code>Hash does not match</code> and leave it open.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>echo -n 'FLAG{your-level-1-flag}' | sha256sum
+</code></pre>
+</div></details>
+<h3 id="step-8-6"><span class="num">8.6</span> <span class="h3-title">Keep a scoreboard</span></h3>
+<p>Keep two small tables in your log, each with at least two rows:</p>
+<table>
+<thead>
+<tr>
+<th>Box I broke</th>
+<th>Level 1 Issue link</th>
+<th>Level 2 Issue link</th>
+<th>Confirmed?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Who opened my box</th>
+<th>Their Issue links</th>
+<th>I answered?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="part-9-clean-up">Part 9: Clean up</h2>
+<p>Lab machines get reused, and knowing where Docker keeps its leftovers is part of knowing Docker.</p>
+<h3 id="step-9-1"><span class="num">9.1</span> <span class="h3-title">Clear out Docker</span></h3>
+<p>List <strong>all</strong> containers, including stopped ones, and remove the leftovers. Remove your classmates' images, <code>test-mine</code> and <code>junior-box</code>. Then ask Docker to remove everything it no longer uses, and <strong>read</strong> what it says it is about to delete before you answer <code>y</code>.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker ps -a
+docker rm &lt;container-name-or-id&gt;
+docker images
+docker rmi box-&lt;their-username&gt; test-mine junior-box
+docker system prune
+docker system df
+</code></pre>
+</div></details>
+<h3 id="step-9-2"><span class="num">9.2</span> <span class="h3-title">Clear out your files, and keep what matters</span></h3>
+<p>Delete <code>~/leak</code>, <code>~/leak-mine</code>, <code>~/loot</code> and the two saved <code>.tar</code> files. If <code>rm</code> says <code>Permission denied</code>, those files were made by <code>sudo docker</code> and belong to root. Check with <code>ls -l</code>, then use <code>sudo rm -r</code>, and read the command twice before pressing Enter.</p>
+<p>Keep <code>~/vault</code> until grades are posted, because you need your flags to answer Issues. After that, delete it. When you are completely done with this VM, also delete its SSH key from your GitHub settings. A key nobody uses is a door nobody watches.</p>
+<p>Your <code>secret-box</code> repository stays. It is a finished project that anyone can run with one command, with a public trail of confirmed work. Take one last look through it to make sure nothing secret is in it.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>rm -r ~/leak ~/leak-mine ~/loot
+rm ~/junior-box.tar ~/mybox.tar
+</code></pre>
+</div></details>
+<h2 id="what-to-submit">What to submit</h2>
+<ul>
+<li>the link to your <code>secret-box</code> repository</li>
+<li>your log: one entry (plan, command, what I see, screenshot) for every step marked <strong>LOG</strong></li>
+<li>your two scoreboard tables from 8.6, with Issue links</li>
+<li>your own two flags, submitted <strong>privately</strong> to the instructor only, so your Issues can be checked</li>
+</ul>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  // Copy buttons on every code block
+  document.querySelectorAll("pre").forEach(function (pre) {
+    var wrap = document.createElement("div");
+    wrap.className = "code-wrap";
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    var btn = document.createElement("button");
+    btn.className = "copy-btn";
+    btn.type = "button";
+    btn.textContent = "Copy";
+    btn.addEventListener("click", function () {
+      var text = pre.innerText.replace(/\n$/, "");
+      var done = function () {
+        btn.textContent = "Copied";
+        btn.classList.add("done");
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text); done(); });
+      } else { fallback(text); done(); }
+    });
+    wrap.appendChild(btn);
+  });
+  function fallback(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // Finish-line checklist: clickable, remembered in this browser when possible
+  var key = "secret-box-finish-line";
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) { saved = {}; }
+  document.querySelectorAll("li.task-list-item input[type=checkbox]").forEach(function (box, i) {
+    var li = box.closest("li");
+    if (saved[i]) { box.checked = true; li.classList.add("checked"); }
+    box.addEventListener("change", function () {
+      li.classList.toggle("checked", box.checked);
+      saved[i] = box.checked;
+      try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {}
+    });
+  });
+
+  // Highlight the current part in the table of contents
+  var links = {};
+  document.querySelectorAll("nav.toc a").forEach(function (a) { links[a.getAttribute("href").slice(1)] = a; });
+  var heads = Array.prototype.slice.call(document.querySelectorAll("main h2[id]"));
+  function update() {
+    var current = heads[0];
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i].getBoundingClientRect().top < 120) current = heads[i];
+    }
+    Object.keys(links).forEach(function (id) { links[id].classList.toggle("active", current && id === current.id); });
+  }
+  window.addEventListener("scroll", update, { passive: true });
+  update();
+
+  // When printing, open every hint so nothing is hidden on paper
+  var opened = [];
+  window.addEventListener("beforeprint", function () {
+    document.querySelectorAll("details:not([open])").forEach(function (d) { d.open = true; opened.push(d); });
+  });
+  window.addEventListener("afterprint", function () {
+    opened.forEach(function (d) { d.open = false; }); opened = [];
+  });
+})();
+</script>
+</body>
+</html>
