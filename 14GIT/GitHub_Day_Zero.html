@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day Zero: Your First Push</title>
+<style>
+  :root {
+    --paper: #fbfaf7;
+    --ink: #1f2328;
+    --muted: #5d6470;
+    --rule: #e4e1da;
+    --panel: #f3f1ec;
+    --code-bg: #1d1f24;
+    --code-ink: #e8e6e3;
+    --accent: #0f6e6e;
+    --hint: #a15c00;
+    --hint-bg: #fff6e8;
+    --show: #0f6e6e;
+    --show-bg: #eaf5f4;
+    --explain: #5b3fa0;
+    --explain-bg: #f3effb;
+    --note-bg: #f1f4f8;
+    --note-rule: #8a9bb3;
+    --bad: #b3261e;
+    --bad-bg: #fdecea;
+    --ok-bg: #e6f4ea;
+    --ok: #1e7b3a;
+    --rule-strong: #c9c4b8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #17181b;
+      --ink: #e6e4df;
+      --muted: #a3a8b0;
+      --rule: #2d2f34;
+      --panel: #202226;
+      --code-bg: #0e0f11;
+      --code-ink: #e8e6e3;
+      --accent: #5cc4c0;
+      --hint: #f0b35a;
+      --hint-bg: #2a2318;
+      --show: #5cc4c0;
+      --show-bg: #172726;
+      --explain: #b79cf0;
+      --explain-bg: #231f2e;
+      --note-bg: #1e232b;
+      --note-rule: #5d6f8a;
+      --bad: #f28b82;
+      --bad-bg: #2e1c1b;
+      --ok-bg: #18291d;
+      --ok: #81c995;
+      --rule-strong: #3d4047;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* ---------- layout ---------- */
+  .layout { display: flex; max-width: 1180px; margin: 0 auto; }
+  nav.toc {
+    position: sticky; top: 0; align-self: flex-start;
+    width: 250px; flex-shrink: 0; height: 100vh; overflow-y: auto;
+    padding: 2rem 1rem 2rem 1.5rem;
+    border-right: 1px solid var(--rule);
+    font-size: 0.9rem;
+  }
+  nav.toc .toc-title {
+    font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.75rem; font-weight: 600;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 0.1rem 0; }
+  nav.toc a {
+    display: block; padding: 0.3rem 0.6rem; border-radius: 6px;
+    color: var(--muted); text-decoration: none; line-height: 1.35;
+  }
+  nav.toc a:hover { background: var(--panel); color: var(--ink); }
+  nav.toc a.active { background: var(--show-bg); color: var(--accent); font-weight: 600; }
+
+  main { flex: 1; min-width: 0; padding: 2.5rem 3rem 6rem; max-width: 860px; }
+
+  /* ---------- header ---------- */
+  header.doc-head { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--ink); }
+  header.doc-head .eyebrow {
+    font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700;
+  }
+  header.doc-head h1 { font-size: 2.4rem; line-height: 1.15; margin: 0.3rem 0 0; }
+
+  /* ---------- text ---------- */
+  h2 {
+    font-size: 1.55rem; margin: 3.2rem 0 1rem; padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+  }
+  h3 { font-size: 1.15rem; margin: 2.2rem 0 0.6rem; display: flex; align-items: baseline; gap: 0.6rem; }
+  h3 .num {
+    flex-shrink: 0;
+    font: 600 0.8rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--accent); background: var(--show-bg);
+    padding: 0.3rem 0.5rem; border-radius: 6px;
+  }
+  p, ul, ol { margin: 0.7rem 0; }
+  li { margin: 0.25rem 0; }
+  a { color: var(--accent); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
+  strong { font-weight: 650; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88em; background: var(--panel); padding: 0.12em 0.35em; border-radius: 4px;
+  }
+
+  /* ---------- code blocks ---------- */
+  .code-wrap { position: relative; margin: 0.8rem 0; }
+  pre {
+    margin: 0; padding: 1rem 1.1rem; overflow-x: auto;
+    background: var(--code-bg); color: var(--code-ink); border-radius: 8px;
+    font-size: 0.88rem; line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .copy-btn {
+    position: absolute; top: 0.45rem; right: 0.45rem;
+    font: 600 0.72rem/1 -apple-system, "Segoe UI", sans-serif;
+    color: #c9c7c3; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18); border-radius: 5px;
+    padding: 0.35rem 0.55rem; cursor: pointer; opacity: 0; transition: opacity .15s;
+  }
+  .code-wrap:hover .copy-btn, .copy-btn:focus { opacity: 1; }
+  .copy-btn.done { color: #7fe0b0; border-color: #7fe0b0; opacity: 1; }
+
+  /* ---------- hint boxes ---------- */
+  details {
+    margin: 0.7rem 0; border-radius: 8px; border: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  details > summary {
+    cursor: pointer; list-style: none; user-select: none;
+    padding: 0.55rem 0.9rem; font-weight: 600; font-size: 0.92rem;
+    display: flex; align-items: center; gap: 0.5rem; border-radius: 8px;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before {
+    content: "▸"; display: inline-block; transition: transform .15s; font-size: 0.85em;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  details[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .details-body { padding: 0.3rem 1rem 0.8rem; }
+
+  details.hint { border-color: color-mix(in srgb, var(--hint) 35%, transparent); }
+  details.hint > summary { color: var(--hint); background: var(--hint-bg); }
+  details.show { border-color: color-mix(in srgb, var(--show) 35%, transparent); }
+  details.show > summary { color: var(--show); background: var(--show-bg); }
+  details.example > summary, details.other > summary { color: var(--muted); background: var(--panel); }
+
+  /* ---------- callouts ---------- */
+  .explain {
+    margin: 1rem 0; padding: 0.8rem 1rem 0.8rem 1.1rem;
+    background: var(--explain-bg); border-left: 4px solid var(--explain); border-radius: 0 8px 8px 0;
+  }
+  .explain-label {
+    font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 700; color: var(--explain);
+  }
+  .explain p { margin: 0.3rem 0 0; }
+
+  blockquote.note {
+    margin: 1rem 0; padding: 0.7rem 1rem;
+    background: var(--note-bg); border-left: 4px solid var(--note-rule); border-radius: 0 8px 8px 0;
+  }
+  blockquote.note p { margin: 0.2rem 0; }
+
+  /* ---------- checklist ---------- */
+  ul.contains-task-list { list-style: none; padding-left: 0.2rem; }
+  li.task-list-item { position: relative; padding: 0.15rem 0 0.15rem 1.9rem; }
+  li.task-list-item input { position: absolute; left: 0.2rem; top: 0.45rem; margin: 0; width: 1.05rem; height: 1.05rem; accent-color: var(--accent); cursor: pointer; }
+  li.task-list-item.checked { color: var(--muted); text-decoration: line-through; }
+
+  /* ---------- tables ---------- */
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--rule); padding: 0.45rem 0.7rem; text-align: left; }
+  th { background: var(--panel); }
+  td:empty::after { content: "\00a0"; }
+
+
+  /* ---------- log badge ---------- */
+  .log-badge {
+    flex-shrink: 0; align-self: center;
+    font: 700 0.68rem/1 -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.08em;
+    color: var(--explain); border: 1.5px solid var(--explain); background: var(--explain-bg);
+    padding: 0.25rem 0.45rem; border-radius: 999px;
+  }
+
+  /* ---------- asides ---------- */
+  blockquote.aside { margin: 1.2rem 0; padding: 0.75rem 1rem 0.75rem 1.1rem; border-radius: 0 8px 8px 0; }
+  blockquote.aside p { margin: 0.2rem 0; }
+  blockquote.aside strong:first-child {
+    display: block; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem;
+  }
+  blockquote.why { background: var(--note-bg); border-left: 4px solid var(--note-rule); }
+  blockquote.why strong:first-child { color: var(--note-rule); }
+  blockquote.ponder { background: var(--explain-bg); border-left: 4px solid var(--explain); }
+  blockquote.ponder strong:first-child { color: var(--explain); }
+
+  /* ---------- figures ---------- */
+  figure.fig { margin: 1.6rem 0; }
+  .fig-scroll { overflow-x: auto; }
+  figure.fig svg { display: block; width: 100%; min-width: 560px; height: auto; }
+  figure.fig figcaption { font-size: 0.86rem; color: var(--muted); margin-top: 0.5rem; text-align: center; }
+  figure.fig text { fill: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  figure.fig text.d-muted { fill: var(--muted); }
+  figure.fig text.d-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  figure.fig text.d-bad-text { fill: var(--bad); }
+  .d-box { fill: var(--panel); stroke: var(--rule-strong); stroke-width: 1.2; }
+  .d-accent { fill: var(--show-bg); stroke: var(--accent); stroke-width: 1.4; }
+  .d-warn { fill: var(--hint-bg); stroke: var(--hint); stroke-width: 1.4; }
+  .d-bad { fill: var(--bad-bg); stroke: var(--bad); stroke-width: 1.4; }
+  .d-ok { fill: var(--ok-bg); stroke: var(--ok); stroke-width: 1.4; }
+  .d-line { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+  .d-line-bad { stroke: var(--bad); stroke-width: 1.6; fill: none; }
+  .d-arrowhead { fill: var(--muted); }
+  .d-dot { fill: var(--accent); }
+  .d-eye { fill: var(--paper); stroke: var(--ink); stroke-width: 1.6; }
+  .d-axis { stroke: var(--rule-strong); stroke-width: 1.2; }
+  .d-bar { fill: var(--accent); }
+  .d-bar-g:hover .d-bar { opacity: 0.8; }
+
+  /* ---------- small screens ---------- */
+  @media (max-width: 900px) {
+    .layout { display: block; }
+    nav.toc {
+      position: static; width: auto; height: auto; border-right: none;
+      border-bottom: 1px solid var(--rule); padding: 1.2rem 1.2rem 0.8rem;
+    }
+    nav.toc ol { columns: 2; }
+    main { padding: 1.5rem 1.2rem 4rem; }
+    header.doc-head h1 { font-size: 1.9rem; }
+  }
+
+  /* ---------- print ---------- */
+  @media print {
+    nav.toc, .copy-btn { display: none; }
+    figure.fig svg { min-width: 0; }
+    figure.fig { break-inside: avoid; }
+    main { padding: 0; max-width: none; }
+    body { font-size: 11pt; background: #fff; color: #000; }
+    pre { background: #f2f2f2; color: #000; border: 1px solid #ccc; white-space: pre-wrap; }
+    details { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <div class="toc-title">Contents</div>
+    <ol>
+<li><a href="#the-finish-line">The finish line</a></li>
+<li><a href="#how-this-works">How this works</a></li>
+<li><a href="#part-0">Part 0: git, meet GitHub</a></li>
+<li><a href="#part-1">Part 1: Set up your workbench</a></li>
+<li><a href="#part-2">Part 2: Your first repository</a></li>
+<li><a href="#part-3">Part 3: Run it like a stranger</a></li>
+<li><a href="#part-4">Part 4: Trade name tags</a></li>
+<li><a href="#part-5">Part 5: Clean up</a></li>
+<li><a href="#what-to-submit">What to submit</a></li>
+    </ol>
+  </nav>
+  <main>
+    <header class="doc-head">
+      <div class="eyebrow">Linux Lab · GitHub practice</div>
+      <h1>Day Zero: Your First Push</h1>
+    </header>
+<p>It is your first day on a small team that ships its tools as Docker containers. Before anyone hands you a real project, there is day zero. Your lead's welcome message is short:</p>
+<p><em>&quot;Welcome aboard! Before you get a real project, let's get your desk ready. Install Docker, and get GitHub to trust your machine. Then ship one tiny thing: a name tag. It's a little container that prints a card with your name on it. Put it on GitHub, get two teammates to build it and run it, and let each of them ask you one question. Answer them in code. If all of that works, you're ready for real work.&quot;</em></p>
+<p>That is this lab. None of it is hard, on purpose. Setting up GitHub for the first time comes with a handful of confusing moments: a key that is not accepted, a branch that cannot be found, a push that seems to go nowhere. It is much better to meet them today, on a three-line text file, than in the middle of a real project. Everything you set up here keeps working for every project after it.</p>
+<p>Everything happens on your own Azure Lab VM (Ubuntu 20.04) and on github.com.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 300" role="img" aria-label="Map of the lab: your VM on the left, GitHub in the middle, classmates' VMs on the right" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-map" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs>
+<text x="105" y="22" text-anchor="middle" font-size="11" font-weight="700" class="d-muted">YOUR AZURE VM</text>
+<text x="380" y="22" text-anchor="middle" font-size="11" font-weight="700" class="d-muted">GITHUB</text>
+<text x="655" y="22" text-anchor="middle" font-size="11" font-weight="700" class="d-muted">CLASSMATES&#x27; VMs</text>
+<rect x="20" y="36" width="170" height="250" rx="8" class="d-accent"/>
+<text x="105" y="66" text-anchor="middle" font-size="15" font-weight="700">Your VM</text>
+<text x="105" y="100" text-anchor="middle" font-size="12" class="d-mono">~/nametag</text>
+<text x="105" y="117" text-anchor="middle" font-size="12">your name tag</text>
+<text x="105" y="214" text-anchor="middle" font-size="12" class="d-mono">tag-&lt;username&gt;</text>
+<text x="105" y="231" text-anchor="middle" font-size="12">their name tags</text>
+<rect x="300" y="56" width="160" height="76" rx="8" class="d-accent"/>
+<text x="380" y="88" text-anchor="middle" font-size="13" font-weight="600">Your repository</text>
+<text x="380" y="107" text-anchor="middle" font-size="13" class="d-mono">nametag</text>
+<rect x="300" y="186" width="160" height="76" rx="8" class="d-box"/>
+<text x="380" y="218" text-anchor="middle" font-size="13">Classmates&#x27;</text>
+<text x="380" y="237" text-anchor="middle" font-size="13" class="d-mono">nametag repos</text>
+<rect x="570" y="56" width="170" height="206" rx="8" class="d-box"/>
+<text x="655" y="152" text-anchor="middle" font-size="13">Classmates&#x27; VMs</text>
+<text x="655" y="170" text-anchor="middle" font-size="13">(at least 2)</text>
+<line x1="296" y1="80" x2="194" y2="80" class="d-line" marker-end="url(#ah-map)"/>
+<text x="245" y="72" text-anchor="middle" font-size="11" class="d-muted">1 clone</text>
+<line x1="194" y1="110" x2="296" y2="110" class="d-line" marker-end="url(#ah-map)"/>
+<text x="245" y="128" text-anchor="middle" font-size="11" class="d-muted">2 push</text>
+<line x1="464" y1="80" x2="566" y2="80" class="d-line" marker-end="url(#ah-map)"/>
+<text x="515" y="72" text-anchor="middle" font-size="11" class="d-muted">3 they build</text>
+<line x1="566" y1="110" x2="464" y2="110" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-map)"/>
+<text x="515" y="128" text-anchor="middle" font-size="11" class="d-muted">their questions</text>
+<line x1="296" y1="210" x2="194" y2="210" class="d-line" marker-end="url(#ah-map)"/>
+<text x="245" y="202" text-anchor="middle" font-size="11" class="d-muted">4 build theirs</text>
+<line x1="194" y1="240" x2="296" y2="240" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-map)"/>
+<text x="245" y="258" text-anchor="middle" font-size="11" class="d-muted">5 your questions</text>
+</svg></div><figcaption>The whole lab on one page. Solid arrows move code; dashed arrows are questions posted as GitHub Issues.</figcaption></figure>
+<h2 id="the-finish-line">The finish line</h2>
+<p>You are done when all of these are true:</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox"> Docker runs on your VM without <code>sudo</code></li>
+<li class="task-list-item"><input type="checkbox"> GitHub trusts your VM: <code>ssh -T git@github.com</code> greets you by name</li>
+<li class="task-list-item"><input type="checkbox"> Your <code>nametag</code> repository is on GitHub, and anyone can build it with one command</li>
+<li class="task-list-item"><input type="checkbox"> You built and ran the name tags of <strong>at least 2 classmates</strong></li>
+<li class="task-list-item"><input type="checkbox"> You asked each of them one question in an Issue, and saw the answer show up in their name tag</li>
+<li class="task-list-item"><input type="checkbox"> You answered every question on your own repository with a commit that closed its Issue</li>
+<li class="task-list-item"><input type="checkbox"> Your log has an entry for every step marked <strong>LOG</strong></li>
+<li class="task-list-item"><input type="checkbox"> You cleaned up your VM</li>
+</ul>
+<p>No teams are needed. Trade with the people around you.</p>
+<h2 id="how-this-works">How this works</h2>
+<h3>The steps</h3>
+<p>Each step tells you what you are trying to do and why it matters, but not the exact command. Try it on your own first. When you get stuck, open <strong>Hint</strong> for a nudge. When you are still stuck, open <strong>Show me</strong> for the command. Using Show me is completely fine. What counts is that you can say what the command did and why.</p>
+<p>Boxes labeled <strong>Why this way?</strong> explain why the lab does something the way it does, and what else people do in the real world. Boxes labeled <strong>Think about it</strong> are questions worth a minute of your time. Neither one needs an answer handed in.</p>
+<h3>The log</h3>
+<p>Every step marked <strong>LOG</strong> gets an entry in your log. Each entry has four parts:</p>
+<ol>
+<li><strong>Plan.</strong> Before you type anything: what are you about to do, and why? One or two sentences in your own words.</li>
+<li><strong>Command.</strong> The exact command or commands you ran.</li>
+<li><strong>What I see.</strong> What came back, and what it means. Did it match your plan? If it surprised you, say what surprised you.</li>
+<li><strong>Screenshot.</strong> The command and its output on your screen.</li>
+</ol>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 150" role="img" aria-label="The four parts of a log entry: plan, command, what I see, screenshot" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-log" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs>
+<rect x="10" y="14" width="170" height="122" rx="8" class="d-accent"/>
+<text x="24" y="40" font-size="13" font-weight="700">1  Plan</text>
+<text x="24" y="66" font-size="12" class="d-muted">I&#x27;ll check where</text>
+<text x="24" y="83" font-size="12" class="d-muted">origin points, since</text>
+<text x="24" y="100" font-size="12" class="d-muted">push sends there.</text>
+<line x1="182" y1="75" x2="198" y2="75" class="d-line" marker-end="url(#ah-log)"/>
+<rect x="200" y="14" width="170" height="122" rx="8" class="d-box"/>
+<text x="214" y="40" font-size="13" font-weight="700">2  Command</text>
+<text x="214" y="66" font-size="12" class="d-mono">git remote -v</text>
+<line x1="372" y1="75" x2="388" y2="75" class="d-line" marker-end="url(#ah-log)"/>
+<rect x="390" y="14" width="170" height="122" rx="8" class="d-box"/>
+<text x="404" y="40" font-size="13" font-weight="700">3  What I see</text>
+<text x="404" y="66" font-size="12" class="d-muted">Two lines, fetch and</text>
+<text x="404" y="83" font-size="12" class="d-muted">push, both to my</text>
+<text x="404" y="100" font-size="12" class="d-muted">nametag on GitHub.</text>
+<line x1="562" y1="75" x2="578" y2="75" class="d-line" marker-end="url(#ah-log)"/>
+<rect x="580" y="14" width="170" height="122" rx="8" class="d-box"/>
+<text x="594" y="40" font-size="13" font-weight="700">4  Screenshot</text>
+<text x="594" y="66" font-size="12" class="d-muted">the terminal showing</text>
+<text x="594" y="83" font-size="12" class="d-muted">the command and</text>
+<text x="594" y="100" font-size="12" class="d-muted">its output</text>
+</svg></div><figcaption>One log entry. The plan is written before you type; the rest after you look.</figcaption></figure>
+<p>Steps without the LOG mark are setup. Do them, but they need no entry.</p>
+<p>Text like <code>&lt;your-username&gt;</code> means &quot;put your own value here, without the angle brackets&quot;.</p>
+
+<h2 id="part-0">Part 0: git, meet GitHub</h2>
+<p>You already know git. Every commit you have made so far lives in exactly one place: the hidden <code>.git</code> folder inside your project. That folder <em>is</em> the history. Nobody else can see it, and if your VM disappears, the history disappears with it.</p>
+<p><strong>GitHub</strong> is a computer on the internet that keeps a copy of a repository where other people can reach it. That is most of the idea. Git does not treat GitHub as anything special. To git, GitHub is simply another copy of the same repository, sitting at some address. A saved address like that is called a <strong>remote</strong>, and the one you cloned from is called <code>origin</code> by convention.</p>
+<p>Three commands move commits between the copies:</p>
+<ul>
+<li><code>git clone</code> makes a complete copy of a repository, with all of its history, and remembers where it came from as <code>origin</code>.</li>
+<li><code>git push</code> sends your new commits to the remote.</li>
+<li><code>git pull</code> brings the remote's new commits to you. You will not need it today, because nobody but you writes to your repository.</li>
+</ul>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 228" role="img" aria-label="Your VM has two commits, GitHub has one; git push copies the missing commit" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-copies" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs>
+<rect x="20" y="20" width="330" height="150" rx="8" class="d-box"/>
+<text x="185" y="46" text-anchor="middle" font-size="13" font-weight="700">Your VM: <tspan class="d-mono" font-weight="400">~/nametag</tspan></text>
+<line x1="127" y1="96" x2="223" y2="96" class="d-line"/>
+<circle cx="110" cy="96" r="17" class="d-accent"/><text x="110" y="101" text-anchor="middle" font-size="13" font-weight="700">A</text>
+<circle cx="240" cy="96" r="17" class="d-accent"/><text x="240" y="101" text-anchor="middle" font-size="13" font-weight="700">B</text>
+<text x="110" y="134" text-anchor="middle" font-size="11" class="d-muted">Initial commit</text>
+<text x="240" y="134" text-anchor="middle" font-size="11" class="d-muted">Add my name tag</text>
+<text x="185" y="159" text-anchor="middle" font-size="11" class="d-mono">ahead of &#x27;origin/main&#x27; by 1 commit</text>
+<rect x="410" y="20" width="330" height="150" rx="8" class="d-box"/>
+<text x="575" y="46" text-anchor="middle" font-size="13" font-weight="700">GitHub: <tspan class="d-mono" font-weight="400">nametag</tspan></text>
+<line x1="517" y1="96" x2="613" y2="96" class="d-line" stroke-dasharray="4 4"/>
+<circle cx="500" cy="96" r="17" class="d-accent"/><text x="500" y="101" text-anchor="middle" font-size="13" font-weight="700">A</text>
+<circle cx="630" cy="96" r="17" class="d-box" stroke-dasharray="4 3"/><text x="630" y="101" text-anchor="middle" font-size="13" class="d-muted">B</text>
+<text x="500" y="134" text-anchor="middle" font-size="11" class="d-muted">Initial commit</text>
+<text x="630" y="134" text-anchor="middle" font-size="11" class="d-muted">arrives with push</text>
+<path d="M240,174 V198 H630 V178" class="d-line" marker-end="url(#ah-copies)"/>
+<text x="435" y="217" text-anchor="middle" font-size="12" class="d-mono">git push</text>
+</svg></div><figcaption>Two copies of one repository. A commit lives only on your VM until you push it.</figcaption></figure>
+<p>The consequence worth remembering: <strong>a commit you make on your VM exists only on your VM until you push it.</strong> Think of git as your own notebook and GitHub as a shelf in the library where you leave a copy for others to read. Writing in your notebook changes nothing on the shelf. <code>git push</code> does. And <code>git status</code> is the friend who tells you when the two have drifted apart.</p>
+<p>GitHub also adds things that git does not have at all: a web page for every repository, and <strong>Issues</strong>, a public list of questions and to-dos attached to a repository, where anyone can add one. Today you use both.</p>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> GitHub is the most common place to keep a repository, but it is not the only one. GitLab, Bitbucket and Codeberg do the same job, and many companies run their own server. Git works the same way with all of them, because git only needs an address. What you learn today carries over.</p>
+</blockquote>
+
+<h2 id="part-1">Part 1: Set up your workbench</h2>
+<p>Nothing here needs a log entry. It is setup, and it only has to work. If you already did some of it in an earlier lab, check that it still works and move on.</p>
+<h3 id="step-1-1"><span class="num">1.1</span> <span class="h3-title">Make sure Docker is installed, and say hello</span></h3>
+<p>Docker may already be on your VM from an earlier lab. Ask Docker for its version to find out. If the command is not found, install the Docker package that Ubuntu provides (its name is <code>docker.io</code>). Either way, finish by running the official test image <code>hello-world</code> with <code>sudo</code>, and read what it prints. It describes, in four short steps, what just happened, including the moment it downloaded something.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker --version
+</code></pre>
+<p>Only if that says <code>command not found</code>:</p>
+<pre><code>sudo apt update
+sudo apt install -y docker.io
+</code></pre>
+<p>Then:</p>
+<pre><code>sudo docker run hello-world
+</code></pre>
+</div></details>
+<h3 id="step-1-2"><span class="num">1.2</span> <span class="h3-title">Make Docker work without sudo</span></h3>
+<p>Now try <code>docker run hello-world</code> <strong>without</strong> <code>sudo</code>. If it works, you did this step before, so move on. If it fails, the error mentions a file called <code>docker.sock</code>. That file is the doorway between the <code>docker</code> command you type and the Docker service that does the real work. Look at who owns it and what its permissions are, the same way you would look at any file.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 170" role="img" aria-label="The docker command talks to the Docker service through docker.sock, which only root and group docker may use" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-socket" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="10" y="50" width="130" height="64" rx="8" class="d-box"/><text x="75" y="76" text-anchor="middle" font-size="13" class="">you</text><text x="75" y="93" text-anchor="middle" font-size="13" class="">(user student)</text><line x1="142" y1="82" x2="192" y2="82" class="d-line" marker-end="url(#ah-socket)"/><rect x="196" y="50" width="140" height="64" rx="8" class="d-box"/><text x="266" y="76" text-anchor="middle" font-size="13" class="d-mono">docker</text><text x="266" y="93" text-anchor="middle" font-size="13" class="d-mono">command</text><line x1="338" y1="82" x2="388" y2="82" class="d-line" marker-end="url(#ah-socket)"/><rect x="392" y="36" width="190" height="92" rx="8" class="d-warn"/><text x="487" y="62" text-anchor="middle" font-size="12" font-weight="700" class="d-mono">/var/run/docker.sock</text><text x="487" y="86" text-anchor="middle" font-size="11.5" class="d-mono">srw-rw----  root  docker</text><text x="487" y="110" text-anchor="middle" font-size="11.5" class="d-muted">root or group docker only</text><line x1="584" y1="82" x2="624" y2="82" class="d-line" marker-end="url(#ah-socket)"/><rect x="628" y="50" width="122" height="64" rx="8" class="d-accent"/><text x="689" y="76" text-anchor="middle" font-size="12.5" class="">Docker service</text><text x="689" y="93" text-anchor="middle" font-size="12.5" class="">(runs as root)</text><text x="487" y="156" text-anchor="middle" font-size="12.5" class="d-muted">Not in group docker?  →  &quot;permission denied&quot;</text></svg></div><figcaption>The socket is a doorway with a permission check, just like a file.</figcaption></figure>
+<p>You will see that the doorway belongs to the group <code>docker</code>. So join that group. Group changes only count for new logins, so log out and back in (or start a new shell that has the group). Then <code>docker run hello-world</code> should work without <code>sudo</code>.</p>
+<details class="hint"><summary>Hint</summary><div class="details-body">
+<p><code>usermod</code> changes a user's settings. You want to <strong>a</strong>ppend one more <strong>G</strong>roup to your own user. Be careful: without the &quot;append&quot; part, you would be removed from every other group, including the one that lets you use <code>sudo</code>.</p>
+</div></details>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker run hello-world
+ls -l /var/run/docker.sock
+sudo usermod -aG docker $USER
+exit
+</code></pre>
+<p>Reconnect to your VM, then:</p>
+<pre><code>groups
+docker run hello-world
+</code></pre>
+<p>If you would rather not reconnect, <code>newgrp docker</code> opens a new shell that already has the group.</p>
+</div></details>
+<p>Do not skip this step. The rest of this lab assumes it. And in bigger projects, files that Docker creates for you while you use <code>sudo docker</code> belong to root, which causes <code>Permission denied</code> errors later.</p>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Anyone in the <code>docker</code> group can start a container that reads or changes any file on the machine. So being in that group is almost the same as being root. That is fine on your own lab VM. Would you add a coworker to it on a shared company server?</p>
+</blockquote>
+<h3 id="step-1-3"><span class="num">1.3</span> <span class="h3-title">Introduce yourself to git and GitHub</span></h3>
+<p>Tell git your name and email, so every commit you make says who made it. If you do not have a GitHub account yet, create one at github.com. Write your GitHub username somewhere handy. You will type it a lot.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git config --global --list
+</code></pre>
+<p>Use the same email as your GitHub account.</p>
+</div></details>
+<p>Every commit carries this email, and on GitHub anyone can read it. If you would rather keep your real address private, GitHub gives you a private no-reply address under Settings → Emails. Use that one here instead.</p>
+<h3 id="step-1-4"><span class="num">1.4</span> <span class="h3-title">Give GitHub a key instead of a password</span></h3>
+<p>GitHub will not accept your password from the command line. Instead, your VM proves who it is with a <strong>key pair</strong>, the same public-key idea that RSA is built on. You keep the private key on the VM and never show it to anyone. You give GitHub the public key. When you connect, GitHub sends a challenge that only the matching private key can answer.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 210" role="img" aria-label="Private key stays on the VM, public key goes to GitHub, GitHub challenges and the VM answers" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-sshkeys" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs><rect x="10" y="20" width="300" height="170" rx="8" class="d-accent"/><text x="160" y="46" text-anchor="middle" font-size="15" font-weight="700" class="">Your VM</text><rect x="30" y="64" width="260" height="46" rx="6" class="d-warn"/><text x="160" y="84" text-anchor="middle" font-size="12" class="">id_ed25519  (private)</text><text x="160" y="101" text-anchor="middle" font-size="12" class="">never leaves the VM</text><rect x="30" y="124" width="260" height="46" rx="6" class="d-box"/><text x="160" y="144" text-anchor="middle" font-size="12" class="">id_ed25519.pub  (public)</text><text x="160" y="161" text-anchor="middle" font-size="12" class="">safe to give away</text><rect x="450" y="20" width="300" height="170" rx="8" class="d-box"/><text x="600" y="46" text-anchor="middle" font-size="15" font-weight="700" class="">GitHub</text><rect x="470" y="124" width="260" height="46" rx="6" class="d-box"/><text x="600" y="144" text-anchor="middle" font-size="12" class="">your public key</text><text x="600" y="161" text-anchor="middle" font-size="12" class="">Settings → SSH keys</text><line x1="292" y1="147" x2="466" y2="147" class="d-line" marker-end="url(#ah-sshkeys)"/><text x="380" y="140" text-anchor="middle" font-size="11" class="d-muted">paste once</text><line x1="448" y1="74" x2="294" y2="74" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-sshkeys)"/><text x="371" y="66" text-anchor="middle" font-size="11" class="d-muted">&quot;prove it: sign this&quot;</text><line x1="294" y1="98" x2="448" y2="98" class="d-line" stroke-dasharray="5 4" marker-end="url(#ah-sshkeys)"/><text x="371" y="116" text-anchor="middle" font-size="11" class="d-muted">signed answer</text></svg></div><figcaption>The private key answers GitHub&#x27;s challenge without ever being sent.</figcaption></figure>
+<p>First look in <code>~/.ssh</code>. If a file named <code>id_ed25519</code> is already there, you made a key before: do not make a new one, just make sure its <code>.pub</code> half is on GitHub and test the connection. Otherwise, create an <code>ed25519</code> key pair, find the two files it made, and paste the <strong>public</strong> one into GitHub under Settings → SSH and GPG keys → New SSH key. Then test the connection.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>ls -l ~/.ssh
+</code></pre>
+<p>Only if there is no <code>id_ed25519</code> yet:</p>
+<pre><code>ssh-keygen -t ed25519 -C "you@example.com"
+</code></pre>
+<p>Press Enter at every question to accept the defaults. Then show the public key:</p>
+<pre><code>ls -l ~/.ssh
+cat ~/.ssh/id_ed25519.pub
+</code></pre>
+<p>Copy the whole line that <code>cat</code> prints into GitHub. Then:</p>
+<pre><code>ssh -T git@github.com
+</code></pre>
+<p>Type <code>yes</code> if it asks about a fingerprint. Success looks like <code>Hi &lt;your-username&gt;! You've successfully authenticated</code>.</p>
+</div></details>
+<details class="other"><summary>It says Permission denied, or it hangs</summary><div class="details-body">
+<p><code>Permission denied (publickey)</code> means GitHub does not have your public key yet, or you pasted the wrong file. Paste the content of <code>id_ed25519.pub</code>, the one ending in <code>.pub</code>.</p>
+<p>If it hangs instead, the normal SSH port may be blocked. GitHub also listens on port 443. Create <code>~/.ssh/config</code> with this content and try again:</p>
+<pre><code>Host github.com
+    Hostname ssh.github.com
+    Port 443
+    User git
+</code></pre>
+</div></details>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> The other common option is HTTPS with a <strong>personal access token</strong>, a long random string you paste instead of a password. It works too. Keys win on a machine you use every day, because nothing secret ever travels over the network: the private key only answers a challenge, it never leaves your VM.</p>
+</blockquote>
+
+<h2 id="part-2">Part 2: Your first repository</h2>
+<h3 id="step-2-1"><span class="num">2.1</span> <span class="h3-title">Create a repository on GitHub and clone it</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>On github.com, create a new <strong>public</strong> repository named <code>nametag</code>. This time, switch <strong>Add README</strong> on. With a README, GitHub makes the first commit for you, on a branch named <code>main</code>, so the repository is ready to clone right away.</p>
+<p>On the new repository's page, the green <strong>Code</strong> button shows its addresses. Pick the <strong>SSH</strong> tab and copy the address that starts with <code>git@github.com:</code>. Clone the repository into your home folder. Then look around: list everything in it, including hidden files, show its history, and show where <code>origin</code> points.</p>
+<p>For your log: where does <code>origin</code> point? How many commits are there already, and whose name is on them? You never ran <code>git commit</code>, so where did they come from?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>cd ~
+git clone git@github.com:&lt;your-username&gt;/nametag.git
+cd nametag
+ls -la
+git log
+git remote -v
+</code></pre>
+<p><code>Permission denied (publickey)</code> sends you back to 1.4. <code>Repository not found</code> usually means a typo in the username or the repository name.</p>
+</div></details>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> There are two other ways to start. One: create an <em>empty</em> repository on GitHub, run <code>git init</code> in a local folder, connect the two with <code>git remote add origin</code>, and push. On this VM that route has a trap. Its git is older (version 2.25) and names the first branch <code>master</code>, while GitHub expects <code>main</code>, so you would also need <code>git branch -M main</code> to rename it. GitHub's own instructions for an empty repository include that exact line for this reason. Two: take a clone of someone else's project and point it at a new empty repository with <code>git remote set-url</code>. That is how you take over someone else's project and make it your own. Starting with a README skips both traps, which is why it comes first.</p>
+</blockquote>
+<h3 id="step-2-2"><span class="num">2.2</span> <span class="h3-title">Make the name tag</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Your name tag is three small files:</p>
+<ul>
+<li><code>card.txt</code>: the words on the card. This is the one you will edit.</li>
+<li><code>tag.py</code>: a tiny Python program that prints every line of <code>card.txt</code> inside a frame.</li>
+<li><code>Dockerfile</code>: the recipe that packs both into an image, on top of a ready-made image that already has Python in it.</li>
+</ul>
+<p>Inside <code>~/nametag</code>, create the three files exactly as shown. Each block below is one command: <code>cat &gt; file &lt;&lt;'EOF'</code> writes every line up to <code>EOF</code> into <code>file</code>, which is a quick way to make a file without opening an editor.</p>
+<pre><code>cat &gt; card.txt &lt;&lt;'EOF'
+Hi! I'm &lt;your first name&gt;
+GitHub: &lt;your-username&gt;
+Ask me one question in an Issue.
+EOF
+</code></pre>
+<pre><code>cat &gt; tag.py &lt;&lt;'EOF'
+# tag.py: prints every line of card.txt inside a frame
+lines = open("card.txt").read().splitlines()
+width = max((len(line) for line in lines), default=0)
+print("+" + "-" * (width + 2) + "+")
+for line in lines:
+    print("| " + line.ljust(width) + " |")
+print("+" + "-" * (width + 2) + "+")
+EOF
+</code></pre>
+<pre><code>cat &gt; Dockerfile &lt;&lt;'EOF'
+# Name tag: a tiny box that prints card.txt inside a frame
+FROM python:3.12-slim
+WORKDIR /tag
+COPY tag.py .
+COPY card.txt .
+CMD ["python3", "tag.py"]
+EOF
+</code></pre>
+<p>The Dockerfile reads top to bottom, like a recipe:</p>
+<ul>
+<li><code>FROM</code> starts from an image that already has Python 3.12. Docker downloads it the first time you need it.</li>
+<li><code>WORKDIR /tag</code> makes a folder <code>/tag</code> inside the image and works from there.</li>
+<li>The two <code>COPY</code> lines copy your files from <code>~/nametag</code> into <code>/tag</code>. They are on separate lines on purpose. Step 4.4 shows why.</li>
+<li><code>CMD</code> is the command a container runs when it starts.</li>
+</ul>
+<p>Now open <code>card.txt</code> in nano and replace the two placeholders with your first name and your GitHub username. Then build an image named <code>nametag</code> from this folder, and run it.</p>
+<p>For your log: the build prints one numbered step for each instruction in the Dockerfile. Which step took the longest, and why? What did the container print?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>nano card.txt
+</code></pre>
+<p>Save with Ctrl+O and Enter, leave with Ctrl+X. Then:</p>
+<pre><code>docker build -t nametag .
+docker run --rm nametag
+</code></pre>
+<p>The dot at the end of <code>docker build</code> means &quot;the Dockerfile and the files are in this folder&quot;. <code>--rm</code> deletes the container as soon as it finishes, so stopped containers do not pile up. If the build starts with a <code>DEPRECATED</code> warning about the legacy builder, ignore it: your VM's Docker uses its older build engine, which works fine here.</p>
+</div></details>
+<p>Success looks like this, with your own name:</p>
+<pre><code>+----------------------------------+
+| Hi! I'm Sam                      |
+| GitHub: sam-lopez                |
+| Ask me one question in an Issue. |
++----------------------------------+
+</code></pre>
+<h3 id="step-2-3"><span class="num">2.3</span> <span class="h3-title">Look, commit, push</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Right now your three files exist on your VM and nowhere else. Ask git what it thinks with <code>git status</code>. Add the three files, commit them with a clear message, and run <code>git status</code> again. Read its second line carefully: it compares your copy with the last thing it knew about <code>origin</code>. Then push, run <code>git status</code> a third time, and refresh your repository's page on GitHub.</p>
+<p>For your log: what did <code>git status</code> say after the commit, and after the push? Explain &quot;ahead of 'origin/main' by 1 commit&quot; in your own words.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>git status
+git add card.txt tag.py Dockerfile
+git commit -m "Add my name tag"
+git status
+git push
+git status
+</code></pre>
+<p>Because you cloned this repository, git already knows where to push and which branch to use, so a plain <code>git push</code> is enough.</p>
+</div></details>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Right after <code>git commit</code>, and before <code>git push</code>, your commit existed in exactly one place in the world. Where? What would have happened to it if your VM had been wiped at that moment?</p>
+</blockquote>
+
+<h2 id="part-3">Part 3: Run it like a stranger</h2>
+<h3 id="step-3-1"><span class="num">3.1</span> <span class="h3-title">Build straight from GitHub</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Your classmates will never see your <code>~/nametag</code> folder. All they will have is your GitHub address. Luckily, Docker can build from an address: it downloads the repository and follows its Dockerfile. Build your own name tag from your GitHub URL, with the name <code>test-mine</code>, and run it. If that works for you, it works for anyone.</p>
+<p>One catch: the Docker on your VM assumes a repository's main branch is called <code>master</code>, the old default. GitHub calls it <code>main</code>. Add <code>#main</code> to the end of the URL to name the branch.</p>
+<p>For your log: this build probably finishes almost instantly, even though Docker had to download your repository. Read the build output. What does Docker say for each step, and why could it skip the work?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker build -t test-mine https://github.com/&lt;your-username&gt;/nametag.git#main
+docker run --rm test-mine
+</code></pre>
+<p><code>couldn't find remote ref master</code> means the <code>#main</code> is missing. Image names must be all lowercase. If Docker cannot find your repository at all, check that it is public and that your push went through.</p>
+</div></details>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> You cloned with a <code>git@github.com:</code> address, and GitHub checked your key. Docker used an <code>https://</code> address with no key at all, and GitHub let it in anyway. What does that tell you about what your key is actually for?</p>
+</blockquote>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> The usual way to share an image is a <strong>registry</strong> such as Docker Hub or the GitHub Container Registry: you build once, push the finished image, and everyone else downloads it ready-made. That needs accounts, tokens and an extra push step. Building from the GitHub URL needs none of that, and everyone builds from a recipe they can read. The cost is that every person builds it themselves.</p>
+</blockquote>
+
+<h2 id="part-4">Part 4: Trade name tags</h2>
+<p>Now the name tags travel. Find at least two classmates and swap GitHub usernames. Trade both ways: everyone whose name tag you take gets yours. Then each of you asks the other one question, and the answer shows up inside the name tag.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 150" role="img" aria-label="A classmate opens an Issue, you answer in card.txt, commit with fixes #1 and push, GitHub closes the Issue, the classmate rebuilds and sees the answer" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-loop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs>
+<rect x="6" y="20" width="132" height="110" rx="8" class="d-box"/>
+<text x="72" y="48" text-anchor="middle" font-size="12.5" font-weight="700">1  Classmate</text>
+<text x="72" y="76" text-anchor="middle" font-size="12">opens Issue #1</text>
+<text x="72" y="96" text-anchor="middle" font-size="12">with a question</text>
+<line x1="140" y1="75" x2="158" y2="75" class="d-line" marker-end="url(#ah-loop)"/>
+<rect x="160" y="20" width="132" height="110" rx="8" class="d-accent"/>
+<text x="226" y="48" text-anchor="middle" font-size="12.5" font-weight="700">2  You</text>
+<text x="226" y="76" text-anchor="middle" font-size="12">add one line</text>
+<text x="226" y="96" text-anchor="middle" font-size="12">to <tspan class="d-mono">card.txt</tspan></text>
+<line x1="294" y1="75" x2="312" y2="75" class="d-line" marker-end="url(#ah-loop)"/>
+<rect x="314" y="20" width="132" height="110" rx="8" class="d-accent"/>
+<text x="380" y="48" text-anchor="middle" font-size="12.5" font-weight="700">3  You commit</text>
+<text x="380" y="76" text-anchor="middle" font-size="12" class="d-mono">... fixes #1</text>
+<text x="380" y="96" text-anchor="middle" font-size="12">and push</text>
+<line x1="448" y1="75" x2="466" y2="75" class="d-line" marker-end="url(#ah-loop)"/>
+<rect x="468" y="20" width="132" height="110" rx="8" class="d-ok"/>
+<text x="534" y="48" text-anchor="middle" font-size="12.5" font-weight="700">4  GitHub</text>
+<text x="534" y="76" text-anchor="middle" font-size="12">closes Issue #1,</text>
+<text x="534" y="96" text-anchor="middle" font-size="12">links your commit</text>
+<line x1="602" y1="75" x2="620" y2="75" class="d-line" marker-end="url(#ah-loop)"/>
+<rect x="622" y="20" width="132" height="110" rx="8" class="d-box"/>
+<text x="688" y="48" text-anchor="middle" font-size="12.5" font-weight="700">5  Classmate</text>
+<text x="688" y="76" text-anchor="middle" font-size="12">rebuilds and</text>
+<text x="688" y="96" text-anchor="middle" font-size="12">sees the answer</text>
+</svg></div><figcaption>One question, one commit, one closed Issue, one updated name tag.</figcaption></figure>
+<h3 id="step-4-1"><span class="num">4.1</span> <span class="h3-title">Build their name tags</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Build each classmate's name tag straight from their GitHub URL, as <code>tag-&lt;their-username&gt;</code> in lowercase, and run it. Then list every image on your VM.</p>
+<p>For your log: compare this build with your very first build in 2.2. What did Docker not have to download again, and why?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker build -t tag-&lt;their-username&gt; https://github.com/&lt;their-username&gt;/nametag.git#main
+docker run --rm tag-&lt;their-username&gt;
+docker images
+</code></pre>
+<p>If Docker says the repository does not exist, your classmate has not pushed yet, made the repository private, or you have a typo.</p>
+</div></details>
+<h3 id="step-4-2"><span class="num">4.2</span> <span class="h3-title">Ask each of them one question</span></h3>
+<p>On each classmate's repository page, open the <strong>Issues</strong> tab and create a new Issue:</p>
+<ul>
+<li><strong>Title:</strong> <code>Question from &lt;your-username&gt;</code></li>
+<li><strong>Body:</strong> one question they can answer in one short line. For example: What is your favorite Linux command? Which lab so far was the most fun? What would you build with a free week?</li>
+</ul>
+<p>Issues are public, so keep it friendly and do not ask for anything personal. GitHub numbers every Issue, like <code>#1</code>, right after its title. Your classmate needs that number in the next step, so make sure they know it.</p>
+<p>No Issues tab? The owner can turn it on under Settings → General → Features.</p>
+<h3 id="step-4-3"><span class="num">4.3</span> <span class="h3-title">Answer the questions on your repository</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>When an Issue shows up on your repository, read it and note its number. Add one line to <code>card.txt</code> that answers it and says who asked. Before you commit, ask git to show you exactly what changed. Then commit with a message that ends in <code>fixes #&lt;number&gt;</code>, using that Issue's number, and push. Open the Issue on GitHub again.</p>
+<p>Here is what just happened. GitHub reads every commit message that lands on <code>main</code>. When it finds a closing keyword (<code>fixes</code>, <code>closes</code> or <code>resolves</code>) followed by <code>#</code> and a number, it closes that Issue and adds a link to the commit. The Issue is now a public record of what was asked and which commit answered it. Answer each question in its own commit, so each Issue points at its own answer.</p>
+<p>For your log: what did <code>git diff</code> show? What happened to the Issue after the push, and what appeared on its page?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>nano card.txt
+</code></pre>
+<p>Then:</p>
+<pre><code>git diff
+git add card.txt
+git commit -m "Answer &lt;their-username&gt;'s question, fixes #1"
+git push
+</code></pre>
+<p>Use the number of the Issue on <strong>your</strong> repository. The second question is probably <code>#2</code>. A new line in <code>card.txt</code> might look like this:</p>
+<pre><code>Favorite command: grep (asked by maria-r)
+</code></pre>
+</div></details>
+<blockquote class="aside why">
+<p><strong>Why this way?</strong> On a real team, a change like this usually arrives as a <strong>pull request</strong>: you push your work to a separate branch, a teammate reviews it, and merging it into <code>main</code> closes the Issue. The same keywords work in a pull request's description. Here the repository is yours and the change is one line of text, so pushing straight to <code>main</code> is fine.</p>
+</blockquote>
+<h3 id="step-4-4"><span class="num">4.4</span> <span class="h3-title">Rebuild their name tag and find your answer</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Once a classmate tells you they answered your question, run their name tag again using the image you already have. Do not rebuild yet. Look at the card. Then rebuild it with the same command as in 4.1, and run it again. This time, read the build output closely: some steps say <code>Using cache</code> (or <code>CACHED</code>), and some actually run.</p>
+<figure class="fig"><div class="fig-scroll"><svg viewBox="0 0 760 232" role="img" aria-label="Rebuild after card.txt changed: the bottom three layers are reused from cache, COPY card.txt and CMD are built again" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ah-layers" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-arrowhead"/></marker></defs>
+<rect x="250" y="24" width="260" height="32" rx="5" class="d-warn"/><text x="380" y="45" text-anchor="middle" font-size="12" class="d-mono">CMD [&quot;python3&quot;, &quot;tag.py&quot;]</text>
+<rect x="250" y="62" width="260" height="32" rx="5" class="d-warn"/><text x="380" y="83" text-anchor="middle" font-size="12" class="d-mono">COPY card.txt .</text>
+<rect x="250" y="100" width="260" height="32" rx="5" class="d-ok"/><text x="380" y="121" text-anchor="middle" font-size="12" class="d-mono">COPY tag.py .</text>
+<rect x="250" y="138" width="260" height="32" rx="5" class="d-ok"/><text x="380" y="159" text-anchor="middle" font-size="12" class="d-mono">WORKDIR /tag</text>
+<rect x="250" y="176" width="260" height="32" rx="5" class="d-ok"/><text x="380" y="197" text-anchor="middle" font-size="12" class="d-mono">FROM python:3.12-slim</text>
+<path d="M524,26 h10 V92 h-10" class="d-line"/>
+<text x="546" y="56" font-size="13" font-weight="700">built again</text>
+<text x="546" y="74" font-size="11.5" class="d-muted">changed, or above a change</text>
+<path d="M524,102 h10 V206 h-10" class="d-line"/>
+<text x="546" y="150" font-size="13" font-weight="700">reused</text>
+<text x="546" y="168" font-size="11.5" class="d-mono d-muted">Using cache / CACHED</text>
+<text x="226" y="74" text-anchor="end" font-size="12.5">card.txt changed</text>
+<line x1="230" y1="78" x2="246" y2="78" class="d-line" marker-end="url(#ah-layers)"/>
+<text x="380" y="226" text-anchor="middle" font-size="11.5" class="d-muted">image = layers stacked bottom to top, one per Dockerfile line</text>
+</svg></div><figcaption>Your classmate&#x27;s rebuild after answering you. A changed file rebuilds its own layer and every layer stacked on top of it.</figcaption></figure>
+<p>Docker reuses a layer only when everything underneath it is the same and the step's own input is the same. In your classmate's repository the only file that changed is <code>card.txt</code>. So <code>FROM</code>, <code>WORKDIR</code> and <code>COPY tag.py</code> come straight out of the cache, while <code>COPY card.txt</code> and every layer above it are built again. That is why the Dockerfile copies the two files on separate lines, with the file that changes most often last.</p>
+<p>Finally, leave a short comment on the closed Issue saying you see the answer.</p>
+<p>For your log: why did the first run still show the old card? In the rebuild, which steps came from the cache, and which ran again?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker run --rm tag-&lt;their-username&gt;
+docker build -t tag-&lt;their-username&gt; https://github.com/&lt;their-username&gt;/nametag.git#main
+docker run --rm tag-&lt;their-username&gt;
+</code></pre>
+</div></details>
+<blockquote class="aside ponder">
+<p><strong>Think about it</strong> Suppose the Dockerfile had copied <code>card.txt</code> before <code>tag.py</code>. Which steps would run again after every answer? Now picture a real project where one step installs a hundred packages and takes five minutes. Where in the Dockerfile would you want that step, and where would you put the files you edit every day?</p>
+</blockquote>
+
+<h2 id="part-5">Part 5: Clean up</h2>
+<h3 id="step-5-1"><span class="num">5.1</span> <span class="h3-title">Clear out Docker</span></h3>
+<p>List all containers, including stopped ones. You will find leftovers from <code>hello-world</code>, which you ran without <code>--rm</code>. Ask Docker to remove everything it no longer uses, and read its list before you answer <code>y</code>. Then remove the name tag images (yours, <code>test-mine</code> and your classmates') and <code>hello-world</code>.</p>
+<p>Keep <code>python:3.12-slim</code>. Any later image that starts from it skips the download.</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>docker ps -a
+docker system prune
+</code></pre>
+<p>Answer <code>y</code> once you have read the list. Then:</p>
+<pre><code>docker images
+docker rmi nametag test-mine tag-&lt;their-username&gt; tag-&lt;their-username&gt; hello-world
+docker images
+</code></pre>
+<p>Images with the name <code>&lt;none&gt;</code> are old versions that a rebuild replaced. <code>docker system prune</code> removes them.</p>
+</div></details>
+<h3 id="step-5-2"><span class="num">5.2</span> <span class="h3-title">Delete your project, then get it back</span> <span class="log-badge" title="Write a log entry for this step">LOG</span></h3>
+<p>Here is the real reason GitHub matters to you. Delete your <code>~/nametag</code> folder completely, history and all. Then clone it again and check. Are all your commits there? Is <code>card.txt</code> still answering your classmates' questions?</p>
+<p>For your log: what came back with the clone, and was anything missing? What would you have lost if you had never pushed?</p>
+<details class="show"><summary>Show me</summary><div class="details-body">
+<pre><code>cd ~
+rm -rf ~/nametag
+git clone git@github.com:&lt;your-username&gt;/nametag.git
+cd nametag
+git log --oneline
+cat card.txt
+</code></pre>
+</div></details>
+<p>Keep your <code>nametag</code> repository on GitHub, and keep your SSH key. Anything you push to GitHub from this VM from now on uses it. When you are completely done with this VM at the end of the semester, delete its key from your GitHub settings. A key nobody uses is a door nobody watches.</p>
+
+<h2 id="what-to-submit">What to submit</h2>
+<ul>
+<li>the link to your <code>nametag</code> repository</li>
+<li>your log: one entry (plan, command, what I see, screenshot) for every step marked <strong>LOG</strong></li>
+<li>two small tables in your log, each with at least two rows:</li>
+</ul>
+<table>
+<thead><tr><th>Question I asked</th><th>Issue link</th><th>Answer showed up in their tag?</th></tr></thead>
+<tbody><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></tbody>
+</table>
+<table>
+<thead><tr><th>Question I answered</th><th>Issue link</th><th>Closed by my commit?</th></tr></thead>
+<tbody><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></tbody>
+</table>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  // Copy buttons on every code block
+  document.querySelectorAll("pre").forEach(function (pre) {
+    var wrap = document.createElement("div");
+    wrap.className = "code-wrap";
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    var btn = document.createElement("button");
+    btn.className = "copy-btn";
+    btn.type = "button";
+    btn.textContent = "Copy";
+    btn.addEventListener("click", function () {
+      var text = pre.innerText.replace(/\n$/, "");
+      var done = function () {
+        btn.textContent = "Copied";
+        btn.classList.add("done");
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1400);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(text); done(); });
+      } else { fallback(text); done(); }
+    });
+    wrap.appendChild(btn);
+  });
+  function fallback(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // Finish-line checklist: clickable, remembered in this browser when possible
+  var key = "day-zero-finish-line";
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) { saved = {}; }
+  document.querySelectorAll("li.task-list-item input[type=checkbox]").forEach(function (box, i) {
+    var li = box.closest("li");
+    if (saved[i]) { box.checked = true; li.classList.add("checked"); }
+    box.addEventListener("change", function () {
+      li.classList.toggle("checked", box.checked);
+      saved[i] = box.checked;
+      try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {}
+    });
+  });
+
+  // Highlight the current part in the table of contents
+  var links = {};
+  document.querySelectorAll("nav.toc a").forEach(function (a) { links[a.getAttribute("href").slice(1)] = a; });
+  var heads = Array.prototype.slice.call(document.querySelectorAll("main h2[id]"));
+  function update() {
+    var current = heads[0];
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i].getBoundingClientRect().top < 120) current = heads[i];
+    }
+    Object.keys(links).forEach(function (id) { links[id].classList.toggle("active", current && id === current.id); });
+  }
+  window.addEventListener("scroll", update, { passive: true });
+  update();
+
+  // When printing, open every hint so nothing is hidden on paper
+  var opened = [];
+  window.addEventListener("beforeprint", function () {
+    document.querySelectorAll("details:not([open])").forEach(function (d) { d.open = true; opened.push(d); });
+  });
+  window.addEventListener("afterprint", function () {
+    opened.forEach(function (d) { d.open = false; }); opened = [];
+  });
+})();
+</script>
+
+</body>
+</html>
